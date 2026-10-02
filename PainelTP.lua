@@ -20,6 +20,14 @@ local NOME_DONO = "P7zINM"
 local IMAGEM_BOTAO = "https://i.pinimg.com/736x/0f/1a/f0/0f1af0cc532c9ace8bd7172899a1ae3c.jpg"
 local ICONE_FALLBACK = "📍"
 
+------------------------------------------------------------
+-- FUNDO DO PAINEL (imagem atrás de tudo)
+-- IMAGEM_FUNDO aceita os mesmos 3 formatos do botão:
+--   1) URL (https://...)      2) "rbxassetid://1234..."   3) "" = cor sólida
+------------------------------------------------------------
+local IMAGEM_FUNDO = ""
+local ESCURECER_FUNDO = 0.55 -- 0 = imagem pura, 1 = some; quanto maior, mais fácil de ler o texto
+
 if player.Name:lower() ~= NOME_DONO:lower() then
 	warn("[PainelTP] Painel bloqueado: dono configurado é '" .. NOME_DONO .. "', mas seu username é '" .. player.Name .. "'. Ajuste NOME_DONO no script.")
 	return -- qualquer outro jogador: o script para aqui, painel nem é criado
@@ -144,7 +152,7 @@ local function baixarImagem(url)
 	return nil
 end
 
-local function resolverImagem(url)
+local function resolverImagem(url, nomeArquivo)
 	if url == "" or url:sub(1, 4) ~= "http" then
 		return url -- vazio ou rbxassetid://: usa direto
 	end
@@ -154,7 +162,7 @@ local function resolverImagem(url)
 		return ""
 	end
 
-	local arquivo = "PainelTP_icone_toggle." .. (url:sub(-4):lower() == ".png" and "png" or "jpg")
+	local arquivo = nomeArquivo or ("PainelTP_imagem." .. (url:sub(-4):lower() == ".png" and "png" or "jpg"))
 
 	local ok, asset = pcall(function()
 		-- usa o arquivo já existente se for uma imagem válida (não precisa de internet)
@@ -191,7 +199,7 @@ local function resolverImagem(url)
 	return ""
 end
 
-local imagemToggle = resolverImagem(IMAGEM_BOTAO)
+local imagemToggle = resolverImagem(IMAGEM_BOTAO, "PainelTP_icone_toggle.jpg")
 
 local botaoToggle = Instance.new("ImageButton")
 botaoToggle.Size = UDim2.new(0, 50, 0, 50)
@@ -224,6 +232,35 @@ frame.BorderSizePixel = 0
 frame.Visible = false -- começa fechado
 frame.Parent = screenGui
 criarUICorner(frame, 10)
+
+------------------------------------------------------------
+-- FUNDO DO PAINEL (imagem + camada escura pra manter a leitura)
+------------------------------------------------------------
+local imagemFundo = resolverImagem(IMAGEM_FUNDO, "PainelTP_fundo_painel.jpg")
+
+-- Imagem de fundo (primeiro filho do frame = fica atrás de tudo)
+local fundoPainel = Instance.new("ImageLabel")
+fundoPainel.Name = "Fundo"
+fundoPainel.Size = UDim2.new(1, 0, 1, 0)
+fundoPainel.Position = UDim2.new(0, 0, 0, 0)
+fundoPainel.BackgroundTransparency = 1
+fundoPainel.BorderSizePixel = 0
+fundoPainel.Image = imagemFundo -- vazio = mostra a cor sólida do frame
+fundoPainel.ScaleType = Enum.ScaleType.Crop -- preenche tudo, cortando o excesso
+fundoPainel.Parent = frame
+criarUICorner(fundoPainel, 10)
+
+-- Camada escura por cima da imagem (só aparece se houver imagem)
+local sombraFundo = Instance.new("Frame")
+sombraFundo.Name = "SombraFundo"
+sombraFundo.Size = UDim2.new(1, 0, 1, 0)
+sombraFundo.Position = UDim2.new(0, 0, 0, 0)
+sombraFundo.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+sombraFundo.BackgroundTransparency = 1 - ESCURECER_FUNDO
+sombraFundo.BorderSizePixel = 0
+sombraFundo.Visible = imagemFundo ~= ""
+sombraFundo.Parent = frame -- segundo filho = atrás do conteúdo, na frente da imagem
+criarUICorner(sombraFundo, 10)
 
 ------------------------------------------------------------
 -- CABEÇALHO — linha 1: título + fechar
