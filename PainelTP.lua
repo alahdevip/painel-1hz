@@ -344,14 +344,15 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	criarUICorner(linha, 6)
 
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(0, 52, 1, 0)
+	label.Size = UDim2.new(0, 70, 1, 0)
 	label.Position = UDim2.new(0, 8, 0, 0)
 	label.BackgroundTransparency = 1
 	label.Text = textoLabel
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextColor3 = Color3.fromRGB(255, 255, 255)
 	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
+	label.TextSize = 12
+	label.TextTruncate = Enum.TextTruncate.AtEnd -- segurança: nunca invade o botão Max
 	label.Parent = linha
 
 	local botaoMenos = novoBotao(linha, "-", UDim2.new(0, 24, 0, 20), UDim2.new(1, -104, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
@@ -367,13 +368,13 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	local botaoMais = novoBotao(linha, "+", UDim2.new(0, 24, 0, 20), UDim2.new(1, -28, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
 
 	-- Botão "Max": leva o valor direto pro máximo dessa linha
-	local botaoMax = novoBotao(linha, "Max", UDim2.new(0, 44, 0, 20), UDim2.new(0, 62, 0.5, -10), Color3.fromRGB(46, 86, 130), 11)
+	local botaoMax = novoBotao(linha, "Max", UDim2.new(0, 34, 0, 20), UDim2.new(0, 82, 0.5, -10), Color3.fromRGB(46, 86, 130), 11)
 
 	return linha, botaoMenos, valorLabel, botaoMais, botaoMax
 end
 
 -- Linha Speed
-local _, botaoSpeedMenos, labelSpeedValor, botaoSpeedMais, botaoSpeedMax = criarLinhaAjuste(Y_LINHAS_MOV, "Speed", valorSpeed, "")
+local _, botaoSpeedMenos, labelSpeedValor, botaoSpeedMais, botaoSpeedMax = criarLinhaAjuste(Y_LINHAS_MOV, "Velocidade", valorSpeed, "")
 
 -- Linha Jump
 local Y_LINHA_JUMP = Y_LINHAS_MOV + ALTURA_LINHA_MOV + GAP_LINHA_MOV
@@ -381,11 +382,11 @@ local _, botaoJumpMenos, labelJumpValor, botaoJumpMais, botaoJumpMax = criarLinh
 
 -- Linha Fly (label + botão liga/desliga + controles de velocidade)
 local Y_LINHA_FLY = Y_LINHA_JUMP + ALTURA_LINHA_MOV + GAP_LINHA_MOV
-local linhaFly, botaoFlySpeedMenos, labelFlySpeedValor, botaoFlySpeedMais, botaoFlyMax = criarLinhaAjuste(Y_LINHA_FLY, "Fly", valorFlySpeed, "")
+local linhaFly, botaoFlySpeedMenos, labelFlySpeedValor, botaoFlySpeedMais, botaoFlyMax = criarLinhaAjuste(Y_LINHA_FLY, "Voar", valorFlySpeed, "")
 
 local botaoFlyToggle = Instance.new("TextButton")
-botaoFlyToggle.Size = UDim2.new(0, 46, 0, 20)
-botaoFlyToggle.Position = UDim2.new(0, 110, 0.5, -10)
+botaoFlyToggle.Size = UDim2.new(0, 36, 0, 20)
+botaoFlyToggle.Position = UDim2.new(0, 120, 0.5, -10)
 botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 76)
 botaoFlyToggle.Text = "OFF"
 botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -414,12 +415,12 @@ caixaBusca.Parent = frame
 criarUICorner(caixaBusca, 6)
 
 local iconeBusca = Instance.new("TextLabel")
-iconeBusca.Size = UDim2.new(0, 20, 1, 0)
-iconeBusca.Position = UDim2.new(0, 6, 0, 0)
+iconeBusca.Size = UDim2.new(0, 24, 1, 0)
+iconeBusca.Position = UDim2.new(0, 8, 0, 0)
 iconeBusca.BackgroundTransparency = 1
 iconeBusca.Text = "🔍"
 iconeBusca.TextColor3 = Color3.fromRGB(150, 150, 155)
-iconeBusca.TextSize = 13
+iconeBusca.TextSize = 14
 iconeBusca.Parent = caixaBusca
 
 caixaBusca.Text = "" -- garante espaço reservado pro ícone à esquerda
@@ -427,7 +428,7 @@ caixaBusca.TextXAlignment = Enum.TextXAlignment.Left
 
 -- Empurra o texto digitado pra direita do ícone usando padding
 local paddingBusca = Instance.new("UIPadding")
-paddingBusca.PaddingLeft = UDim.new(0, 26)
+paddingBusca.PaddingLeft = UDim.new(0, 38) -- texto começa depois da lupa, sem sobrepor
 paddingBusca.Parent = caixaBusca
 
 ------------------------------------------------------------
