@@ -88,14 +88,15 @@ local function criarUICorner(instancia, raio)
 	return uic
 end
 
-local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte, transparencia)
+local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte)
 	local botao = Instance.new("TextButton")
 	botao.Size = tamanho
 	botao.Position = posicao
 	botao.BackgroundColor3 = corFundo
-	botao.BackgroundTransparency = transparencia or 0.35 -- efeito vidro: a arte do fundo aparece através
+	botao.BackgroundTransparency = 1 -- sem fundo: só o texto flutua sobre a arte
 	botao.Text = texto
 	botao.TextColor3 = Color3.fromRGB(255, 255, 255)
+	botao.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
 	botao.Font = Enum.Font.GothamBold
 	botao.TextSize = tamanhoFonte or 13
 	botao.AutoButtonColor = true
@@ -294,11 +295,12 @@ local botaoFechar = Instance.new("TextButton")
 botaoFechar.Size = UDim2.new(0, 26, 0, 26)
 botaoFechar.Position = UDim2.new(1, -32, 0, 3)
 botaoFechar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-botaoFechar.BackgroundTransparency = 0.35
+botaoFechar.BackgroundTransparency = 1
 botaoFechar.Text = "X"
 botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
 botaoFechar.Font = Enum.Font.GothamBold
 botaoFechar.TextSize = 14
+botaoFechar.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
 botaoFechar.Parent = frame
 criarUICorner(botaoFechar, 13)
 
@@ -430,11 +432,12 @@ local botaoFlyToggle = Instance.new("TextButton")
 botaoFlyToggle.Size = UDim2.new(0, 28, 0, 20)
 botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -10)
 botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 76)
-botaoFlyToggle.BackgroundTransparency = 0.35
+botaoFlyToggle.BackgroundTransparency = 1
 botaoFlyToggle.Text = "OFF"
 botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 botaoFlyToggle.Font = Enum.Font.GothamBold
 botaoFlyToggle.TextSize = 10
+botaoFlyToggle.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
 botaoFlyToggle.Parent = linhaFly
 criarUICorner(botaoFlyToggle, 5)
 
@@ -708,8 +711,7 @@ end)
 -- SALVAR LOCAL / RETORNAR AO LOCAL
 ------------------------------------------------------------
 local ARQUIVO_LOCAL_SALVO = "PainelTP_local_salvo.txt"
-local corBotaoRetornarAtiva = Color3.fromRGB(50, 120, 200)
-local corBotaoRetornarApagada = Color3.fromRGB(40, 40, 44)
+-- (estado do "Retornar" agora é pela cor do texto: branco = tem local, cinza = nada salvo)
 
 -- Grava a posição em arquivo (só funciona em executors que têm writefile; ignora se não existir)
 local function persistirLocal()
@@ -751,10 +753,10 @@ carregarLocalPersistido()
 local function atualizarBotaoRetornar()
 	if posicaoSalva then
 		botaoRetornarLocal.Text = "Retornar"
-		botaoRetornarLocal.BackgroundColor3 = corBotaoRetornarAtiva
+		botaoRetornarLocal.TextColor3 = Color3.fromRGB(255, 255, 255)
 	else
 		botaoRetornarLocal.Text = "Retornar"
-		botaoRetornarLocal.BackgroundColor3 = corBotaoRetornarApagada
+		botaoRetornarLocal.TextColor3 = Color3.fromRGB(140, 140, 145)
 	end
 end
 
@@ -767,17 +769,17 @@ local function salvarLocal()
 	atualizarBotaoRetornar()
 
 	botaoSalvarLocal.Text = "Salvo ✓"
-	botaoSalvarLocal.BackgroundColor3 = Color3.fromRGB(60, 160, 90)
+	botaoSalvarLocal.TextColor3 = Color3.fromRGB(90, 255, 150)
 	task.delay(1.5, function()
 		botaoSalvarLocal.Text = "Salvar Local"
-		botaoSalvarLocal.BackgroundColor3 = Color3.fromRGB(55, 55, 60)
+		botaoSalvarLocal.TextColor3 = Color3.fromRGB(255, 255, 255)
 	end)
 end
 
 local function retornarLocal()
 	if not posicaoSalva then
 		botaoRetornarLocal.Text = "Nada salvo!"
-		botaoRetornarLocal.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+		botaoRetornarLocal.TextColor3 = Color3.fromRGB(255, 120, 120)
 		task.delay(1.2, function()
 			atualizarBotaoRetornar()
 		end)
@@ -963,10 +965,10 @@ botaoESP.MouseButton1Click:Connect(function()
 	espAtivo = not espAtivo
 	if espAtivo then
 		botaoESP.Text = "ESP: ON"
-		botaoESP.BackgroundColor3 = Color3.fromRGB(60, 160, 90)
+		botaoESP.TextColor3 = Color3.fromRGB(90, 255, 150)
 	else
 		botaoESP.Text = "ESP: OFF"
-		botaoESP.BackgroundColor3 = Color3.fromRGB(55, 55, 60)
+		botaoESP.TextColor3 = Color3.fromRGB(255, 255, 255)
 	end
 	atualizarESPTodos()
 end)
@@ -1064,11 +1066,11 @@ botaoNoclip.MouseButton1Click:Connect(function()
 	noclipAtivo = not noclipAtivo
 	if noclipAtivo then
 		botaoNoclip.Text = "Noclip: ON"
-		botaoNoclip.BackgroundColor3 = Color3.fromRGB(60, 160, 90)
+		botaoNoclip.TextColor3 = Color3.fromRGB(90, 255, 150)
 		ativarNoclip()
 	else
 		botaoNoclip.Text = "Noclip: OFF"
-		botaoNoclip.BackgroundColor3 = Color3.fromRGB(55, 55, 60)
+		botaoNoclip.TextColor3 = Color3.fromRGB(255, 255, 255)
 		desativarNoclip()
 	end
 end)
@@ -1194,7 +1196,7 @@ local function pararFly()
 	end
 
 	botaoFlyToggle.Text = "OFF"
-	botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 76)
+	botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
 
 local function iniciarFly()
@@ -1223,7 +1225,7 @@ local function iniciarFly()
 	flyBodyGyro.Parent = hrp
 
 	botaoFlyToggle.Text = "ON"
-	botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(60, 160, 90)
+	botaoFlyToggle.TextColor3 = Color3.fromRGB(90, 255, 150)
 
 	RunService:BindToRenderStep("PainelTP_Fly", Enum.RenderPriority.Character.Value, function()
 		if not flyBodyVelocity or not flyBodyGyro then
@@ -1398,6 +1400,7 @@ local function atualizarLista()
 		botaoFavorito.Size = UDim2.new(0, LARGURA_ESTRELA, 0, LARGURA_ESTRELA)
 		botaoFavorito.Position = UDim2.new(1, -(LARGURA_ESTRELA + 6), 0, 6)
 		botaoFavorito.BackgroundTransparency = 1
+		botaoFavorito.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
 		botaoFavorito.Text = ehFavorito and "★" or "☆"
 		botaoFavorito.TextColor3 = ehFavorito and Color3.fromRGB(255, 210, 60) or Color3.fromRGB(140, 140, 145)
 		botaoFavorito.Font = Enum.Font.GothamBold
@@ -1434,6 +1437,7 @@ local function atualizarLista()
 			seguindoEsse and Color3.fromRGB(60, 160, 90) or Color3.fromRGB(90, 90, 95),
 			12
 		)
+		botaoSeguir.TextColor3 = seguindoEsse and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
 
 		botaoTP.MouseButton1Click:Connect(function()
 			teleportarAte(outroPlayer)
