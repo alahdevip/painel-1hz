@@ -80,7 +80,6 @@ local flyBodyGyro = nil
 
 local seguirHeartbeat = nil -- loop do seguir (desconectado ao desinjetar)
 local espHeartbeat = nil -- loop do ESP (desconectado ao desinjetar)
-local assetLogoDemoniaka = "" -- asset do logo (resolve no cabeçalho, reutilizado nos botões)
 local destruido = false
 local destruirPainel -- definida no fim do script: clique no logo desinjeta tudo
 
@@ -112,24 +111,7 @@ local function criarBorda(instancia, cor, transparencia)
 	return borda
 end
 
--- Logo DEMONIAKA atrás de um botão (irmão anterior = renderiza por baixo, texto fica visível)
-local function fundoLogo(pai, tamanho, posicao, raio)
-	local fundo = Instance.new("ImageLabel")
-	fundo.Name = "FundoLogo"
-	fundo.Size = tamanho
-	fundo.Position = posicao
-	fundo.BackgroundTransparency = 1
-	fundo.BorderSizePixel = 0
-	fundo.ScaleType = Enum.ScaleType.Crop -- preenche o botão, cortando o excesso
-	fundo.Image = assetLogoDemoniaka -- "" = invisível, mantém o visual atual
-	fundo.Parent = pai -- ANTES do botão: fica por baixo dele
-	criarUICorner(fundo, raio or 6)
-	return fundo
-end
-
 local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte)
-	fundoLogo(pai, tamanho, posicao, 6) -- DEMONIAKA atrás do texto
-
 	local botao = Instance.new("TextButton")
 	botao.Size = tamanho
 	botao.Position = posicao
@@ -338,7 +320,6 @@ do -- tenta o GitHub primeiro, cai pro espelho se falhar
 		assetLogo = resolverImagem(IMAGEM_LOGO_2, "PainelTP_logo")
 	end
 	logoTitulo.Image = assetLogo
-	assetLogoDemoniaka = assetLogo -- reutilizado como fundo dos botões
 end
 logoTitulo.Parent = frame
 logoTitulo.MouseButton1Click:Connect(function()
@@ -368,7 +349,6 @@ botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
 botaoFechar.Font = Enum.Font.GothamBold
 botaoFechar.TextSize = 14
 botaoFechar.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
-fundoLogo(frame, botaoFechar.Size, botaoFechar.Position, 13)
 botaoFechar.Parent = frame
 criarUICorner(botaoFechar, 13)
 criarBorda(botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
@@ -507,7 +487,6 @@ botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 botaoFlyToggle.Font = Enum.Font.GothamBold
 botaoFlyToggle.TextSize = 10
 botaoFlyToggle.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
-fundoLogo(linhaFly, botaoFlyToggle.Size, botaoFlyToggle.Position, 5)
 botaoFlyToggle.Parent = linhaFly
 criarUICorner(botaoFlyToggle, 5)
 criarBorda(botaoFlyToggle)
@@ -1476,7 +1455,6 @@ local function atualizarLista()
 		botaoFavorito.TextColor3 = ehFavorito and Color3.fromRGB(255, 210, 60) or Color3.fromRGB(140, 140, 145)
 		botaoFavorito.Font = Enum.Font.GothamBold
 		botaoFavorito.TextSize = 20
-		fundoLogo(linha, botaoFavorito.Size, botaoFavorito.Position, 6)
 		botaoFavorito.Parent = linha
 
 		-- Linha de botões de ação (TP / Spec / Seguir), largura igual entre os três
