@@ -25,7 +25,7 @@ local ICONE_FALLBACK = "📍"
 -- IMAGEM_FUNDO aceita os mesmos 3 formatos do botão:
 --   1) URL (https://...)      2) "rbxassetid://1234..."   3) "" = cor sólida
 ------------------------------------------------------------
-local IMAGEM_FUNDO = "https://i.pinimg.com/736x/36/49/1f/36491f8795a8ee2f0f506df204a3481f.jpg"
+local IMAGEM_FUNDO = "https://i.pinimg.com/736x/74/5e/83/745e835eca5be13b1df753fcb279b35e.jpg"
 local ESCURECER_FUNDO = 0.55 -- 0 = imagem pura, 1 = some; quanto maior, mais fácil de ler o texto
 
 if player.Name:lower() ~= NOME_DONO:lower() then
