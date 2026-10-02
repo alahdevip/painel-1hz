@@ -50,9 +50,10 @@ local DISTANCIA_MAXIMA_SEGUIR = 3 -- studs: se afastar mais que isso, puxa de vo
 local posicaoSalva = nil -- CFrame do local salvo pelo botão "Salvar Local"
 
 -- Speed / Jump / Fly
-local valorSpeed = 16 -- WalkSpeed padrão do Roblox
-local valorJump = 50 -- JumpPower padrão do Roblox
-local valorFlySpeed = 50 -- velocidade do voo em studs/segundo
+local SPEED_NORMAL, JUMP_NORMAL, FLYSPEED_NORMAL = 16, 50, 50 -- valores padrão (botão "Normal")
+local valorSpeed = SPEED_NORMAL
+local valorJump = JUMP_NORMAL
+local valorFlySpeed = FLYSPEED_NORMAL
 
 local SPEED_MIN, SPEED_MAX, SPEED_PASSO = 8, 200, 4
 local JUMP_MIN, JUMP_MAX, JUMP_PASSO = 20, 300, 10
@@ -65,7 +66,7 @@ local flyBodyGyro = nil
 ------------------------------------------------------------
 -- DIMENSÕES DO PAINEL (usadas para alinhar tudo certinho)
 ------------------------------------------------------------
-local LARGURA_PAINEL = 280
+local LARGURA_PAINEL = 320
 local MARGEM = 8
 local LARGURA_UTIL = LARGURA_PAINEL - (MARGEM * 2) -- área interna útil
 
@@ -333,8 +334,8 @@ local ALTURA_LINHA_MOV = 26
 local GAP_LINHA_MOV = 4
 local Y_LINHAS_MOV = Y_MOVIMENTO_TITULO + 18
 
--- Cria uma linha padrão com label + botão "-" + valor + botão "+"
--- extraLargura/extraTexto permite inserir um botão extra (usado pelo Fly) entre o label e os controles
+-- Cria uma linha padrão: label + Max + Normal + botão "-" + valor + botão "+"
+-- (a linha do Fly ainda recebe o toggle ON/OFF entre o Normal e o "-")
 local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	local linha = Instance.new("Frame")
 	linha.Size = UDim2.new(1, -MARGEM * 2, 0, ALTURA_LINHA_MOV)
@@ -368,30 +369,33 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	local botaoMais = novoBotao(linha, "+", UDim2.new(0, 24, 0, 20), UDim2.new(1, -28, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
 
 	-- Botão "Max": leva o valor direto pro máximo dessa linha
-	local botaoMax = novoBotao(linha, "Max", UDim2.new(0, 34, 0, 20), UDim2.new(0, 82, 0.5, -10), Color3.fromRGB(46, 86, 130), 11)
+	local botaoMax = novoBotao(linha, "Max", UDim2.new(0, 32, 0, 20), UDim2.new(0, 82, 0.5, -10), Color3.fromRGB(46, 86, 130), 11)
 
-	return linha, botaoMenos, valorLabel, botaoMais, botaoMax
+	-- Botão "Normal": volta pro valor padrão dessa linha
+	local botaoNormal = novoBotao(linha, "Normal", UDim2.new(0, 42, 0, 20), UDim2.new(0, 118, 0.5, -10), Color3.fromRGB(70, 70, 76), 10)
+
+	return linha, botaoMenos, valorLabel, botaoMais, botaoMax, botaoNormal
 end
 
 -- Linha Speed
-local _, botaoSpeedMenos, labelSpeedValor, botaoSpeedMais, botaoSpeedMax = criarLinhaAjuste(Y_LINHAS_MOV, "Velocidade", valorSpeed, "")
+local _, botaoSpeedMenos, labelSpeedValor, botaoSpeedMais, botaoSpeedMax, botaoSpeedNormal = criarLinhaAjuste(Y_LINHAS_MOV, "Velocidade", valorSpeed, "")
 
 -- Linha Jump
 local Y_LINHA_JUMP = Y_LINHAS_MOV + ALTURA_LINHA_MOV + GAP_LINHA_MOV
-local _, botaoJumpMenos, labelJumpValor, botaoJumpMais, botaoJumpMax = criarLinhaAjuste(Y_LINHA_JUMP, "Salto", valorJump, "")
+local _, botaoJumpMenos, labelJumpValor, botaoJumpMais, botaoJumpMax, botaoJumpNormal = criarLinhaAjuste(Y_LINHA_JUMP, "Salto", valorJump, "")
 
 -- Linha Fly (label + botão liga/desliga + controles de velocidade)
 local Y_LINHA_FLY = Y_LINHA_JUMP + ALTURA_LINHA_MOV + GAP_LINHA_MOV
-local linhaFly, botaoFlySpeedMenos, labelFlySpeedValor, botaoFlySpeedMais, botaoFlyMax = criarLinhaAjuste(Y_LINHA_FLY, "Voar", valorFlySpeed, "")
+local linhaFly, botaoFlySpeedMenos, labelFlySpeedValor, botaoFlySpeedMais, botaoFlyMax, botaoFlyNormal = criarLinhaAjuste(Y_LINHA_FLY, "Voar", valorFlySpeed, "")
 
 local botaoFlyToggle = Instance.new("TextButton")
-botaoFlyToggle.Size = UDim2.new(0, 36, 0, 20)
-botaoFlyToggle.Position = UDim2.new(0, 120, 0.5, -10)
+botaoFlyToggle.Size = UDim2.new(0, 28, 0, 20)
+botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -10)
 botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 76)
 botaoFlyToggle.Text = "OFF"
 botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 botaoFlyToggle.Font = Enum.Font.GothamBold
-botaoFlyToggle.TextSize = 11
+botaoFlyToggle.TextSize = 10
 botaoFlyToggle.Parent = linhaFly
 criarUICorner(botaoFlyToggle, 5)
 
@@ -1070,6 +1074,13 @@ botaoSpeedMax.MouseButton1Click:Connect(function()
 	aplicarSpeed()
 end)
 
+-- Normal: Speed de volta pro padrão
+botaoSpeedNormal.MouseButton1Click:Connect(function()
+	valorSpeed = SPEED_NORMAL
+	labelSpeedValor.Text = tostring(valorSpeed)
+	aplicarSpeed()
+end)
+
 ------------------------------------------------------------
 -- SALTO (JumpPower ajustável)
 ------------------------------------------------------------
@@ -1097,6 +1108,13 @@ end)
 -- Max: Salto direto pro limite máximo
 botaoJumpMax.MouseButton1Click:Connect(function()
 	valorJump = JUMP_MAX
+	labelJumpValor.Text = tostring(valorJump)
+	aplicarJump()
+end)
+
+-- Normal: Salto de volta pro padrão
+botaoJumpNormal.MouseButton1Click:Connect(function()
+	valorJump = JUMP_NORMAL
 	labelJumpValor.Text = tostring(valorJump)
 	aplicarJump()
 end)
@@ -1223,6 +1241,12 @@ end)
 -- Max: velocidade do fly direto pro limite máximo
 botaoFlyMax.MouseButton1Click:Connect(function()
 	valorFlySpeed = FLYSPEED_MAX
+	labelFlySpeedValor.Text = tostring(valorFlySpeed)
+end)
+
+-- Normal: velocidade do fly de volta pro padrão
+botaoFlyNormal.MouseButton1Click:Connect(function()
+	valorFlySpeed = FLYSPEED_NORMAL
 	labelFlySpeedValor.Text = tostring(valorFlySpeed)
 end)
 
