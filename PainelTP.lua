@@ -229,7 +229,7 @@ botaoToggle.Size = UDim2.new(0, 50, 0, 50)
 botaoToggle.Position = UDim2.new(0, 20, 0.5, -180)
 botaoToggle.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
 botaoToggle.Image = imagemToggle -- vazio = mostra o emoji abaixo
-botaoToggle.ScaleType = Enum.ScaleType.Fit
+botaoToggle.ScaleType = Enum.ScaleType.Crop -- preenche o círculo todo (Fit espremeria a imagem)
 botaoToggle.AutoButtonColor = true
 botaoToggle.Parent = screenGui
 criarUICorner(botaoToggle, 25)
