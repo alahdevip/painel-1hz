@@ -17,7 +17,7 @@ local NOME_DONO = "P7zINM"
 --   2) "rbxassetid://1234..." = ID de um decal enviado no Roblox (funciona em qualquer lugar)
 --   3) ""                     = usa o emoji de ICONE_FALLBACK
 ------------------------------------------------------------
-local IMAGEM_BOTAO = "https://i.pinimg.com/736x/0f/1a/f0/0f1af0cc532c9ace8bd7172899a1ae3c.jpg"
+local IMAGEM_BOTAO = "https://i.pinimg.com/736x/46/3d/34/463d3437da0561f30879391cfe426530.jpg"
 local ICONE_FALLBACK = "📍"
 
 ------------------------------------------------------------
@@ -88,11 +88,12 @@ local function criarUICorner(instancia, raio)
 	return uic
 end
 
-local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte)
+local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte, transparencia)
 	local botao = Instance.new("TextButton")
 	botao.Size = tamanho
 	botao.Position = posicao
 	botao.BackgroundColor3 = corFundo
+	botao.BackgroundTransparency = transparencia or 0.25 -- efeito vidro: a arte do fundo aparece através
 	botao.Text = texto
 	botao.TextColor3 = Color3.fromRGB(255, 255, 255)
 	botao.Font = Enum.Font.GothamBold
@@ -152,7 +153,7 @@ local function baixarImagem(url)
 	return nil
 end
 
-local function resolverImagem(url, nomeArquivo)
+local function resolverImagem(url, prefixo)
 	if url == "" or url:sub(1, 4) ~= "http" then
 		return url -- vazio ou rbxassetid://: usa direto
 	end
@@ -162,7 +163,10 @@ local function resolverImagem(url, nomeArquivo)
 		return ""
 	end
 
-	local arquivo = nomeArquivo or ("PainelTP_imagem." .. (url:sub(-4):lower() == ".png" and "png" or "jpg"))
+	-- o nome do cache inclui um pedaço da URL: trocou a URL, baixa a nova (sem reaproveitar imagem velha)
+	local base = url:match("([^/%?]+)$") or "img"
+	base = base:gsub("[^%w%.%-]", "_")
+	local arquivo = (prefixo or "PainelTP_imagem") .. "_" .. base
 
 	local ok, asset = pcall(function()
 		-- usa o arquivo já existente se for uma imagem válida (não precisa de internet)
@@ -199,7 +203,7 @@ local function resolverImagem(url, nomeArquivo)
 	return ""
 end
 
-local imagemToggle = resolverImagem(IMAGEM_BOTAO, "PainelTP_icone_toggle.jpg")
+local imagemToggle = resolverImagem(IMAGEM_BOTAO, "PainelTP_botao")
 
 local botaoToggle = Instance.new("ImageButton")
 botaoToggle.Size = UDim2.new(0, 50, 0, 50)
@@ -236,7 +240,7 @@ criarUICorner(frame, 10)
 ------------------------------------------------------------
 -- FUNDO DO PAINEL (imagem + camada escura pra manter a leitura)
 ------------------------------------------------------------
-local imagemFundo = resolverImagem(IMAGEM_FUNDO, "PainelTP_fundo_painel.jpg")
+local imagemFundo = resolverImagem(IMAGEM_FUNDO, "PainelTP_fundo")
 
 -- Imagem de fundo (primeiro filho do frame = fica atrás de tudo)
 local fundoPainel = Instance.new("ImageLabel")
@@ -289,6 +293,7 @@ local botaoFechar = Instance.new("TextButton")
 botaoFechar.Size = UDim2.new(0, 26, 0, 26)
 botaoFechar.Position = UDim2.new(1, -32, 0, 3)
 botaoFechar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+botaoFechar.BackgroundTransparency = 0.25
 botaoFechar.Text = "X"
 botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
 botaoFechar.Font = Enum.Font.GothamBold
@@ -378,6 +383,7 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	linha.Size = UDim2.new(1, -MARGEM * 2, 0, ALTURA_LINHA_MOV)
 	linha.Position = UDim2.new(0, MARGEM, 0, y)
 	linha.BackgroundColor3 = Color3.fromRGB(38, 38, 44)
+	linha.BackgroundTransparency = 0.4
 	linha.Parent = frame
 	criarUICorner(linha, 6)
 
@@ -429,6 +435,7 @@ local botaoFlyToggle = Instance.new("TextButton")
 botaoFlyToggle.Size = UDim2.new(0, 28, 0, 20)
 botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -10)
 botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 76)
+botaoFlyToggle.BackgroundTransparency = 0.25
 botaoFlyToggle.Text = "OFF"
 botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 botaoFlyToggle.Font = Enum.Font.GothamBold
@@ -445,6 +452,7 @@ local caixaBusca = Instance.new("TextBox")
 caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
 caixaBusca.Position = UDim2.new(0, MARGEM, 0, Y_BUSCA)
 caixaBusca.BackgroundColor3 = Color3.fromRGB(38, 38, 44)
+caixaBusca.BackgroundTransparency = 0.4
 caixaBusca.PlaceholderText = "Pesquisar jogador..."
 caixaBusca.PlaceholderColor3 = Color3.fromRGB(130, 130, 135)
 caixaBusca.Text = ""
@@ -471,6 +479,7 @@ local barraEspectando = Instance.new("Frame")
 barraEspectando.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
 barraEspectando.Position = UDim2.new(0, MARGEM, 0, Y_BARRA_ESPECTANDO_REAL)
 barraEspectando.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+barraEspectando.BackgroundTransparency = 0.4
 barraEspectando.Visible = false
 barraEspectando.Parent = frame
 criarUICorner(barraEspectando, 6)
@@ -1350,6 +1359,7 @@ local function atualizarLista()
 		local linha = Instance.new("Frame")
 		linha.Size = UDim2.new(1, 0, 0, ALTURA_LINHA)
 		linha.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
+		linha.BackgroundTransparency = 0.4
 		linha.LayoutOrder = i
 		linha.Parent = scrollFrame
 		criarUICorner(linha, 8)
