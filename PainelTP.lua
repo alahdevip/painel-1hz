@@ -414,21 +414,11 @@ caixaBusca.ClearTextOnFocus = false
 caixaBusca.Parent = frame
 criarUICorner(caixaBusca, 6)
 
-local iconeBusca = Instance.new("TextLabel")
-iconeBusca.Size = UDim2.new(0, 24, 1, 0)
-iconeBusca.Position = UDim2.new(0, 8, 0, 0)
-iconeBusca.BackgroundTransparency = 1
-iconeBusca.Text = "🔍"
-iconeBusca.TextColor3 = Color3.fromRGB(150, 150, 155)
-iconeBusca.TextSize = 14
-iconeBusca.Parent = caixaBusca
-
-caixaBusca.Text = "" -- garante espaço reservado pro ícone à esquerda
 caixaBusca.TextXAlignment = Enum.TextXAlignment.Left
 
--- Empurra o texto digitado pra direita do ícone usando padding
+-- Pequena margem esquerda pro texto não colar na borda
 local paddingBusca = Instance.new("UIPadding")
-paddingBusca.PaddingLeft = UDim.new(0, 38) -- texto começa depois da lupa, sem sobrepor
+paddingBusca.PaddingLeft = UDim.new(0, 10)
 paddingBusca.Parent = caixaBusca
 
 ------------------------------------------------------------
