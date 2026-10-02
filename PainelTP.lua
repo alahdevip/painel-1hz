@@ -26,7 +26,7 @@ local ICONE_FALLBACK = "📍"
 --   1) URL (https://...)      2) "rbxassetid://1234..."   3) "" = cor sólida
 ------------------------------------------------------------
 local IMAGEM_FUNDO = "https://i.pinimg.com/736x/74/5e/83/745e835eca5be13b1df753fcb279b35e.jpg"
-local ESCURECER_FUNDO = 0.55 -- 0 = imagem pura, 1 = some; quanto maior, mais fácil de ler o texto
+local ESCURECER_FUNDO = 0.3 -- 0 = imagem pura, 1 = some; quanto maior, mais fácil de ler o texto
 
 if player.Name:lower() ~= NOME_DONO:lower() then
 	warn("[PainelTP] Painel bloqueado: dono configurado é '" .. NOME_DONO .. "', mas seu username é '" .. player.Name .. "'. Ajuste NOME_DONO no script.")
@@ -93,7 +93,7 @@ local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte, t
 	botao.Size = tamanho
 	botao.Position = posicao
 	botao.BackgroundColor3 = corFundo
-	botao.BackgroundTransparency = transparencia or 0.25 -- efeito vidro: a arte do fundo aparece através
+	botao.BackgroundTransparency = transparencia or 0.35 -- efeito vidro: a arte do fundo aparece através
 	botao.Text = texto
 	botao.TextColor3 = Color3.fromRGB(255, 255, 255)
 	botao.Font = Enum.Font.GothamBold
@@ -293,7 +293,7 @@ local botaoFechar = Instance.new("TextButton")
 botaoFechar.Size = UDim2.new(0, 26, 0, 26)
 botaoFechar.Position = UDim2.new(1, -32, 0, 3)
 botaoFechar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-botaoFechar.BackgroundTransparency = 0.25
+botaoFechar.BackgroundTransparency = 0.35
 botaoFechar.Text = "X"
 botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
 botaoFechar.Font = Enum.Font.GothamBold
@@ -383,7 +383,7 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	linha.Size = UDim2.new(1, -MARGEM * 2, 0, ALTURA_LINHA_MOV)
 	linha.Position = UDim2.new(0, MARGEM, 0, y)
 	linha.BackgroundColor3 = Color3.fromRGB(38, 38, 44)
-	linha.BackgroundTransparency = 0.4
+	linha.BackgroundTransparency = 0.5
 	linha.Parent = frame
 	criarUICorner(linha, 6)
 
@@ -435,7 +435,7 @@ local botaoFlyToggle = Instance.new("TextButton")
 botaoFlyToggle.Size = UDim2.new(0, 28, 0, 20)
 botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -10)
 botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 76)
-botaoFlyToggle.BackgroundTransparency = 0.25
+botaoFlyToggle.BackgroundTransparency = 0.35
 botaoFlyToggle.Text = "OFF"
 botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 botaoFlyToggle.Font = Enum.Font.GothamBold
@@ -452,7 +452,7 @@ local caixaBusca = Instance.new("TextBox")
 caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
 caixaBusca.Position = UDim2.new(0, MARGEM, 0, Y_BUSCA)
 caixaBusca.BackgroundColor3 = Color3.fromRGB(38, 38, 44)
-caixaBusca.BackgroundTransparency = 0.4
+caixaBusca.BackgroundTransparency = 0.5
 caixaBusca.PlaceholderText = "Pesquisar jogador..."
 caixaBusca.PlaceholderColor3 = Color3.fromRGB(130, 130, 135)
 caixaBusca.Text = ""
@@ -479,7 +479,7 @@ local barraEspectando = Instance.new("Frame")
 barraEspectando.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
 barraEspectando.Position = UDim2.new(0, MARGEM, 0, Y_BARRA_ESPECTANDO_REAL)
 barraEspectando.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
-barraEspectando.BackgroundTransparency = 0.4
+barraEspectando.BackgroundTransparency = 0.5
 barraEspectando.Visible = false
 barraEspectando.Parent = frame
 criarUICorner(barraEspectando, 6)
@@ -1359,7 +1359,7 @@ local function atualizarLista()
 		local linha = Instance.new("Frame")
 		linha.Size = UDim2.new(1, 0, 0, ALTURA_LINHA)
 		linha.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
-		linha.BackgroundTransparency = 0.4
+		linha.BackgroundTransparency = 0.5
 		linha.LayoutOrder = i
 		linha.Parent = scrollFrame
 		criarUICorner(linha, 8)
