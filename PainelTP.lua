@@ -63,9 +63,9 @@ local valorSpeed = SPEED_NORMAL
 local valorJump = JUMP_NORMAL
 local valorFlySpeed = FLYSPEED_NORMAL
 
-local SPEED_MIN, SPEED_MAX, SPEED_PASSO = 8, 200, 4
-local JUMP_MIN, JUMP_MAX, JUMP_PASSO = 20, 300, 10
-local FLYSPEED_MIN, FLYSPEED_MAX, FLYSPEED_PASSO = 10, 300, 10
+local SPEED_MIN, SPEED_MAX, SPEED_PASSO = 8, 1000, 20
+local JUMP_MIN, JUMP_MAX, JUMP_PASSO = 20, 1000, 50
+local FLYSPEED_MIN, FLYSPEED_MAX, FLYSPEED_PASSO = 10, 1000, 50
 
 local flyAtivo = false
 local flyBodyVelocity = nil
