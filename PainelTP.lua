@@ -302,14 +302,6 @@ botaoFechar.TextSize = 14
 botaoFechar.Parent = frame
 criarUICorner(botaoFechar, 13)
 
--- Linha divisória sutil abaixo do título
-local divisor = Instance.new("Frame")
-divisor.Size = UDim2.new(1, -MARGEM * 2, 0, 1)
-divisor.Position = UDim2.new(0, MARGEM, 0, 34)
-divisor.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-divisor.BorderSizePixel = 0
-divisor.Parent = frame
-
 ------------------------------------------------------------
 -- CABEÇALHO — linha 2: barra de ferramentas (Noclip / ESP)
 ------------------------------------------------------------
