@@ -33,6 +33,7 @@ local ESCURECER_FUNDO = 0.15 -- 0 = imagem pura, 1 = some; quanto maior, mais f�
 -- Mesmos 3 formatos: URL / "rbxassetid://..." / "" (= mantém o texto)
 ------------------------------------------------------------
 local IMAGEM_LOGO = "https://raw.githubusercontent.com/alahdevip/painel-1hz/main/logo-demoniaka.png"
+local IMAGEM_LOGO_2 = "https://files.catbox.moe/4qxeuk.png" -- espelho: se o GitHub falhar no executor, tenta aqui
 
 if player.Name:lower() ~= NOME_DONO:lower() then
 	warn("[PainelTP] Painel bloqueado: dono configurado é '" .. NOME_DONO .. "', mas seu username é '" .. player.Name .. "'. Ajuste NOME_DONO no script.")
@@ -305,7 +306,14 @@ logoTitulo.Position = UDim2.new(0, MARGEM, 0, 1)
 logoTitulo.BackgroundTransparency = 1
 logoTitulo.BorderSizePixel = 0
 logoTitulo.ScaleType = Enum.ScaleType.Fit -- mantém a proporção, sem distorcer
-logoTitulo.Image = resolverImagem(IMAGEM_LOGO, "PainelTP_logo")
+do -- tenta o GitHub primeiro, cai pro espelho se falhar
+	local assetLogo = resolverImagem(IMAGEM_LOGO, "PainelTP_logo")
+	if assetLogo == "" then
+		print("[PainelTP] Logo: GitHub falhou, tentando o espelho...")
+		assetLogo = resolverImagem(IMAGEM_LOGO_2, "PainelTP_logo")
+	end
+	logoTitulo.Image = assetLogo
+end
 logoTitulo.Parent = frame
 
 local titulo = Instance.new("TextLabel")
