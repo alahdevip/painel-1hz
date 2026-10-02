@@ -28,6 +28,12 @@ local ICONE_FALLBACK = "📍"
 local IMAGEM_FUNDO = "https://i.pinimg.com/736x/74/5e/83/745e835eca5be13b1df753fcb279b35e.jpg"
 local ESCURECER_FUNDO = 0.15 -- 0 = imagem pura, 1 = some; quanto maior, mais fácil de ler o texto
 
+------------------------------------------------------------
+-- LOGO DO CABEÇALHO (no lugar do texto "Painel do ...")
+-- Mesmos 3 formatos: URL / "rbxassetid://..." / "" (= mantém o texto)
+------------------------------------------------------------
+local IMAGEM_LOGO = "https://raw.githubusercontent.com/alahdevip/painel-1hz/main/logo-demoniaka.png"
+
 if player.Name:lower() ~= NOME_DONO:lower() then
 	warn("[PainelTP] Painel bloqueado: dono configurado é '" .. NOME_DONO .. "', mas seu username é '" .. player.Name .. "'. Ajuste NOME_DONO no script.")
 	return -- qualquer outro jogador: o script para aqui, painel nem é criado
@@ -88,6 +94,17 @@ local function criarUICorner(instancia, raio)
 	return uic
 end
 
+-- Borda bem fina nos botões (fundo continua invisível, só o contorno marca o clique)
+local function criarBorda(instancia, cor, transparencia)
+	local borda = Instance.new("UIStroke")
+	borda.Color = cor or Color3.fromRGB(255, 255, 255)
+	borda.Thickness = 1 -- bem fininha
+	borda.Transparency = transparencia or 0.55
+	borda.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	borda.Parent = instancia
+	return borda
+end
+
 local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte)
 	local botao = Instance.new("TextButton")
 	botao.Size = tamanho
@@ -102,6 +119,7 @@ local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte)
 	botao.AutoButtonColor = true
 	botao.Parent = pai
 	criarUICorner(botao, 6)
+	criarBorda(botao)
 	return botao
 end
 
@@ -279,6 +297,17 @@ barraArraste.BackgroundTransparency = 1
 barraArraste.Active = true -- necessário pra receber eventos de input
 barraArraste.Parent = frame
 
+-- Logo DEMONIAKA no lugar do título (o texto abaixo vira fallback se a imagem falhar)
+local logoTitulo = Instance.new("ImageLabel")
+logoTitulo.Name = "Logo"
+logoTitulo.Size = UDim2.new(0, 88, 0, 32)
+logoTitulo.Position = UDim2.new(0, MARGEM, 0, 1)
+logoTitulo.BackgroundTransparency = 1
+logoTitulo.BorderSizePixel = 0
+logoTitulo.ScaleType = Enum.ScaleType.Fit -- mantém a proporção, sem distorcer
+logoTitulo.Image = resolverImagem(IMAGEM_LOGO, "PainelTP_logo")
+logoTitulo.Parent = frame
+
 local titulo = Instance.new("TextLabel")
 titulo.Size = UDim2.new(1, -46, 0, 32)
 titulo.Position = UDim2.new(0, MARGEM, 0, 0)
@@ -289,6 +318,7 @@ titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
 titulo.Font = Enum.Font.GothamBold
 titulo.TextSize = 16
 titulo.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
+titulo.Visible = (logoTitulo.Image == "") -- só aparece se o logo falhar
 titulo.Parent = frame
 
 local botaoFechar = Instance.new("TextButton")
@@ -303,6 +333,7 @@ botaoFechar.TextSize = 14
 botaoFechar.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
 botaoFechar.Parent = frame
 criarUICorner(botaoFechar, 13)
+criarBorda(botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
 
 ------------------------------------------------------------
 -- CABEÇALHO — linha 2: barra de ferramentas (Noclip / ESP)
@@ -440,6 +471,7 @@ botaoFlyToggle.TextSize = 10
 botaoFlyToggle.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
 botaoFlyToggle.Parent = linhaFly
 criarUICorner(botaoFlyToggle, 5)
+criarBorda(botaoFlyToggle)
 
 ------------------------------------------------------------
 -- CAIXA DE BUSCA (filtra a lista por nome digitado)
