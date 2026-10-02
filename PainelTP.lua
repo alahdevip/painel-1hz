@@ -78,6 +78,11 @@ local flyAtivo = false
 local flyBodyVelocity = nil
 local flyBodyGyro = nil
 
+local seguirHeartbeat = nil -- loop do seguir (desconectado ao desinjetar)
+local espHeartbeat = nil -- loop do ESP (desconectado ao desinjetar)
+local destruido = false
+local destruirPainel -- definida no fim do script: clique no logo desinjeta tudo
+
 ------------------------------------------------------------
 -- DIMENSÕES DO PAINEL (usadas para alinhar tudo certinho)
 ------------------------------------------------------------
@@ -299,13 +304,15 @@ barraArraste.Active = true -- necessário pra receber eventos de input
 barraArraste.Parent = frame
 
 -- Logo DEMONIAKA no lugar do título (o texto abaixo vira fallback se a imagem falhar)
-local logoTitulo = Instance.new("ImageLabel")
+-- É um BOTÃO invisível: CLICAR NELE DESINJETA TUDO (painel + bolinha somem)
+local logoTitulo = Instance.new("ImageButton")
 logoTitulo.Name = "Logo"
 logoTitulo.Size = UDim2.new(0, 88, 0, 32)
 logoTitulo.Position = UDim2.new(0, MARGEM, 0, 1)
 logoTitulo.BackgroundTransparency = 1
 logoTitulo.BorderSizePixel = 0
 logoTitulo.ScaleType = Enum.ScaleType.Fit -- mantém a proporção, sem distorcer
+logoTitulo.AutoButtonColor = false -- sem flash cinza: o logo é a própria arte
 do -- tenta o GitHub primeiro, cai pro espelho se falhar
 	local assetLogo = resolverImagem(IMAGEM_LOGO, "PainelTP_logo")
 	if assetLogo == "" then
@@ -315,6 +322,9 @@ do -- tenta o GitHub primeiro, cai pro espelho se falhar
 	logoTitulo.Image = assetLogo
 end
 logoTitulo.Parent = frame
+logoTitulo.MouseButton1Click:Connect(function()
+	destruirPainel()
+end)
 
 local titulo = Instance.new("TextLabel")
 titulo.Size = UDim2.new(1, -46, 0, 32)
@@ -725,7 +735,7 @@ local function seguirAte(alvo)
 	teleportarAte(alvo)
 end
 
-RunService.Heartbeat:Connect(function()
+seguirHeartbeat = RunService.Heartbeat:Connect(function()
 	if not seguindoAlvo then
 		return
 	end
@@ -1013,7 +1023,7 @@ botaoESP.MouseButton1Click:Connect(function()
 	atualizarESPTodos()
 end)
 
-RunService.Heartbeat:Connect(function()
+espHeartbeat = RunService.Heartbeat:Connect(function()
 	if not espAtivo then
 		return
 	end
@@ -1516,3 +1526,52 @@ Players.PlayerRemoving:Connect(atualizarLista)
 caixaBusca:GetPropertyChangedSignal("Text"):Connect(atualizarLista)
 
 atualizarLista()
+
+------------------------------------------------------------
+-- DESINJETAR (clique no logo DEMONIAKA)
+-- Restaura tudo que o painel alterou e remove painel + botão flutuante
+-- Pra voltar, é só rodar o loadstring de novo
+------------------------------------------------------------
+destruirPainel = function()
+	if destruido then
+		return
+	end
+	destruido = true
+
+	-- 1) restaura o personagem e a câmera (antes de remover a GUI, pois usam os controles)
+	pararSeguir()
+	if espectando then
+		pararEspectar()
+	end
+	if flyAtivo then
+		pararFly()
+	end
+	if noclipAtivo then
+		desativarNoclip()
+	end
+
+	-- 2) remove os ESPs e desliga os loops por frame
+	for alvo in pairs(espObjetos) do
+		removerESP(alvo)
+	end
+	espAtivo = false
+	if seguirHeartbeat then
+		seguirHeartbeat:Disconnect()
+		seguirHeartbeat = nil
+	end
+	if espHeartbeat then
+		espHeartbeat:Disconnect()
+		espHeartbeat = nil
+	end
+	if noclipConexao then
+		noclipConexao:Disconnect()
+		noclipConexao = nil
+	end
+
+	-- 3) some com tudo (painel + botão flutuante)
+	if screenGui then
+		screenGui:Destroy()
+	end
+
+	print("[PainelTP] Painel desinjetado. Rode o loadstring de novo pra reabrir.")
+end
