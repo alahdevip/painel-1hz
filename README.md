@@ -131,7 +131,8 @@ O painel é organizado em **4 Abas Especializadas**, projetadas para máxima efi
 | **`W, A, S, D`** | Direcionamento durante o voo de acordo com o ângulo da câmera |
 | **`Espaço`** | Elevação vertical (subir) no voo |
 | **`Ctrl Esquerdo`** | Descida vertical (descer) no voo |
-| **Clique no Botão Flutuante (📍)** | Abre / Minimiza o painel principal |
+| **Clique no Botão Flutuante (📍)** | Abre / Fecha o painel principal |
+| **Botão `-` / `+` no Cabeçalho** | **Minimiza** o painel em uma barra fina de 32px ou expande |
 | **Arrastar Barra de Título / Botão** | Move o painel ou botão para qualquer local da tela |
 | **Clique na Logo DEMONIAKA** | **Desinjetar Script**: limpa conexões e remove o painel com total segurança |
 

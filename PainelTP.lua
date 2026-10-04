@@ -105,8 +105,10 @@ local destruirPainel -- definida no fim do script: clique no logo desinjeta tudo
 ------------------------------------------------------------
 -- DIMENSÕES DO PAINEL (usadas para alinhar tudo certinho)
 ------------------------------------------------------------
-local LARGURA_PAINEL = 320
-local MARGEM = 8
+local LARGURA_PAINEL = 275 -- Compacto (era 320)
+local ALTURA_PAINEL = 375  -- Compacto (era 526)
+local TAMANHO_ICONE = 40   -- Botão flutuante (era 50)
+local MARGEM = 6
 local LARGURA_UTIL = LARGURA_PAINEL - (MARGEM * 2) -- área interna útil
 
 ------------------------------------------------------------
@@ -366,35 +368,35 @@ end
 local imagemToggle = resolverImagem(IMAGEM_BOTAO, "PainelTP_botao")
 
 local botaoToggle = Instance.new("ImageButton")
-botaoToggle.Size = UDim2.new(0, 50, 0, 50)
-botaoToggle.Position = UDim2.new(0, 20, 0.5, -180)
+botaoToggle.Size = UDim2.new(0, TAMANHO_ICONE, 0, TAMANHO_ICONE)
+botaoToggle.Position = UDim2.new(0, 16, 0.5, -math.floor(ALTURA_PAINEL / 2))
 botaoToggle.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
 botaoToggle.Image = imagemToggle -- vazio = mostra o emoji abaixo
 botaoToggle.ScaleType = Enum.ScaleType.Crop -- preenche o círculo todo (Fit espremeria a imagem)
 botaoToggle.AutoButtonColor = true
 botaoToggle.Parent = screenGui
-criarUICorner(botaoToggle, 25)
+criarUICorner(botaoToggle, math.floor(TAMANHO_ICONE / 2))
 
 -- Sem imagem personalizada: exibe o ícone de fallback por cima do fundo
 if imagemToggle == "" then
 	local iconeToggle = Instance.new("TextLabel")
-	iconeToggle.Size = UDim2.new(1, -8, 1, -8)
-	iconeToggle.Position = UDim2.new(0, 4, 0, 4)
+	iconeToggle.Size = UDim2.new(1, -6, 1, -6)
+	iconeToggle.Position = UDim2.new(0, 3, 0, 3)
 	iconeToggle.BackgroundTransparency = 1
 	iconeToggle.Text = ICONE_FALLBACK
 	iconeToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-	aplicarFonte(iconeToggle, 22)
+	aplicarFonte(iconeToggle, 18)
 	iconeToggle.Parent = botaoToggle
 end
 -- Frame principal (painel)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, LARGURA_PAINEL, 0, 526)
-frame.Position = UDim2.new(0, 20, 0.5, -233)
+frame.Size = UDim2.new(0, LARGURA_PAINEL, 0, ALTURA_PAINEL)
+frame.Position = UDim2.new(0, 16, 0.5, -math.floor(ALTURA_PAINEL / 2))
 frame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 frame.BorderSizePixel = 0
 frame.Visible = true -- abre automaticamente ao executar
 frame.Parent = screenGui
-criarUICorner(frame, 10)
+criarUICorner(frame, 8)
 
 ------------------------------------------------------------
 -- SISTEMA DE EFEITOS VISUAIS E NOTIFICAÇÕES DEMONÍACAS (HUD)
@@ -543,8 +545,8 @@ end
 ------------------------------------------------------------
 local janelaServidores = Instance.new("Frame")
 janelaServidores.Name = "JanelaServidores"
-janelaServidores.Size = UDim2.new(0, 350, 0, 526)
-janelaServidores.Position = UDim2.new(0, LARGURA_PAINEL + 30, 0.5, -233)
+janelaServidores.Size = UDim2.new(0, 310, 0, ALTURA_PAINEL)
+janelaServidores.Position = UDim2.new(0, LARGURA_PAINEL + 20, 0.5, -math.floor(ALTURA_PAINEL / 2))
 janelaServidores.BackgroundColor3 = Color3.fromRGB(20, 18, 24)
 janelaServidores.BorderSizePixel = 0
 janelaServidores.Visible = false
@@ -940,17 +942,44 @@ titulo.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
 titulo.Visible = (logoTitulo.Image == "") -- só aparece se o logo falhar
 titulo.Parent = frame
 
+local botaoMinimizar = Instance.new("TextButton")
+botaoMinimizar.Size = UDim2.new(0, 22, 0, 22)
+botaoMinimizar.Position = UDim2.new(1, -50, 0, 4)
+botaoMinimizar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+botaoMinimizar.BackgroundTransparency = 1
+botaoMinimizar.Text = "-"
+botaoMinimizar.TextColor3 = Color3.fromRGB(200, 200, 205)
+aplicarFonte(botaoMinimizar, 14)
+botaoMinimizar.TextStrokeTransparency = 0.5
+botaoMinimizar.Parent = frame
+criarUICorner(botaoMinimizar, 11)
+criarBorda(botaoMinimizar, Color3.fromRGB(200, 200, 205), 0.6)
+
+local painelMinimizado = false
+botaoMinimizar.MouseButton1Click:Connect(function()
+	painelMinimizado = not painelMinimizado
+	if painelMinimizado then
+		botaoMinimizar.Text = "+"
+		frame.ClipsDescendants = true
+		frame.Size = UDim2.new(0, LARGURA_PAINEL, 0, 32)
+	else
+		botaoMinimizar.Text = "-"
+		frame.ClipsDescendants = false
+		frame.Size = UDim2.new(0, LARGURA_PAINEL, 0, ALTURA_PAINEL)
+	end
+end)
+
 local botaoFechar = Instance.new("TextButton")
-botaoFechar.Size = UDim2.new(0, 26, 0, 26)
-botaoFechar.Position = UDim2.new(1, -32, 0, 3)
+botaoFechar.Size = UDim2.new(0, 22, 0, 22)
+botaoFechar.Position = UDim2.new(1, -25, 0, 4)
 botaoFechar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
 botaoFechar.BackgroundTransparency = 1
 botaoFechar.Text = "X"
 botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
-aplicarFonte(botaoFechar, 14)
-botaoFechar.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
+aplicarFonte(botaoFechar, 13)
+botaoFechar.TextStrokeTransparency = 0.5
 botaoFechar.Parent = frame
-criarUICorner(botaoFechar, 13)
+criarUICorner(botaoFechar, 11)
 criarBorda(botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
 
 ------------------------------------------------------------
@@ -1292,8 +1321,8 @@ end
 ------------------------------------------------------------
 -- BARRA DE ABAS (Geral / Movimento / Combate / Jogadores)
 ------------------------------------------------------------
-local Y_ABAS = 36
-local LARGURA_ABA = math.floor((LARGURA_UTIL - 9) / 4)
+local Y_ABAS = 34
+local LARGURA_ABA = math.floor((LARGURA_UTIL - 6) / 4)
 
 local abasBotoes = {}
 local abasContainers = {}
@@ -1317,14 +1346,14 @@ end
 
 local nomesAbas = { "Geral", "Movimento", "Combate", "Jogadores" }
 for idx, nome in ipairs(nomesAbas) do
-	local posX = MARGEM + (idx - 1) * (LARGURA_ABA + 3)
+	local posX = MARGEM + (idx - 1) * (LARGURA_ABA + 2)
 	local btnAba = novoBotao(
 		frame,
 		nome,
-		UDim2.new(0, LARGURA_ABA, 0, 24),
+		UDim2.new(0, LARGURA_ABA, 0, 22),
 		UDim2.new(0, posX, 0, Y_ABAS),
 		Color3.fromRGB(40, 40, 45),
-		11
+		10
 	)
 	abasBotoes[nome] = btnAba
 	btnAba.MouseButton1Click:Connect(function()
@@ -1333,8 +1362,8 @@ for idx, nome in ipairs(nomesAbas) do
 
 	local container = Instance.new("Frame")
 	container.Name = "Aba_" .. nome
-	container.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_ABAS + 28 + MARGEM))
-	container.Position = UDim2.new(0, MARGEM, 0, Y_ABAS + 28)
+	container.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_ABAS + 24 + MARGEM))
+	container.Position = UDim2.new(0, MARGEM, 0, Y_ABAS + 24)
 	container.BackgroundTransparency = 1
 	container.Visible = (idx == 1)
 	container.Parent = frame
@@ -2825,9 +2854,9 @@ end)
 ------------------------------------------------------------
 -- LISTA DE JOGADORES (favoritos primeiro, cartão organizado)
 ------------------------------------------------------------
-local ALTURA_LINHA = 78
-local LARGURA_FOTO = 40
-local LARGURA_ESTRELA = 26
+local ALTURA_LINHA = 62
+local LARGURA_FOTO = 32
+local LARGURA_ESTRELA = 20
 local LARGURA_LINHA_INTERNA = LARGURA_UTIL - 4 -- pequena folga p/ scrollbar
 local LARGURA_BOTAO_ACAO = math.floor((LARGURA_LINHA_INTERNA - 12) / 4) -- 4 botões (TP, Spec, Seguir, Fling)
 
@@ -2915,44 +2944,44 @@ local function atualizarLista()
 		botaoFavorito.Parent = linha
 
 		-- Linha de botões de ação (TP / Spec / Seguir / Fling), largura igual entre os quatro
-		local Y_ACOES = LARGURA_FOTO + 12
+		local Y_ACOES = LARGURA_FOTO + 6
 
 		local botaoTP = novoBotao(
 			linha,
 			"TP",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
-			UDim2.new(0, 6, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 22),
+			UDim2.new(0, 4, 0, Y_ACOES),
 			Color3.fromRGB(50, 120, 200),
-			12
+			11
 		)
 
 		local botaoSpec = novoBotao(
 			linha,
 			"Spec",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
-			UDim2.new(0, 6 + LARGURA_BOTAO_ACAO + 4, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 22),
+			UDim2.new(0, 4 + LARGURA_BOTAO_ACAO + 3, 0, Y_ACOES),
 			Color3.fromRGB(90, 90, 95),
-			12
+			11
 		)
 
 		local seguindoEsse = seguindoAlvo == outroPlayer
 		local botaoSeguir = novoBotao(
 			linha,
 			seguindoEsse and "Seguindo" or "Seguir",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
-			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO + 4) * 2, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 22),
+			UDim2.new(0, 4 + (LARGURA_BOTAO_ACAO + 3) * 2, 0, Y_ACOES),
 			seguindoEsse and Color3.fromRGB(60, 160, 90) or Color3.fromRGB(90, 90, 95),
-			12
+			10
 		)
 		botaoSeguir.TextColor3 = seguindoEsse and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
 
 		local botaoFling = novoBotao(
 			linha,
 			"Fling",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
-			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO + 4) * 3, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 22),
+			UDim2.new(0, 4 + (LARGURA_BOTAO_ACAO + 3) * 3, 0, Y_ACOES),
 			Color3.fromRGB(150, 40, 40),
-			12
+			11
 		)
 		botaoFling.TextColor3 = Color3.fromRGB(255, 90, 90)
 		criarBorda(botaoFling, Color3.fromRGB(255, 60, 60), 0.6)
