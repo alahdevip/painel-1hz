@@ -25,7 +25,7 @@ local ICONE_FALLBACK = "📍"
 --   1) URL (https://...)      2) "rbxassetid://1234..."   3) "" = cor sólida
 ------------------------------------------------------------
 local IMAGEM_FUNDO = "https://i.pinimg.com/736x/74/5e/83/745e835eca5be13b1df753fcb279b35e.jpg"
-local ESCURECER_FUNDO = 0.42 -- escurecimento balanceado: mantém a arte nítida e elimina o ofuscamento branco nas letras
+local ESCURECER_FUNDO = 0.22 -- arte bem visível e vibrante com efeito glass translúcido
 
 ------------------------------------------------------------
 -- LOGO DO CABEÇALHO (no lugar do texto "Painel do ...")
@@ -218,16 +218,16 @@ local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte)
 	local botao = Instance.new("TextButton")
 	botao.Size = tamanho
 	botao.Position = posicao
-	botao.BackgroundColor3 = corFundo or Color3.fromRGB(32, 32, 38)
-	botao.BackgroundTransparency = 0.25 -- vidro escuro translúcido: contraste perfeito com letras brancas
+	botao.BackgroundColor3 = corFundo or Color3.fromRGB(20, 20, 26)
+	botao.BackgroundTransparency = 0.52 -- efeito dark glass translúcido: a arte de fundo fica bem visível
 	botao.Text = texto
 	botao.TextColor3 = Color3.fromRGB(255, 255, 255)
-	botao.TextStrokeTransparency = 1 -- sem contorno cinza que embaça ou fecha os buracos das letras
+	botao.TextStrokeTransparency = 1 -- sem contorno cinza
 	aplicarFonte(botao, tamanhoFonte or 13)
 	botao.AutoButtonColor = true
 	botao.Parent = pai
 	criarUICorner(botao, 6)
-	criarBorda(botao, Color3.fromRGB(255, 255, 255), 0.4)
+	criarBorda(botao, Color3.fromRGB(255, 255, 255), 0.5)
 	return botao
 end
 
@@ -453,8 +453,8 @@ titulo.Parent = frame
 local botaoMinimizar = Instance.new("TextButton")
 botaoMinimizar.Size = UDim2.new(0, 26, 0, 26)
 botaoMinimizar.Position = UDim2.new(1, -62, 0, 3)
-botaoMinimizar.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
-botaoMinimizar.BackgroundTransparency = 0.25
+botaoMinimizar.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+botaoMinimizar.BackgroundTransparency = 0.5
 botaoMinimizar.Text = "-"
 botaoMinimizar.TextColor3 = Color3.fromRGB(220, 220, 230)
 aplicarFonte(botaoMinimizar, 14)
@@ -480,8 +480,8 @@ end)
 local botaoFechar = Instance.new("TextButton")
 botaoFechar.Size = UDim2.new(0, 26, 0, 26)
 botaoFechar.Position = UDim2.new(1, -32, 0, 3)
-botaoFechar.BackgroundColor3 = Color3.fromRGB(55, 25, 25)
-botaoFechar.BackgroundTransparency = 0.25
+botaoFechar.BackgroundColor3 = Color3.fromRGB(55, 20, 20)
+botaoFechar.BackgroundTransparency = 0.5
 botaoFechar.Text = "X"
 botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
 aplicarFonte(botaoFechar, 14)
@@ -562,10 +562,11 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	local linha = Instance.new("Frame")
 	linha.Size = UDim2.new(1, -MARGEM * 2, 0, ALTURA_LINHA_MOV)
 	linha.Position = UDim2.new(0, MARGEM, 0, y)
-	linha.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-	linha.BackgroundTransparency = 0.35 -- cartão escuro translúcido: separa os botões da imagem
+	linha.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+	linha.BackgroundTransparency = 0.52 -- vidro translúcido para revelar a arte
 	linha.Parent = frame
 	criarUICorner(linha, 6)
+	criarBorda(linha, Color3.fromRGB(255, 255, 255), 0.75)
 
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0, 70, 1, 0)
@@ -614,8 +615,8 @@ local linhaFly, botaoFlySpeedMenos, labelFlySpeedValor, botaoFlySpeedMais, botao
 local botaoFlyToggle = Instance.new("TextButton")
 botaoFlyToggle.Size = UDim2.new(0, 28, 0, 20)
 botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -10)
-botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 58)
-botaoFlyToggle.BackgroundTransparency = 0.25
+botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+botaoFlyToggle.BackgroundTransparency = 0.5
 botaoFlyToggle.Text = "OFF"
 botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 aplicarFonte(botaoFlyToggle, 10)
@@ -632,8 +633,8 @@ local Y_BUSCA = Y_LINHA_FLY + ALTURA_LINHA_MOV + 10 -- logo abaixo da seção Mo
 local caixaBusca = Instance.new("TextBox")
 caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
 caixaBusca.Position = UDim2.new(0, MARGEM, 0, Y_BUSCA)
-caixaBusca.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-caixaBusca.BackgroundTransparency = 0.3 -- fundo escuro translúcido: busca bem legível
+caixaBusca.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+caixaBusca.BackgroundTransparency = 0.52 -- vidro translúcido
 caixaBusca.PlaceholderText = "Pesquisar jogador..."
 caixaBusca.PlaceholderColor3 = Color3.fromRGB(180, 180, 190)
 caixaBusca.Text = ""
@@ -643,6 +644,7 @@ caixaBusca.TextStrokeTransparency = 1
 caixaBusca.ClearTextOnFocus = false
 caixaBusca.Parent = frame
 criarUICorner(caixaBusca, 6)
+criarBorda(caixaBusca, Color3.fromRGB(255, 255, 255), 0.75)
 
 caixaBusca.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -1564,18 +1566,19 @@ local function atualizarLista()
 		-- Cartão do jogador
 		local linha = Instance.new("Frame")
 		linha.Size = UDim2.new(1, 0, 0, ALTURA_LINHA)
-		linha.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-		linha.BackgroundTransparency = 0.35 -- cartão fumê escuro: separa cada jogador com nitidez total
+		linha.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+		linha.BackgroundTransparency = 0.55 -- vidro dark glass: o fundo da garota aparece claramente por trás
 		linha.LayoutOrder = i
 		linha.Parent = scrollFrame
 		criarUICorner(linha, 8)
-		criarBorda(linha, Color3.fromRGB(255, 255, 255), 0.75)
+		criarBorda(linha, Color3.fromRGB(255, 255, 255), 0.7)
 
 		-- Foto do boneco
 		local foto = Instance.new("ImageLabel")
 		foto.Size = UDim2.new(0, LARGURA_FOTO, 0, LARGURA_FOTO)
 		foto.Position = UDim2.new(0, 6, 0, 6)
-		foto.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+		foto.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+		foto.BackgroundTransparency = 0.4
 		foto.Parent = linha
 		criarUICorner(foto, 6)
 
