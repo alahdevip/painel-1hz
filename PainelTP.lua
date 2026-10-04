@@ -34,6 +34,7 @@ local ESCURECER_FUNDO = 0.15 -- 0 = imagem pura, 1 = some; quanto maior, mais f�
 ------------------------------------------------------------
 local IMAGEM_LOGO = "https://raw.githubusercontent.com/alahdevip/painel-1hz/main/logo-demoniaka.png"
 local IMAGEM_LOGO_2 = "https://files.catbox.moe/4qxeuk.png" -- espelho: se o GitHub falhar no executor, tenta aqui
+local FONTE_DEMONIAKA_URL = "https://raw.githubusercontent.com/alahdevip/painel-1hz/main/fonte-demoniaka.ttf"
 
 if player.Name:lower() ~= NOME_DONO:lower() then
 	warn("[PainelTP] Painel bloqueado: dono configurado é '" .. NOME_DONO .. "', mas seu username é '" .. player.Name .. "'. Ajuste NOME_DONO no script.")
@@ -112,6 +113,111 @@ local function criarBorda(instancia, cor, transparencia)
 	return borda
 end
 
+------------------------------------------------------------
+-- FONTE DEMONÍACA (estilo Metal Mania da logo DEMONIAKA)
+------------------------------------------------------------
+local function baixarArquivo(url)
+	local headers = { ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36" }
+	local candidatas = {}
+	if type(request) == "function" then table.insert(candidatas, request) end
+	if type(http_request) == "function" then table.insert(candidatas, http_request) end
+	if type(syn) == "table" and type(syn.request) == "function" then table.insert(candidatas, syn.request) end
+
+	for _, fn in ipairs(candidatas) do
+		local ok, r = pcall(fn, { Url = url, Method = "GET", Headers = headers })
+		if ok and type(r) == "table" and type(r.Body) == "string" and #r.Body > 1000 then
+			return r.Body
+		end
+	end
+
+	local ok, corpo = pcall(function()
+		return game:HttpGet(url, true)
+	end)
+	if ok and type(corpo) == "string" and #corpo > 1000 then
+		return corpo
+	end
+
+	return nil
+end
+
+local function resolverFonteDemoniaka()
+	local customAssetFn = (type(getcustomasset) == "function" and getcustomasset) or (type(getsynasset) == "function" and getsynasset)
+	local customFontFace = nil
+
+	if customAssetFn and type(writefile) == "function" then
+		pcall(function()
+			local arqFonte = "fonte-demoniaka.ttf"
+			local existe = (type(isfile) == "function" and (isfile(arqFonte) or isfile("PainelTP_fonte.ttf")))
+			local nomeFinal = (type(isfile) == "function" and isfile(arqFonte) and arqFonte) or "PainelTP_fonte.ttf"
+
+			if not existe then
+				local conteudo = baixarArquivo(FONTE_DEMONIAKA_URL)
+				if conteudo then
+					writefile(nomeFinal, conteudo)
+					existe = true
+				end
+			end
+
+			if existe then
+				local assetTtf = customAssetFn(nomeFinal)
+				-- Tentativa 1: Font Family JSON (padrão Roblox)
+				local arqJson = "PainelTP_demoniaka.json"
+				local jsonDados = '{"name":"Metal Mania","faces":[{"name":"Regular","weight":400,"style":"normal","assetId":"' .. tostring(assetTtf) .. '"}]}'
+				pcall(writefile, arqJson, jsonDados)
+
+				local ok1, f1 = pcall(function()
+					return Font.new(customAssetFn(arqJson))
+				end)
+				if ok1 and f1 then
+					customFontFace = f1
+				else
+					local ok2, f2 = pcall(function()
+						return Font.new(assetTtf)
+					end)
+					if ok2 and f2 then
+						customFontFace = f2
+					end
+				end
+			end
+		end)
+	end
+
+	-- Fallback nativo do Roblox: Creepster ou Nosifer
+	local fallbackFontFace = nil
+	local fontesNativas = {
+		"rbxasset://fonts/families/Nosifer.json",
+		"rbxasset://fonts/families/Creepster.json",
+		"rbxasset://fonts/families/GrenzeGotisch.json",
+	}
+	for _, caminho in ipairs(fontesNativas) do
+		local ok, f = pcall(function()
+			return Font.new(caminho)
+		end)
+		if ok and f then
+			fallbackFontFace = f
+			break
+		end
+	end
+
+	return customFontFace or fallbackFontFace, Enum.Font.Creepster
+end
+
+local FONTE_DEMONIAKA_FACE, FONTE_DEMONIAKA_ENUM = resolverFonteDemoniaka()
+
+local function aplicarFonte(instancia, tamanho)
+	pcall(function()
+		instancia.Font = FONTE_DEMONIAKA_ENUM
+	end)
+	if FONTE_DEMONIAKA_FACE then
+		pcall(function()
+			instancia.FontFace = FONTE_DEMONIAKA_FACE
+		end)
+	end
+	if tamanho then
+		instancia.TextSize = tamanho
+	end
+end
+
 local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte)
 	local botao = Instance.new("TextButton")
 	botao.Size = tamanho
@@ -121,8 +227,7 @@ local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte)
 	botao.Text = texto
 	botao.TextColor3 = Color3.fromRGB(255, 255, 255)
 	botao.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
-	botao.Font = Enum.Font.GothamBold
-	botao.TextSize = tamanhoFonte or 13
+	aplicarFonte(botao, tamanhoFonte or 13)
 	botao.AutoButtonColor = true
 	botao.Parent = pai
 	criarUICorner(botao, 6)
@@ -249,8 +354,7 @@ if imagemToggle == "" then
 	iconeToggle.BackgroundTransparency = 1
 	iconeToggle.Text = ICONE_FALLBACK
 	iconeToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-	iconeToggle.Font = Enum.Font.GothamBold
-	iconeToggle.TextSize = 22
+	aplicarFonte(iconeToggle, 22)
 	iconeToggle.Parent = botaoToggle
 end
 -- Frame principal (painel)
@@ -334,8 +438,7 @@ titulo.BackgroundTransparency = 1
 titulo.Text = "Painel do " .. NOME_DONO
 titulo.TextXAlignment = Enum.TextXAlignment.Left
 titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
-titulo.Font = Enum.Font.GothamBold
-titulo.TextSize = 16
+aplicarFonte(titulo, 16)
 titulo.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
 titulo.Visible = (logoTitulo.Image == "") -- só aparece se o logo falhar
 titulo.Parent = frame
@@ -347,8 +450,7 @@ botaoFechar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
 botaoFechar.BackgroundTransparency = 1
 botaoFechar.Text = "X"
 botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
-botaoFechar.Font = Enum.Font.GothamBold
-botaoFechar.TextSize = 14
+aplicarFonte(botaoFechar, 14)
 botaoFechar.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
 botaoFechar.Parent = frame
 criarUICorner(botaoFechar, 13)
@@ -413,8 +515,7 @@ labelMovimento.BackgroundTransparency = 1
 labelMovimento.Text = "MOVIMENTO"
 labelMovimento.TextXAlignment = Enum.TextXAlignment.Left
 labelMovimento.TextColor3 = Color3.fromRGB(140, 140, 145)
-labelMovimento.Font = Enum.Font.GothamBold
-labelMovimento.TextSize = 11
+aplicarFonte(labelMovimento, 11)
 labelMovimento.Parent = frame
 
 local ALTURA_LINHA_MOV = 26
@@ -439,8 +540,7 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	label.Text = textoLabel
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextColor3 = Color3.fromRGB(255, 255, 255)
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 12
+	aplicarFonte(label, 12)
 	label.TextTruncate = Enum.TextTruncate.AtEnd -- segurança: nunca invade o botão Max
 	label.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
 	label.Parent = linha
@@ -452,8 +552,7 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	valorLabel.BackgroundTransparency = 1
 	valorLabel.Text = tostring(valorInicial) .. (sufixo or "")
 	valorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	valorLabel.Font = Enum.Font.GothamBold
-	valorLabel.TextSize = 13
+	aplicarFonte(valorLabel, 13)
 	valorLabel.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
 	valorLabel.Parent = linha
 	local botaoMais = novoBotao(linha, "+", UDim2.new(0, 24, 0, 20), UDim2.new(1, -28, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
@@ -485,8 +584,7 @@ botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 76)
 botaoFlyToggle.BackgroundTransparency = 1
 botaoFlyToggle.Text = "OFF"
 botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-botaoFlyToggle.Font = Enum.Font.GothamBold
-botaoFlyToggle.TextSize = 10
+aplicarFonte(botaoFlyToggle, 10)
 botaoFlyToggle.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
 botaoFlyToggle.Parent = linhaFly
 criarUICorner(botaoFlyToggle, 5)
@@ -506,8 +604,7 @@ caixaBusca.PlaceholderText = "Pesquisar jogador..."
 caixaBusca.PlaceholderColor3 = Color3.fromRGB(130, 130, 135)
 caixaBusca.Text = ""
 caixaBusca.TextColor3 = Color3.fromRGB(255, 255, 255)
-caixaBusca.Font = Enum.Font.Gotham
-caixaBusca.TextSize = 13
+aplicarFonte(caixaBusca, 13)
 caixaBusca.ClearTextOnFocus = false
 caixaBusca.Parent = frame
 criarUICorner(caixaBusca, 6)
@@ -540,8 +637,7 @@ labelEspectando.BackgroundTransparency = 1
 labelEspectando.TextXAlignment = Enum.TextXAlignment.Left
 labelEspectando.Text = "Espectando: -"
 labelEspectando.TextColor3 = Color3.fromRGB(255, 255, 255)
-labelEspectando.Font = Enum.Font.Gotham
-labelEspectando.TextSize = 13
+aplicarFonte(labelEspectando, 13)
 labelEspectando.Parent = barraEspectando
 
 local botaoPararSpec = novoBotao(
@@ -1465,8 +1561,7 @@ local function atualizarLista()
 		nomeLabel.Text = outroPlayer.Name
 		nomeLabel.TextXAlignment = Enum.TextXAlignment.Left
 		nomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-		nomeLabel.Font = Enum.Font.GothamBold
-		nomeLabel.TextSize = 15
+		aplicarFonte(nomeLabel, 15)
 		nomeLabel.TextTruncate = Enum.TextTruncate.AtEnd
 		nomeLabel.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
 		nomeLabel.Parent = linha
