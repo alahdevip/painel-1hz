@@ -6,12 +6,16 @@ local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local player = Players.LocalPlayer
+while not player do
+	player = Players.LocalPlayer
+	task.wait()
+end
 local camera = workspace.CurrentCamera
 
 ------------------------------------------------------------
 -- DONO DO PAINEL — só esse usuário consegue ver/usar o painel
 ------------------------------------------------------------
-local NOME_DONO = "P7zINM"
+local NOME_DONO = "" -- Deixe "" (vazio) para liberar para qualquer usuário/você mesmo, ou coloque seu nick
 
 ------------------------------------------------------------
 -- ÍCONE DO BOTÃO FLUTUANTE (o círculo que abre o painel)
@@ -39,7 +43,7 @@ local IMAGEM_LOGO = "https://raw.githubusercontent.com/alahdevip/painel-1hz/main
 local IMAGEM_LOGO_2 = "https://files.catbox.moe/4qxeuk.png" -- espelho: se o GitHub falhar no executor, tenta aqui
 local FONTE_DEMONIAKA_URL = "https://raw.githubusercontent.com/alahdevip/painel-1hz/main/fonte-demoniaka.ttf"
 
-if player.Name:lower() ~= NOME_DONO:lower() then
+if NOME_DONO ~= "" and player.Name:lower() ~= NOME_DONO:lower() then
 	warn("[PainelTP] Painel bloqueado: dono configurado é '" .. NOME_DONO .. "', mas seu username é '" .. player.Name .. "'. Ajuste NOME_DONO no script.")
 	return -- qualquer outro jogador: o script para aqui, painel nem é criado
 end
@@ -264,7 +268,22 @@ end
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PainelTP"
 screenGui.ResetOnSpawn = false
-screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local parentGui = nil
+pcall(function()
+	if type(gethui) == "function" then
+		parentGui = gethui()
+	elseif syn and syn.protect_gui then
+		syn.protect_gui(screenGui)
+		parentGui = game:GetService("CoreGui")
+	elseif game:GetService("CoreGui") then
+		parentGui = game:GetService("CoreGui")
+	end
+end)
+if not parentGui then
+	parentGui = player:WaitForChild("PlayerGui")
+end
+screenGui.Parent = parentGui
 
 -- Resolve a imagem do botão:
 --  - rbxassetid:// ou "": usa direto
@@ -924,7 +943,7 @@ local titulo = Instance.new("TextLabel")
 titulo.Size = UDim2.new(1, -46, 0, 32)
 titulo.Position = UDim2.new(0, MARGEM, 0, 0)
 titulo.BackgroundTransparency = 1
-titulo.Text = "Painel do " .. NOME_DONO
+titulo.Text = NOME_DONO ~= "" and ("Painel do " .. NOME_DONO) or ("Painel do " .. (player.DisplayName or player.Name))
 titulo.TextXAlignment = Enum.TextXAlignment.Left
 titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
 aplicarFonte(titulo, 16)
