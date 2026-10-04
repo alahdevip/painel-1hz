@@ -18,15 +18,17 @@
 
 ## 🚀 Como Executar (Quickstart)
 
-No seu executor de scripts para Roblox (*Solara, Wave, Delta, Fluxus, Arceus X, Synapse, Codex, etc.*), execute:
+No seu executor de scripts para Roblox, basta colar e executar esta linha única:
 
 ```lua
-local get = (game and game.HttpGet and function(u) return game:HttpGet(u) end) or (type(HttpGet) == "function" and HttpGet) or (type(request) == "function" and function(u) return request({Url = u, Method = "GET"}).Body end) or (type(http_request) == "function" and function(u) return http_request({Url = u, Method = "GET"}).Body end)
-(loadstring or load)(get("https://raw.githubusercontent.com/alahdevip/painel-1hz/main/PainelTP.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/alahdevip/painel-1hz/main/PainelTP.lua"))()
 ```
 
 > [!TIP]
-> Se o seu executor não tiver conexão com a internet ou bloquear o GitHub, você também pode simplesmente abrir o arquivo [PainelTP.lua](file:///c:/Users/Administrator/Documents/Default%20Project/PainelTP.lua), copiar todo o código e colar direto no executor!
+> Caso sua operadora de internet tenha bloqueio com o GitHub, use este link alternativo ultra-rápido via CDN:
+> ```lua
+> loadstring(game:HttpGet("https://cdn.jsdelivr.net/gh/alahdevip/painel-1hz@main/PainelTP.lua"))()
+> ```
 
 ---
 
