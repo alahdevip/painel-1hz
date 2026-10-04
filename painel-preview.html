@@ -55,7 +55,7 @@
   }
   #sombraFundo {
     position: absolute; inset: 0; border-radius: 10px;
-    background: rgba(0,0,0,.15);
+    background: rgba(0,0,0,.42);
   }
 
   #painel button, #painel input {
@@ -71,33 +71,33 @@
     position: absolute; left: 8px; top: 0; height: 32px; width: calc(100% - 60px);
     display: flex; align-items: center;
     font-weight: 700; font-size: 15px;
-    text-shadow: 0 1px 3px rgba(0,0,0,.9);
+    text-shadow: 0 1px 2px rgba(0,0,0,.8);
   }
   #minimizar {
     position: absolute; right: 30px; top: 5px; width: 22px; height: 22px;
-    border: 1px solid rgba(255,255,255,.3); border-radius: 11px; background: transparent;
+    border: 1px solid rgba(255,255,255,.3); border-radius: 11px; background: rgba(35,35,42,.7);
     color: #ccc; font-weight: 700; font-size: 13px; cursor: pointer;
   }
-  #minimizar:hover { background: rgba(255,255,255,.1); color: #fff; }
+  #minimizar:hover { background: rgba(255,255,255,.2); color: #fff; }
   #fechar {
     position: absolute; right: 5px; top: 5px; width: 22px; height: 22px;
-    border: 1px solid rgba(255,120,120,.4); border-radius: 11px; background: transparent;
+    border: 1px solid rgba(255,120,120,.5); border-radius: 11px; background: rgba(50,20,20,.7);
     color: rgb(255,120,120); font-weight: 700; font-size: 12px; cursor: pointer;
   }
-  #fechar:hover { background: transparent; filter: brightness(1.4); }
+  #fechar:hover { background: rgba(255,50,50,.3); filter: brightness(1.4); }
   #logoCabecalho { height: 26px; margin-top: 1px; display: block; cursor: pointer; }
 
   /* botões genéricos */
   .botao {
-    position: absolute; border: 1px solid rgba(255,255,255,.45); border-radius: 6px;
-    background: transparent; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.9);
+    position: absolute; border: 1px solid rgba(255,255,255,.35); border-radius: 6px;
+    background: rgba(32, 32, 40, 0.75); color: #fff;
     font-family: inherit; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; cursor: pointer;
     transition: filter .12s, background .15s;
   }
-  .botao:hover { filter: brightness(1.18); }
-  .on   { background: transparent !important; color: #5aff96 !important; }
-  .azul { background: transparent !important; color: #fff !important; }
-  .vermelho { background: transparent !important; color: #ff7878 !important; }
+  .botao:hover { filter: brightness(1.25); background: rgba(45, 45, 55, 0.85); }
+  .on   { background: rgba(20, 60, 35, 0.8) !important; color: #5aff96 !important; border-color: rgba(90,255,150,.5) !important; }
+  .azul { background: rgba(30, 50, 80, 0.8) !important; color: #fff !important; }
+  .vermelho { background: rgba(70, 25, 25, 0.8) !important; color: #ff7878 !important; }
 
   /* Abas de Navegação */
   #abas {

@@ -25,7 +25,7 @@ local ICONE_FALLBACK = "📍"
 --   1) URL (https://...)      2) "rbxassetid://1234..."   3) "" = cor sólida
 ------------------------------------------------------------
 local IMAGEM_FUNDO = "https://i.pinimg.com/736x/74/5e/83/745e835eca5be13b1df753fcb279b35e.jpg"
-local ESCURECER_FUNDO = 0.15 -- 0 = imagem pura, 1 = some; quanto maior, mais fácil de ler o texto
+local ESCURECER_FUNDO = 0.42 -- escurecimento balanceado: mantém a arte nítida e elimina o ofuscamento branco nas letras
 
 ------------------------------------------------------------
 -- LOGO DO CABEÇALHO (no lugar do texto "Painel do ...")
@@ -218,16 +218,16 @@ local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte)
 	local botao = Instance.new("TextButton")
 	botao.Size = tamanho
 	botao.Position = posicao
-	botao.BackgroundColor3 = corFundo
-	botao.BackgroundTransparency = 1 -- sem fundo: só o texto flutua sobre a arte
+	botao.BackgroundColor3 = corFundo or Color3.fromRGB(32, 32, 38)
+	botao.BackgroundTransparency = 0.25 -- vidro escuro translúcido: contraste perfeito com letras brancas
 	botao.Text = texto
 	botao.TextColor3 = Color3.fromRGB(255, 255, 255)
-	botao.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
+	botao.TextStrokeTransparency = 1 -- sem contorno cinza que embaça ou fecha os buracos das letras
 	aplicarFonte(botao, tamanhoFonte or 13)
 	botao.AutoButtonColor = true
 	botao.Parent = pai
 	criarUICorner(botao, 6)
-	criarBorda(botao)
+	criarBorda(botao, Color3.fromRGB(255, 255, 255), 0.4)
 	return botao
 end
 
@@ -446,22 +446,22 @@ titulo.Text = "Painel do " .. (player.DisplayName or player.Name)
 titulo.TextXAlignment = Enum.TextXAlignment.Left
 titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
 aplicarFonte(titulo, 16)
-titulo.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
+titulo.TextStrokeTransparency = 1
 titulo.Visible = (logoTitulo.Image == "") -- só aparece se o logo falhar
 titulo.Parent = frame
 
 local botaoMinimizar = Instance.new("TextButton")
 botaoMinimizar.Size = UDim2.new(0, 26, 0, 26)
 botaoMinimizar.Position = UDim2.new(1, -62, 0, 3)
-botaoMinimizar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-botaoMinimizar.BackgroundTransparency = 1
+botaoMinimizar.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+botaoMinimizar.BackgroundTransparency = 0.25
 botaoMinimizar.Text = "-"
-botaoMinimizar.TextColor3 = Color3.fromRGB(200, 200, 205)
+botaoMinimizar.TextColor3 = Color3.fromRGB(220, 220, 230)
 aplicarFonte(botaoMinimizar, 14)
-botaoMinimizar.TextStrokeTransparency = 0.5
+botaoMinimizar.TextStrokeTransparency = 1
 botaoMinimizar.Parent = frame
 criarUICorner(botaoMinimizar, 13)
-criarBorda(botaoMinimizar, Color3.fromRGB(200, 200, 205), 0.6)
+criarBorda(botaoMinimizar, Color3.fromRGB(200, 200, 205), 0.5)
 
 local painelMinimizado = false
 botaoMinimizar.MouseButton1Click:Connect(function()
@@ -480,12 +480,12 @@ end)
 local botaoFechar = Instance.new("TextButton")
 botaoFechar.Size = UDim2.new(0, 26, 0, 26)
 botaoFechar.Position = UDim2.new(1, -32, 0, 3)
-botaoFechar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-botaoFechar.BackgroundTransparency = 1
+botaoFechar.BackgroundColor3 = Color3.fromRGB(55, 25, 25)
+botaoFechar.BackgroundTransparency = 0.25
 botaoFechar.Text = "X"
 botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
 aplicarFonte(botaoFechar, 14)
-botaoFechar.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
+botaoFechar.TextStrokeTransparency = 1
 botaoFechar.Parent = frame
 criarUICorner(botaoFechar, 13)
 criarBorda(botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
@@ -548,8 +548,8 @@ labelMovimento.Position = UDim2.new(0, MARGEM, 0, Y_MOVIMENTO_TITULO)
 labelMovimento.BackgroundTransparency = 1
 labelMovimento.Text = "MOVIMENTO"
 labelMovimento.TextXAlignment = Enum.TextXAlignment.Left
-labelMovimento.TextColor3 = Color3.fromRGB(140, 140, 145)
-aplicarFonte(labelMovimento, 11)
+labelMovimento.TextColor3 = Color3.fromRGB(220, 220, 230)
+aplicarFonte(labelMovimento, 12)
 labelMovimento.Parent = frame
 
 local ALTURA_LINHA_MOV = 26
@@ -562,8 +562,8 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	local linha = Instance.new("Frame")
 	linha.Size = UDim2.new(1, -MARGEM * 2, 0, ALTURA_LINHA_MOV)
 	linha.Position = UDim2.new(0, MARGEM, 0, y)
-	linha.BackgroundColor3 = Color3.fromRGB(38, 38, 44)
-	linha.BackgroundTransparency = 1 -- fileira invisível: só os botões flutuam sobre a arte
+	linha.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+	linha.BackgroundTransparency = 0.35 -- cartão escuro translúcido: separa os botões da imagem
 	linha.Parent = frame
 	criarUICorner(linha, 6)
 
@@ -576,7 +576,7 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	label.TextColor3 = Color3.fromRGB(255, 255, 255)
 	aplicarFonte(label, 12)
 	label.TextTruncate = Enum.TextTruncate.AtEnd -- segurança: nunca invade o botão Max
-	label.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
+	label.TextStrokeTransparency = 1 -- nítido e limpo
 	label.Parent = linha
 
 	local botaoMenos = novoBotao(linha, "-", UDim2.new(0, 24, 0, 20), UDim2.new(1, -104, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
@@ -587,7 +587,7 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	valorLabel.Text = tostring(valorInicial) .. (sufixo or "")
 	valorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 	aplicarFonte(valorLabel, 13)
-	valorLabel.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
+	valorLabel.TextStrokeTransparency = 1 -- nítido e limpo
 	valorLabel.Parent = linha
 	local botaoMais = novoBotao(linha, "+", UDim2.new(0, 24, 0, 20), UDim2.new(1, -28, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
 
@@ -614,12 +614,12 @@ local linhaFly, botaoFlySpeedMenos, labelFlySpeedValor, botaoFlySpeedMais, botao
 local botaoFlyToggle = Instance.new("TextButton")
 botaoFlyToggle.Size = UDim2.new(0, 28, 0, 20)
 botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -10)
-botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 76)
-botaoFlyToggle.BackgroundTransparency = 1
+botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 58)
+botaoFlyToggle.BackgroundTransparency = 0.25
 botaoFlyToggle.Text = "OFF"
 botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 aplicarFonte(botaoFlyToggle, 10)
-botaoFlyToggle.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
+botaoFlyToggle.TextStrokeTransparency = 1
 botaoFlyToggle.Parent = linhaFly
 criarUICorner(botaoFlyToggle, 5)
 criarBorda(botaoFlyToggle)
@@ -632,13 +632,14 @@ local Y_BUSCA = Y_LINHA_FLY + ALTURA_LINHA_MOV + 10 -- logo abaixo da seção Mo
 local caixaBusca = Instance.new("TextBox")
 caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
 caixaBusca.Position = UDim2.new(0, MARGEM, 0, Y_BUSCA)
-caixaBusca.BackgroundColor3 = Color3.fromRGB(38, 38, 44)
-caixaBusca.BackgroundTransparency = 1 -- busca invisível: só o texto flutua sobre a arte
+caixaBusca.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+caixaBusca.BackgroundTransparency = 0.3 -- fundo escuro translúcido: busca bem legível
 caixaBusca.PlaceholderText = "Pesquisar jogador..."
-caixaBusca.PlaceholderColor3 = Color3.fromRGB(130, 130, 135)
+caixaBusca.PlaceholderColor3 = Color3.fromRGB(180, 180, 190)
 caixaBusca.Text = ""
 caixaBusca.TextColor3 = Color3.fromRGB(255, 255, 255)
 aplicarFonte(caixaBusca, 13)
+caixaBusca.TextStrokeTransparency = 1
 caixaBusca.ClearTextOnFocus = false
 caixaBusca.Parent = frame
 criarUICorner(caixaBusca, 6)
@@ -658,8 +659,8 @@ local Y_BARRA_ESPECTANDO_REAL = Y_BUSCA + 28 + 8
 local barraEspectando = Instance.new("Frame")
 barraEspectando.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
 barraEspectando.Position = UDim2.new(0, MARGEM, 0, Y_BARRA_ESPECTANDO_REAL)
-barraEspectando.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
-barraEspectando.BackgroundTransparency = 1 -- barra invisível: só texto + botão Parar flutuam
+barraEspectando.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+barraEspectando.BackgroundTransparency = 0.3 -- barra translúcida
 barraEspectando.Visible = false
 barraEspectando.Parent = frame
 criarUICorner(barraEspectando, 6)
@@ -672,6 +673,7 @@ labelEspectando.TextXAlignment = Enum.TextXAlignment.Left
 labelEspectando.Text = "Espectando: -"
 labelEspectando.TextColor3 = Color3.fromRGB(255, 255, 255)
 aplicarFonte(labelEspectando, 13)
+labelEspectando.TextStrokeTransparency = 1
 labelEspectando.Parent = barraEspectando
 
 local botaoPararSpec = novoBotao(
@@ -1562,11 +1564,12 @@ local function atualizarLista()
 		-- Cartão do jogador
 		local linha = Instance.new("Frame")
 		linha.Size = UDim2.new(1, 0, 0, ALTURA_LINHA)
-		linha.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
-		linha.BackgroundTransparency = 1 -- cartão invisível: foto, nome e botões flutuam sobre a arte
+		linha.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+		linha.BackgroundTransparency = 0.35 -- cartão fumê escuro: separa cada jogador com nitidez total
 		linha.LayoutOrder = i
 		linha.Parent = scrollFrame
 		criarUICorner(linha, 8)
+		criarBorda(linha, Color3.fromRGB(255, 255, 255), 0.75)
 
 		-- Foto do boneco
 		local foto = Instance.new("ImageLabel")
@@ -1597,7 +1600,7 @@ local function atualizarLista()
 		nomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 		aplicarFonte(nomeLabel, 16)
 		nomeLabel.TextTruncate = Enum.TextTruncate.AtEnd
-		nomeLabel.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
+		nomeLabel.TextStrokeTransparency = 1 -- nítido e aberto
 		nomeLabel.Parent = linha
 
 		-- Estrela de favorito, no canto superior direito do cartão
@@ -1606,9 +1609,9 @@ local function atualizarLista()
 		botaoFavorito.Size = UDim2.new(0, LARGURA_ESTRELA, 0, LARGURA_ESTRELA)
 		botaoFavorito.Position = UDim2.new(1, -(LARGURA_ESTRELA + 6), 0, 8)
 		botaoFavorito.BackgroundTransparency = 1
-		botaoFavorito.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
+		botaoFavorito.TextStrokeTransparency = 1 -- nítido
 		botaoFavorito.Text = ehFavorito and "★" or "☆"
-		botaoFavorito.TextColor3 = ehFavorito and Color3.fromRGB(255, 210, 60) or Color3.fromRGB(140, 140, 145)
+		botaoFavorito.TextColor3 = ehFavorito and Color3.fromRGB(255, 210, 60) or Color3.fromRGB(160, 160, 165)
 		botaoFavorito.Font = Enum.Font.GothamBold
 		botaoFavorito.TextSize = 20
 		botaoFavorito.Parent = linha
