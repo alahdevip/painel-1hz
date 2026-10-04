@@ -747,100 +747,99 @@ local function atualizarListaServidores(filtro)
 			local textoPlayersLocal = table.concat(nomesJogadores, ", ")
 
 			local textoParaBusca = (s.id .. " " .. textoPlayersLocal):lower()
-			if filtro ~= "" and not textoParaBusca:find(filtro, 1, true) then
-				continue
-			end
-			exibidos = exibidos + 1
+			if filtro == "" or textoParaBusca:find(filtro, 1, true) then
+				exibidos = exibidos + 1
 
-			local card = Instance.new("Frame")
-			card.Size = UDim2.new(1, -6, 0, eAtual and 96 or 82)
-			card.BackgroundColor3 = eAtual and Color3.fromRGB(24, 38, 28) or Color3.fromRGB(30, 28, 36)
-			card.BackgroundTransparency = 0.3
-			card.Parent = scrollServ
-			criarUICorner(card, 6)
-			criarBorda(card, eAtual and Color3.fromRGB(74, 222, 128) or Color3.fromRGB(255, 80, 80), 0.6)
+				local card = Instance.new("Frame")
+				card.Size = UDim2.new(1, -6, 0, eAtual and 96 or 82)
+				card.BackgroundColor3 = eAtual and Color3.fromRGB(24, 38, 28) or Color3.fromRGB(30, 28, 36)
+				card.BackgroundTransparency = 0.3
+				card.Parent = scrollServ
+				criarUICorner(card, 6)
+				criarBorda(card, eAtual and Color3.fromRGB(74, 222, 128) or Color3.fromRGB(255, 80, 80), 0.6)
 
-			-- Linha 1: Status
-			local lblTop = Instance.new("TextLabel")
-			lblTop.Size = UDim2.new(1, -12, 0, 20)
-			lblTop.Position = UDim2.new(0, 6, 0, 4)
-			lblTop.BackgroundTransparency = 1
-			lblTop.TextXAlignment = Enum.TextXAlignment.Left
-			lblTop.Font = Enum.Font.GothamBold
-			lblTop.TextSize = 11
-			local corPing = pingNum < 70 and "4ade80" or (pingNum < 130 and "fbbf24" or "ef4444")
-			lblTop.RichText = true
-			lblTop.Text = string.format(
-				"<font color='#%s'>📶 %dms</font>  |  <font color='#38bdf8'>⚡ %dfps</font>  |  <font color='#c084fc'>👥 %d/%d</font> %s",
-				corPing,
-				pingNum,
-				fpsNum,
-				playersNum,
-				maxNum,
-				eAtual and "<font color='#4ade80'><b>[SEU SERVIDOR]</b></font>" or ""
-			)
-			lblTop.TextColor3 = Color3.fromRGB(255, 255, 255)
-			lblTop.Parent = card
-
-			-- Linha 2: Jogadores / JobId
-			local lblInfo = Instance.new("TextLabel")
-			lblInfo.Size = UDim2.new(1, -12, 0, eAtual and 34 or 20)
-			lblInfo.Position = UDim2.new(0, 6, 0, 24)
-			lblInfo.BackgroundTransparency = 1
-			lblInfo.TextXAlignment = Enum.TextXAlignment.Left
-			lblInfo.TextYAlignment = Enum.TextYAlignment.Top
-			lblInfo.TextWrapped = true
-			lblInfo.Font = Enum.Font.Gotham
-			lblInfo.TextSize = 10
-			lblInfo.TextColor3 = Color3.fromRGB(190, 190, 195)
-			if eAtual then
-				lblInfo.Text = "Jogadores (" .. #nomesJogadores .. "): " .. textoPlayersLocal
-			else
-				lblInfo.Text = "JobId: " .. tostring(s.id):sub(1, 24) .. "... (" .. playersNum .. " jogadores conectados)"
-			end
-			lblInfo.Parent = card
-
-			-- Linha 3: Botões de Ação
-			local Y_BOTOES = eAtual and 62 or 48
-
-			local botaoCopiar = novoBotao(
-				card,
-				"📋 Copiar JobId",
-				UDim2.new(0, 110, 0, 24),
-				UDim2.new(0, 6, 0, Y_BOTOES),
-				Color3.fromRGB(45, 45, 52),
-				10
-			)
-			botaoCopiar.MouseButton1Click:Connect(function()
-				if setclipboard then
-					setclipboard(tostring(s.id))
-					botaoCopiar.Text = "✓ Copiado!"
-					spawnFloatingText("📋 JobId Copiado!", Color3.fromRGB(251, 191, 36))
-					notificar("Área de Transferência", "JobId copiado com sucesso!", "📋", Color3.fromRGB(251, 191, 36))
-					task.wait(1.2)
-					botaoCopiar.Text = "📋 Copiar JobId"
-				end
-			end)
-
-			if not eAtual then
-				local botaoEntrar = novoBotao(
-					card,
-					"🚀 Entrar",
-					UDim2.new(0, 80, 0, 24),
-					UDim2.new(1, -86, 0, Y_BOTOES),
-					Color3.fromRGB(30, 80, 45),
-					11
+				-- Linha 1: Status
+				local lblTop = Instance.new("TextLabel")
+				lblTop.Size = UDim2.new(1, -12, 0, 20)
+				lblTop.Position = UDim2.new(0, 6, 0, 4)
+				lblTop.BackgroundTransparency = 1
+				lblTop.TextXAlignment = Enum.TextXAlignment.Left
+				lblTop.Font = Enum.Font.GothamBold
+				lblTop.TextSize = 11
+				local corPing = pingNum < 70 and "4ade80" or (pingNum < 130 and "fbbf24" or "ef4444")
+				lblTop.RichText = true
+				lblTop.Text = string.format(
+					"<font color='#%s'>📶 %dms</font>  |  <font color='#38bdf8'>⚡ %dfps</font>  |  <font color='#c084fc'>👥 %d/%d</font> %s",
+					corPing,
+					pingNum,
+					fpsNum,
+					playersNum,
+					maxNum,
+					eAtual and "<font color='#4ade80'><b>[SEU SERVIDOR]</b></font>" or ""
 				)
-				botaoEntrar.TextColor3 = Color3.fromRGB(90, 255, 150)
-				criarBorda(botaoEntrar, Color3.fromRGB(74, 222, 128), 0.6)
-				botaoEntrar.MouseButton1Click:Connect(function()
-					botaoEntrar.Text = "Entrando..."
-					flashVignette(Color3.fromRGB(56, 189, 248))
-					shakePainel(8)
-					spawnFloatingText("🚀 TELEPORTANDO!", Color3.fromRGB(56, 189, 248))
-					notificar("Conectando ao Servidor", "Teleportando para nova instância com " .. playersNum .. " jogadores!", "🌐", Color3.fromRGB(56, 189, 248))
-					TeleportService:TeleportToPlaceInstance(placeId, s.id, player)
+				lblTop.TextColor3 = Color3.fromRGB(255, 255, 255)
+				lblTop.Parent = card
+
+				-- Linha 2: Jogadores / JobId
+				local lblInfo = Instance.new("TextLabel")
+				lblInfo.Size = UDim2.new(1, -12, 0, eAtual and 34 or 20)
+				lblInfo.Position = UDim2.new(0, 6, 0, 24)
+				lblInfo.BackgroundTransparency = 1
+				lblInfo.TextXAlignment = Enum.TextXAlignment.Left
+				lblInfo.TextYAlignment = Enum.TextYAlignment.Top
+				lblInfo.TextWrapped = true
+				lblInfo.Font = Enum.Font.Gotham
+				lblInfo.TextSize = 10
+				lblInfo.TextColor3 = Color3.fromRGB(190, 190, 195)
+				if eAtual then
+					lblInfo.Text = "Jogadores (" .. #nomesJogadores .. "): " .. textoPlayersLocal
+				else
+					lblInfo.Text = "JobId: " .. tostring(s.id):sub(1, 24) .. "... (" .. playersNum .. " jogadores conectados)"
+				end
+				lblInfo.Parent = card
+
+				-- Linha 3: Botões de Ação
+				local Y_BOTOES = eAtual and 62 or 48
+
+				local botaoCopiar = novoBotao(
+					card,
+					"📋 Copiar JobId",
+					UDim2.new(0, 110, 0, 24),
+					UDim2.new(0, 6, 0, Y_BOTOES),
+					Color3.fromRGB(45, 45, 52),
+					10
+				)
+				botaoCopiar.MouseButton1Click:Connect(function()
+					if setclipboard then
+						setclipboard(tostring(s.id))
+						botaoCopiar.Text = "✓ Copiado!"
+						spawnFloatingText("📋 JobId Copiado!", Color3.fromRGB(251, 191, 36))
+						notificar("Área de Transferência", "JobId copiado com sucesso!", "📋", Color3.fromRGB(251, 191, 36))
+						task.wait(1.2)
+						botaoCopiar.Text = "📋 Copiar JobId"
+					end
 				end)
+
+				if not eAtual then
+					local botaoEntrar = novoBotao(
+						card,
+						"🚀 Entrar",
+						UDim2.new(0, 80, 0, 24),
+						UDim2.new(1, -86, 0, Y_BOTOES),
+						Color3.fromRGB(30, 80, 45),
+						11
+					)
+					botaoEntrar.TextColor3 = Color3.fromRGB(90, 255, 150)
+					criarBorda(botaoEntrar, Color3.fromRGB(74, 222, 128), 0.6)
+					botaoEntrar.MouseButton1Click:Connect(function()
+						botaoEntrar.Text = "Entrando..."
+						flashVignette(Color3.fromRGB(56, 189, 248))
+						shakePainel(8)
+						spawnFloatingText("🚀 TELEPORTANDO!", Color3.fromRGB(56, 189, 248))
+						notificar("Conectando ao Servidor", "Teleportando para nova instância com " .. playersNum .. " jogadores!", "🌐", Color3.fromRGB(56, 189, 248))
+						TeleportService:TeleportToPlaceInstance(placeId, s.id, player)
+					end)
+				end
 			end
 		end
 
