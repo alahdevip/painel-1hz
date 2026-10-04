@@ -261,21 +261,18 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PainelTP"
 screenGui.ResetOnSpawn = false
 
-local parentGui = nil
 pcall(function()
 	if type(gethui) == "function" then
-		parentGui = gethui()
+		screenGui.Parent = gethui()
 	elseif syn and syn.protect_gui then
 		syn.protect_gui(screenGui)
-		parentGui = game:GetService("CoreGui")
-	elseif game:GetService("CoreGui") then
-		parentGui = game:GetService("CoreGui")
+		screenGui.Parent = game:GetService("CoreGui")
 	end
 end)
-if not parentGui then
-	parentGui = player:WaitForChild("PlayerGui")
+
+if not screenGui.Parent then
+	screenGui.Parent = player:WaitForChild("PlayerGui")
 end
-screenGui.Parent = parentGui
 
 -- Resolve a imagem do botão:
 --  - rbxassetid:// ou "": usa direto
@@ -395,7 +392,7 @@ frame.Size = UDim2.new(0, LARGURA_PAINEL, 0, 526)
 frame.Position = UDim2.new(0, 20, 0.5, -233)
 frame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 frame.BorderSizePixel = 0
-frame.Visible = false -- começa fechado
+frame.Visible = true -- abre automaticamente ao executar
 frame.Parent = screenGui
 criarUICorner(frame, 10)
 
