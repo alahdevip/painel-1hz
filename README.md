@@ -139,14 +139,9 @@ O painel é organizado em **4 Abas Especializadas**, projetadas para máxima efi
 
 ## ⚙️ Configuração e Personalização
 
-No início do arquivo [PainelTP.lua](file:///c:/Users/Administrator/Documents/Default%20Project/PainelTP.lua), você pode customizar as opções do painel de acordo com sua necessidade:
+No início do arquivo [PainelTP.lua](file:///c:/Users/Administrator/Documents/Default%20Project/PainelTP.lua), você pode customizar as opções visuais do painel caso deseje:
 
 ```lua
-------------------------------------------------------------
--- DONO DO PAINEL — só esse usuário consegue ver/usar o painel
-------------------------------------------------------------
-local NOME_DONO = "P7zINM" -- Altere para o seu nome de usuário no Roblox
-
 ------------------------------------------------------------
 -- IMAGENS E APARÊNCIA
 ------------------------------------------------------------
@@ -156,7 +151,7 @@ local IMAGEM_LOGO  = "https://raw.githubusercontent.com/alahdevip/painel-1hz/mai
 ```
 
 > [!NOTE]
-> Se o jogador conectado não corresponder a `NOME_DONO`, o script não é renderizado, garantindo proteção contra uso indevido caso compartilhado.
+> O script é livre de restrições de usuário e pode ser executado em qualquer conta.
 
 ---
 
