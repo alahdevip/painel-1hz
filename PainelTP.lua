@@ -80,6 +80,24 @@ local flyAtivo = false
 local flyBodyVelocity = nil
 local flyBodyGyro = nil
 
+-- Estados dos Novos Recursos VIP
+local antiAfkAtivo = false
+local antiAfkConexao = nil
+
+local jesusWalkAtivo = false
+local jesusPlataforma = nil
+local jesusHeartbeat = nil
+
+local ghostModeAtivo = false
+local ghostPartsOriginal = {}
+
+local hitboxAtiva = false
+local hitboxTamanho = 15
+local hitboxLoop = nil
+
+local antiRagdollAtivo = false
+local antiRagdollConexao = nil
+
 local seguirHeartbeat = nil -- loop do seguir (desconectado ao desinjetar)
 local espHeartbeat = nil -- loop do ESP (desconectado ao desinjetar)
 local destruido = false
@@ -457,92 +475,544 @@ criarUICorner(botaoFechar, 13)
 criarBorda(botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
 
 ------------------------------------------------------------
--- CABEÇALHO — linha 2: barra de ferramentas (Noclip / ESP)
+-- FUNÇÕES DOS RECURSOS VIP (8 NOVOS RECURSOS PROFISSIONAIS)
 ------------------------------------------------------------
-local Y_TOOLBAR = 42
+
+-- 1) ANTI-AFK AUTOMÁTICO
+local function alternarAntiAFK(btn)
+	antiAfkAtivo = not antiAfkAtivo
+	if antiAfkAtivo then
+		local VirtualUser = game:GetService("VirtualUser")
+		antiAfkConexao = player.Idled:Connect(function()
+			pcall(function()
+				VirtualUser:CaptureController()
+				VirtualUser:ClickButton2(Vector2.zero)
+			end)
+		end)
+		if btn then
+			btn.Text = "ON"
+			btn.TextColor3 = Color3.fromRGB(90, 255, 150)
+		end
+	else
+		if antiAfkConexao then
+			antiAfkConexao:Disconnect()
+			antiAfkConexao = nil
+		end
+		if btn then
+			btn.Text = "OFF"
+			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end
+	return antiAfkAtivo
+end
+
+-- 2) SERVER HOP (TROCAR DE SERVIDOR)
+local function serverHop(btn)
+	if btn then
+		btn.Text = "Buscando..."
+		btn.TextColor3 = Color3.fromRGB(255, 220, 100)
+	end
+	task.spawn(function()
+		local TeleportService = game:GetService("TeleportService")
+		local HttpService = game:GetService("HttpService")
+		local placeId = game.PlaceId
+		local ok, corpo = pcall(function()
+			return game:HttpGet("https://games.roblox.com/v1/games/" .. tostring(placeId) .. "/servers/Public?sortOrder=Asc&limit=100")
+		end)
+		if ok and corpo then
+			local okJson, dados = pcall(function()
+				return HttpService:JSONDecode(corpo)
+			end)
+			if okJson and dados and dados.data then
+				for _, s in ipairs(dados.data) do
+					if s.id ~= game.JobId and s.playing < s.maxPlayers and s.playing > 0 then
+						if btn then
+							btn.Text = "Entrando!"
+							btn.TextColor3 = Color3.fromRGB(90, 255, 150)
+						end
+						TeleportService:TeleportToPlaceInstance(placeId, s.id, player)
+						return
+					end
+				end
+			end
+		end
+		TeleportService:Teleport(placeId, player)
+	end)
+end
+
+-- 3) REJOIN INSTANTÂNEO
+local function rejoinInstant(btn)
+	if btn then
+		btn.Text = "Reconectando..."
+		btn.TextColor3 = Color3.fromRGB(255, 220, 100)
+	end
+	local TeleportService = game:GetService("TeleportService")
+	pcall(function()
+		TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+	end)
+end
+
+-- 4) JESUS WALK (ANDAR SOBRE A ÁGUA E LAVA)
+local function alternarJesusWalk(btn)
+	jesusWalkAtivo = not jesusWalkAtivo
+	if jesusWalkAtivo then
+		if not jesusPlataforma then
+			jesusPlataforma = Instance.new("Part")
+			jesusPlataforma.Name = "PainelTP_JesusPlat"
+			jesusPlataforma.Size = Vector3.new(12, 1, 12)
+			jesusPlataforma.Transparency = 1
+			jesusPlataforma.Anchored = true
+			jesusPlataforma.CanCollide = true
+			jesusPlataforma.Parent = workspace
+		end
+		jesusHeartbeat = RunService.Heartbeat:Connect(function()
+			local myChar = player.Character
+			local hrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+			if hrp and jesusPlataforma then
+				jesusPlataforma.CFrame = CFrame.new(hrp.Position.X, hrp.Position.Y - 3.2, hrp.Position.Z)
+			end
+		end)
+		if btn then
+			btn.Text = "ON"
+			btn.TextColor3 = Color3.fromRGB(90, 255, 150)
+		end
+	else
+		if jesusHeartbeat then
+			jesusHeartbeat:Disconnect()
+			jesusHeartbeat = nil
+		end
+		if jesusPlataforma then
+			jesusPlataforma:Destroy()
+			jesusPlataforma = nil
+		end
+		if btn then
+			btn.Text = "OFF"
+			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end
+	return jesusWalkAtivo
+end
+
+-- 5) GHOST MODE (INVISIBILIDADE COMPLETA)
+local function alternarGhostMode(btn)
+	ghostModeAtivo = not ghostModeAtivo
+	local myChar = player.Character
+	if not myChar then return ghostModeAtivo end
+
+	if ghostModeAtivo then
+		ghostPartsOriginal = {}
+		for _, part in ipairs(myChar:GetDescendants()) do
+			if part:IsA("BasePart") or part:IsA("Decal") then
+				ghostPartsOriginal[part] = part.Transparency
+				part.Transparency = 1
+			end
+		end
+		if btn then
+			btn.Text = "ON"
+			btn.TextColor3 = Color3.fromRGB(90, 255, 150)
+		end
+	else
+		for part, transp in pairs(ghostPartsOriginal) do
+			if part and part.Parent then
+				part.Transparency = transp
+			end
+		end
+		ghostPartsOriginal = {}
+		if btn then
+			btn.Text = "OFF"
+			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end
+	return ghostModeAtivo
+end
+
+-- 6) HITBOX EXPANDER
+local function aplicarHitboxNosPlayers()
+	for _, outro in ipairs(Players:GetPlayers()) do
+		if outro ~= player and outro.Character then
+			local hrp = outro.Character:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				if hitboxAtiva then
+					hrp.Size = Vector3.new(hitboxTamanho, hitboxTamanho, hitboxTamanho)
+					hrp.Transparency = 0.7
+					hrp.BrickColor = BrickColor.new("Really red")
+					hrp.Material = Enum.Material.Neon
+					hrp.CanCollide = false
+				else
+					hrp.Size = Vector3.new(2, 2, 1)
+					hrp.Transparency = 1
+					hrp.CanCollide = false
+				end
+			end
+		end
+	end
+end
+
+local function alternarHitbox(btn)
+	hitboxAtiva = not hitboxAtiva
+	if hitboxAtiva then
+		hitboxLoop = RunService.RenderStepped:Connect(function()
+			aplicarHitboxNosPlayers()
+		end)
+		if btn then
+			btn.Text = "ON"
+			btn.TextColor3 = Color3.fromRGB(90, 255, 150)
+		end
+	else
+		if hitboxLoop then
+			hitboxLoop:Disconnect()
+			hitboxLoop = nil
+		end
+		aplicarHitboxNosPlayers()
+		if btn then
+			btn.Text = "OFF"
+			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end
+	return hitboxAtiva
+end
+
+-- 7) ANTI-RAGDOLL / ANTI-STUN
+local function conectarAntiRagdollNoChar(char)
+	if antiRagdollConexao then
+		antiRagdollConexao:Disconnect()
+		antiRagdollConexao = nil
+	end
+	local hum = char and char:WaitForChild("Humanoid", 3)
+	if not hum then return end
+	local bloqueados = {
+		[Enum.HumanoidStateType.Ragdoll] = true,
+		[Enum.HumanoidStateType.FallingDown] = true,
+		[Enum.HumanoidStateType.PlatformStanding] = true,
+		[Enum.HumanoidStateType.Physics] = true,
+	}
+	antiRagdollConexao = hum.StateChanged:Connect(function(antigo, novo)
+		if antiRagdollAtivo and bloqueados[novo] and not flyAtivo then
+			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+			task.defer(function()
+				hum:ChangeState(Enum.HumanoidStateType.Running)
+			end)
+		end
+	end)
+end
+
+local function alternarAntiRagdoll(btn)
+	antiRagdollAtivo = not antiRagdollAtivo
+	if antiRagdollAtivo then
+		conectarAntiRagdollNoChar(player.Character)
+		if btn then
+			btn.Text = "ON"
+			btn.TextColor3 = Color3.fromRGB(90, 255, 150)
+		end
+	else
+		if antiRagdollConexao then
+			antiRagdollConexao:Disconnect()
+			antiRagdollConexao = nil
+		end
+		if btn then
+			btn.Text = "OFF"
+			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end
+	return antiRagdollAtivo
+end
+
+player.CharacterAdded:Connect(function(novoChar)
+	if antiRagdollAtivo then
+		task.wait(0.5)
+		conectarAntiRagdollNoChar(novoChar)
+	end
+end)
+
+-- 8) FLING PLAYER (ARREMESSAR ALVO A 999.999 STUDS/S)
+local function flingPlayer(alvo)
+	local myChar = player.Character
+	local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+	local alvoChar = alvo and alvo.Character
+	local alvoHrp = alvoChar and alvoChar:FindFirstChild("HumanoidRootPart")
+	if not myHrp or not alvoHrp then return end
+
+	task.spawn(function()
+		local cframeOriginal = myHrp.CFrame
+		local bav = Instance.new("BodyAngularVelocity")
+		bav.Name = "PainelTP_FlingTorque"
+		bav.MaxTorque = Vector3.new(1e8, 1e8, 1e8)
+		bav.AngularVelocity = Vector3.new(0, 999999, 0)
+		bav.P = 1e5
+		bav.Parent = myHrp
+
+		local tempNoclip = RunService.Stepped:Connect(function()
+			for _, part in ipairs(myChar:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end)
+
+		local tempoInicio = tick()
+		while tick() - tempoInicio < 1.5 do
+			RunService.Heartbeat:Wait()
+			if not alvoHrp.Parent or not myHrp.Parent then break end
+			myHrp.CFrame = alvoHrp.CFrame * CFrame.new(0, 0.5, 0)
+			myHrp.Velocity = Vector3.new(0, 150, 0)
+		end
+
+		tempNoclip:Disconnect()
+		bav:Destroy()
+		myHrp.CFrame = cframeOriginal
+		myHrp.Velocity = Vector3.zero
+		myHrp.RotVelocity = Vector3.zero
+	end)
+end
+
+------------------------------------------------------------
+-- BARRA DE ABAS (Geral / Movimento / Combate / Jogadores)
+------------------------------------------------------------
+local Y_ABAS = 36
+local LARGURA_ABA = math.floor((LARGURA_UTIL - 9) / 4)
+
+local abasBotoes = {}
+local abasContainers = {}
+
+local function alternarAba(nomeAba)
+	for nome, btn in pairs(abasBotoes) do
+		local ativa = (nome == nomeAba)
+		if ativa then
+			btn.TextColor3 = Color3.fromRGB(255, 80, 80)
+			btn.BackgroundTransparency = 0.82
+			btn.BackgroundColor3 = Color3.fromRGB(255, 40, 40)
+		else
+			btn.TextColor3 = Color3.fromRGB(160, 160, 165)
+			btn.BackgroundTransparency = 1
+		end
+	end
+	for nome, c in pairs(abasContainers) do
+		c.Visible = (nome == nomeAba)
+	end
+end
+
+local nomesAbas = { "Geral", "Movimento", "Combate", "Jogadores" }
+for idx, nome in ipairs(nomesAbas) do
+	local posX = MARGEM + (idx - 1) * (LARGURA_ABA + 3)
+	local btnAba = novoBotao(
+		frame,
+		nome,
+		UDim2.new(0, LARGURA_ABA, 0, 24),
+		UDim2.new(0, posX, 0, Y_ABAS),
+		Color3.fromRGB(40, 40, 45),
+		11
+	)
+	abasBotoes[nome] = btnAba
+	btnAba.MouseButton1Click:Connect(function()
+		alternarAba(nome)
+	end)
+
+	local container = Instance.new("Frame")
+	container.Name = "Aba_" .. nome
+	container.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_ABAS + 28 + MARGEM))
+	container.Position = UDim2.new(0, MARGEM, 0, Y_ABAS + 28)
+	container.BackgroundTransparency = 1
+	container.Visible = (idx == 1)
+	container.Parent = frame
+	abasContainers[nome] = container
+end
+
+local containerGeral = abasContainers["Geral"]
+local containerMovimento = abasContainers["Movimento"]
+local containerCombate = abasContainers["Combate"]
+local containerJogadores = abasContainers["Jogadores"]
+
+-- Ativa a aba "Geral" por padrão
+alternarAba("Geral")
+
+------------------------------------------------------------
+-- ABA 1: GERAL (Noclip, ESP, Salvar, Retornar, AFK, Server Hop, Rejoin)
+------------------------------------------------------------
 local LARGURA_FERRAMENTA = (LARGURA_UTIL - 8) / 2
 
 local botaoNoclip = novoBotao(
-	frame,
+	containerGeral,
 	"Noclip: OFF",
 	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
-	UDim2.new(0, MARGEM, 0, Y_TOOLBAR),
+	UDim2.new(0, 0, 0, 0),
 	Color3.fromRGB(55, 55, 60),
 	12
 )
 
 local botaoESP = novoBotao(
-	frame,
+	containerGeral,
 	"ESP: OFF",
 	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
-	UDim2.new(0, MARGEM + LARGURA_FERRAMENTA + 8, 0, Y_TOOLBAR),
+	UDim2.new(0, LARGURA_FERRAMENTA + 8, 0, 0),
 	Color3.fromRGB(55, 55, 60),
 	12
 )
 
-------------------------------------------------------------
--- CABEÇALHO — linha 3: Salvar Local / Retornar ao Local
-------------------------------------------------------------
-local Y_TOOLBAR_LOCAL = Y_TOOLBAR + 28 + 8 -- 8px abaixo da linha Noclip/ESP
-
 local botaoSalvarLocal = novoBotao(
-	frame,
+	containerGeral,
 	"Salvar Local",
 	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
-	UDim2.new(0, MARGEM, 0, Y_TOOLBAR_LOCAL),
+	UDim2.new(0, 0, 0, 36),
 	Color3.fromRGB(55, 55, 60),
 	12
 )
 
 local botaoRetornarLocal = novoBotao(
-	frame,
+	containerGeral,
 	"Retornar",
 	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
-	UDim2.new(0, MARGEM + LARGURA_FERRAMENTA + 8, 0, Y_TOOLBAR_LOCAL),
-	Color3.fromRGB(40, 40, 44), -- começa apagado: ainda não há local salvo
+	UDim2.new(0, LARGURA_FERRAMENTA + 8, 0, 36),
+	Color3.fromRGB(40, 40, 44),
 	12
 )
 
-------------------------------------------------------------
--- CABEÇALHO — linha 4: Speed / Jump / Fly (com ajuste de valor)
-------------------------------------------------------------
-local Y_MOVIMENTO_TITULO = Y_TOOLBAR_LOCAL + 28 + 10
+local labelSistema = Instance.new("TextLabel")
+labelSistema.Size = UDim2.new(1, 0, 0, 14)
+labelSistema.Position = UDim2.new(0, 0, 0, 74)
+labelSistema.BackgroundTransparency = 1
+labelSistema.Text = "SISTEMA & AFK"
+labelSistema.TextXAlignment = Enum.TextXAlignment.Left
+labelSistema.TextColor3 = Color3.fromRGB(140, 140, 145)
+aplicarFonte(labelSistema, 11)
+labelSistema.Parent = containerGeral
 
+-- Card Anti-AFK
+local cardAntiAfk = Instance.new("Frame")
+cardAntiAfk.Size = UDim2.new(1, 0, 0, 48)
+cardAntiAfk.Position = UDim2.new(0, 0, 0, 92)
+cardAntiAfk.BackgroundColor3 = Color3.fromRGB(28, 25, 32)
+cardAntiAfk.BackgroundTransparency = 0.5
+cardAntiAfk.Parent = containerGeral
+criarUICorner(cardAntiAfk, 6)
+criarBorda(cardAntiAfk, Color3.fromRGB(255, 255, 255), 0.75)
+
+local lblAfkNome = Instance.new("TextLabel")
+lblAfkNome.Size = UDim2.new(1, -66, 0, 20)
+lblAfkNome.Position = UDim2.new(0, 8, 0, 4)
+lblAfkNome.BackgroundTransparency = 1
+lblAfkNome.Text = "Anti-AFK Automático"
+lblAfkNome.TextXAlignment = Enum.TextXAlignment.Left
+lblAfkNome.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(lblAfkNome, 12)
+lblAfkNome.Parent = cardAntiAfk
+
+local lblAfkDesc = Instance.new("TextLabel")
+lblAfkDesc.Size = UDim2.new(1, -66, 0, 18)
+lblAfkDesc.Position = UDim2.new(0, 8, 0, 24)
+lblAfkDesc.BackgroundTransparency = 1
+lblAfkDesc.Text = "Impede timeout de 20m do Roblox"
+lblAfkDesc.TextXAlignment = Enum.TextXAlignment.Left
+lblAfkDesc.TextColor3 = Color3.fromRGB(150, 150, 155)
+lblAfkDesc.Font = Enum.Font.Gotham
+lblAfkDesc.TextSize = 10
+lblAfkDesc.Parent = cardAntiAfk
+
+local botaoAntiAfk = novoBotao(
+	cardAntiAfk,
+	"OFF",
+	UDim2.new(0, 52, 0, 24),
+	UDim2.new(1, -58, 0.5, -12),
+	Color3.fromRGB(50, 50, 56),
+	11
+)
+botaoAntiAfk.MouseButton1Click:Connect(function()
+	alternarAntiAFK(botaoAntiAfk)
+end)
+
+local labelServidores = Instance.new("TextLabel")
+labelServidores.Size = UDim2.new(1, 0, 0, 14)
+labelServidores.Position = UDim2.new(0, 0, 0, 150)
+labelServidores.BackgroundTransparency = 1
+labelServidores.Text = "SERVIDORES (1-CLIQUE)"
+labelServidores.TextXAlignment = Enum.TextXAlignment.Left
+labelServidores.TextColor3 = Color3.fromRGB(140, 140, 145)
+aplicarFonte(labelServidores, 11)
+labelServidores.Parent = containerGeral
+
+local botaoServerHop = novoBotao(
+	containerGeral,
+	"Server Hop",
+	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
+	UDim2.new(0, 0, 0, 168),
+	Color3.fromRGB(55, 55, 60),
+	12
+)
+botaoServerHop.MouseButton1Click:Connect(function()
+	serverHop(botaoServerHop)
+end)
+
+local botaoRejoin = novoBotao(
+	containerGeral,
+	"Rejoin Instant",
+	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
+	UDim2.new(0, LARGURA_FERRAMENTA + 8, 0, 168),
+	Color3.fromRGB(55, 55, 60),
+	12
+)
+botaoRejoin.MouseButton1Click:Connect(function()
+	rejoinInstant(botaoRejoin)
+end)
+
+-- Card de Info do Servidor
+local cardInfoServidor = Instance.new("Frame")
+cardInfoServidor.Size = UDim2.new(1, 0, 0, 80)
+cardInfoServidor.Position = UDim2.new(0, 0, 0, 206)
+cardInfoServidor.BackgroundColor3 = Color3.fromRGB(20, 16, 24)
+cardInfoServidor.BackgroundTransparency = 0.5
+cardInfoServidor.Parent = containerGeral
+criarUICorner(cardInfoServidor, 6)
+criarBorda(cardInfoServidor, Color3.fromRGB(255, 255, 255), 0.8)
+
+local txtInfo = Instance.new("TextLabel")
+txtInfo.Size = UDim2.new(1, -16, 1, -10)
+txtInfo.Position = UDim2.new(0, 8, 0, 5)
+txtInfo.BackgroundTransparency = 1
+txtInfo.TextColor3 = Color3.fromRGB(180, 180, 185)
+txtInfo.Font = Enum.Font.Gotham
+txtInfo.TextSize = 11
+txtInfo.TextXAlignment = Enum.TextXAlignment.Left
+txtInfo.TextYAlignment = Enum.TextYAlignment.Top
+txtInfo.Text = "PlaceId: " .. tostring(game.PlaceId) .. "\n" ..
+               "JobId: " .. tostring(game.JobId):sub(1, 14) .. "...\n" ..
+               "Players: " .. tostring(#Players:GetPlayers()) .. " online\n" ..
+               "Status: DEMONIAKA VIP ATIVO"
+txtInfo.Parent = cardInfoServidor
+
+------------------------------------------------------------
+-- ABA 2: MOVIMENTO (Speed, Jump, Fly, Jesus Walk, Ghost Mode)
+------------------------------------------------------------
 local labelMovimento = Instance.new("TextLabel")
 labelMovimento.Size = UDim2.new(1, 0, 0, 14)
-labelMovimento.Position = UDim2.new(0, MARGEM, 0, Y_MOVIMENTO_TITULO)
+labelMovimento.Position = UDim2.new(0, 0, 0, 0)
 labelMovimento.BackgroundTransparency = 1
-labelMovimento.Text = "MOVIMENTO"
+labelMovimento.Text = "AJUSTES DE LOCOMOÇÃO"
 labelMovimento.TextXAlignment = Enum.TextXAlignment.Left
 labelMovimento.TextColor3 = Color3.fromRGB(140, 140, 145)
 aplicarFonte(labelMovimento, 11)
-labelMovimento.Parent = frame
+labelMovimento.Parent = containerMovimento
 
 local ALTURA_LINHA_MOV = 26
 local GAP_LINHA_MOV = 4
-local Y_LINHAS_MOV = Y_MOVIMENTO_TITULO + 18
 
--- Cria uma linha padrão: label + Max + Normal + botão "-" + valor + botão "+"
--- (a linha do Fly ainda recebe o toggle ON/OFF entre o Normal e o "-")
-local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
+local function criarLinhaAjuste(pai, y, textoLabel, valorInicial, sufixo)
 	local linha = Instance.new("Frame")
-	linha.Size = UDim2.new(1, -MARGEM * 2, 0, ALTURA_LINHA_MOV)
-	linha.Position = UDim2.new(0, MARGEM, 0, y)
+	linha.Size = UDim2.new(1, 0, 0, ALTURA_LINHA_MOV)
+	linha.Position = UDim2.new(0, 0, 0, y)
 	linha.BackgroundColor3 = Color3.fromRGB(38, 38, 44)
-	linha.BackgroundTransparency = 1 -- fileira invisível: só os botões flutuam sobre a arte
-	linha.Parent = frame
+	linha.BackgroundTransparency = 1
+	linha.Parent = pai
 	criarUICorner(linha, 6)
 
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0, 70, 1, 0)
-	label.Position = UDim2.new(0, 8, 0, 0)
+	label.Position = UDim2.new(0, 4, 0, 0)
 	label.BackgroundTransparency = 1
 	label.Text = textoLabel
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextColor3 = Color3.fromRGB(255, 255, 255)
 	aplicarFonte(label, 12)
-	label.TextTruncate = Enum.TextTruncate.AtEnd -- segurança: nunca invade o botão Max
-	label.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
+	label.TextTruncate = Enum.TextTruncate.AtEnd
+	label.TextStrokeTransparency = 0.5
 	label.Parent = linha
 
 	local botaoMenos = novoBotao(linha, "-", UDim2.new(0, 24, 0, 20), UDim2.new(1, -104, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
@@ -553,81 +1023,330 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	valorLabel.Text = tostring(valorInicial) .. (sufixo or "")
 	valorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 	aplicarFonte(valorLabel, 13)
-	valorLabel.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
+	valorLabel.TextStrokeTransparency = 0.5
 	valorLabel.Parent = linha
 	local botaoMais = novoBotao(linha, "+", UDim2.new(0, 24, 0, 20), UDim2.new(1, -28, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
 
-	-- Botão "Max": leva o valor direto pro máximo dessa linha
-	local botaoMax = novoBotao(linha, "Max", UDim2.new(0, 32, 0, 20), UDim2.new(0, 82, 0.5, -10), Color3.fromRGB(46, 86, 130), 11)
-
-	-- Botão "Normal": volta pro valor padrão dessa linha
-	local botaoNormal = novoBotao(linha, "Normal", UDim2.new(0, 42, 0, 20), UDim2.new(0, 118, 0.5, -10), Color3.fromRGB(70, 70, 76), 10)
+	local botaoMax = novoBotao(linha, "Max", UDim2.new(0, 32, 0, 20), UDim2.new(0, 80, 0.5, -10), Color3.fromRGB(46, 86, 130), 11)
+	local botaoNormal = novoBotao(linha, "Normal", UDim2.new(0, 42, 0, 20), UDim2.new(0, 116, 0.5, -10), Color3.fromRGB(70, 70, 76), 10)
 
 	return linha, botaoMenos, valorLabel, botaoMais, botaoMax, botaoNormal
 end
 
--- Linha Speed
-local _, botaoSpeedMenos, labelSpeedValor, botaoSpeedMais, botaoSpeedMax, botaoSpeedNormal = criarLinhaAjuste(Y_LINHAS_MOV, "Velocidade", valorSpeed, "")
-
--- Linha Jump
-local Y_LINHA_JUMP = Y_LINHAS_MOV + ALTURA_LINHA_MOV + GAP_LINHA_MOV
-local _, botaoJumpMenos, labelJumpValor, botaoJumpMais, botaoJumpMax, botaoJumpNormal = criarLinhaAjuste(Y_LINHA_JUMP, "Salto", valorJump, "")
-
--- Linha Fly (label + botão liga/desliga + controles de velocidade)
-local Y_LINHA_FLY = Y_LINHA_JUMP + ALTURA_LINHA_MOV + GAP_LINHA_MOV
-local linhaFly, botaoFlySpeedMenos, labelFlySpeedValor, botaoFlySpeedMais, botaoFlyMax, botaoFlyNormal = criarLinhaAjuste(Y_LINHA_FLY, "Voar", valorFlySpeed, "")
+local _, botaoSpeedMenos, labelSpeedValor, botaoSpeedMais, botaoSpeedMax, botaoSpeedNormal = criarLinhaAjuste(containerMovimento, 18, "Velocidade", valorSpeed, "")
+local _, botaoJumpMenos, labelJumpValor, botaoJumpMais, botaoJumpMax, botaoJumpNormal = criarLinhaAjuste(containerMovimento, 18 + ALTURA_LINHA_MOV + GAP_LINHA_MOV, "Salto", valorJump, "")
+local linhaFly, botaoFlySpeedMenos, labelFlySpeedValor, botaoFlySpeedMais, botaoFlyMax, botaoFlyNormal = criarLinhaAjuste(containerMovimento, 18 + (ALTURA_LINHA_MOV + GAP_LINHA_MOV) * 2, "Voar", valorFlySpeed, "")
 
 local botaoFlyToggle = Instance.new("TextButton")
 botaoFlyToggle.Size = UDim2.new(0, 28, 0, 20)
-botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -10)
+botaoFlyToggle.Position = UDim2.new(0, 162, 0.5, -10)
 botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 76)
 botaoFlyToggle.BackgroundTransparency = 1
 botaoFlyToggle.Text = "OFF"
 botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 aplicarFonte(botaoFlyToggle, 10)
-botaoFlyToggle.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
+botaoFlyToggle.TextStrokeTransparency = 0.5
 botaoFlyToggle.Parent = linhaFly
 criarUICorner(botaoFlyToggle, 5)
 criarBorda(botaoFlyToggle)
 
-------------------------------------------------------------
--- CAIXA DE BUSCA (filtra a lista por nome digitado)
-------------------------------------------------------------
-local Y_BUSCA = Y_LINHA_FLY + ALTURA_LINHA_MOV + 10 -- logo abaixo da seção Movimento
+-- Modos Especiais na Aba Movimento
+local labelModosEsp = Instance.new("TextLabel")
+labelModosEsp.Size = UDim2.new(1, 0, 0, 14)
+labelModosEsp.Position = UDim2.new(0, 0, 0, 116)
+labelModosEsp.BackgroundTransparency = 1
+labelModosEsp.Text = "MODOS ESPECIAIS"
+labelModosEsp.TextXAlignment = Enum.TextXAlignment.Left
+labelModosEsp.TextColor3 = Color3.fromRGB(140, 140, 145)
+aplicarFonte(labelModosEsp, 11)
+labelModosEsp.Parent = containerMovimento
 
+-- Card Jesus Walk
+local cardJesus = Instance.new("Frame")
+cardJesus.Size = UDim2.new(1, 0, 0, 48)
+cardJesus.Position = UDim2.new(0, 0, 0, 134)
+cardJesus.BackgroundColor3 = Color3.fromRGB(28, 25, 32)
+cardJesus.BackgroundTransparency = 0.5
+cardJesus.Parent = containerMovimento
+criarUICorner(cardJesus, 6)
+criarBorda(cardJesus, Color3.fromRGB(255, 255, 255), 0.75)
+
+local lblJesusNome = Instance.new("TextLabel")
+lblJesusNome.Size = UDim2.new(1, -66, 0, 20)
+lblJesusNome.Position = UDim2.new(0, 8, 0, 4)
+lblJesusNome.BackgroundTransparency = 1
+lblJesusNome.Text = "Jesus Walk (Água & Lava)"
+lblJesusNome.TextXAlignment = Enum.TextXAlignment.Left
+lblJesusNome.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(lblJesusNome, 12)
+lblJesusNome.Parent = cardJesus
+
+local lblJesusDesc = Instance.new("TextLabel")
+lblJesusDesc.Size = UDim2.new(1, -66, 0, 18)
+lblJesusDesc.Position = UDim2.new(0, 8, 0, 24)
+lblJesusDesc.BackgroundTransparency = 1
+lblJesusDesc.Text = "Plataforma invisível sobre a água"
+lblJesusDesc.TextXAlignment = Enum.TextXAlignment.Left
+lblJesusDesc.TextColor3 = Color3.fromRGB(150, 150, 155)
+lblJesusDesc.Font = Enum.Font.Gotham
+lblJesusDesc.TextSize = 10
+lblJesusDesc.Parent = cardJesus
+
+local botaoJesusWalk = novoBotao(
+	cardJesus,
+	"OFF",
+	UDim2.new(0, 52, 0, 24),
+	UDim2.new(1, -58, 0.5, -12),
+	Color3.fromRGB(50, 50, 56),
+	11
+)
+botaoJesusWalk.MouseButton1Click:Connect(function()
+	alternarJesusWalk(botaoJesusWalk)
+end)
+
+-- Card Ghost Mode
+local cardGhost = Instance.new("Frame")
+cardGhost.Size = UDim2.new(1, 0, 0, 48)
+cardGhost.Position = UDim2.new(0, 0, 0, 188)
+cardGhost.BackgroundColor3 = Color3.fromRGB(28, 25, 32)
+cardGhost.BackgroundTransparency = 0.5
+cardGhost.Parent = containerMovimento
+criarUICorner(cardGhost, 6)
+criarBorda(cardGhost, Color3.fromRGB(255, 255, 255), 0.75)
+
+local lblGhostNome = Instance.new("TextLabel")
+lblGhostNome.Size = UDim2.new(1, -66, 0, 20)
+lblGhostNome.Position = UDim2.new(0, 8, 0, 4)
+lblGhostNome.BackgroundTransparency = 1
+lblGhostNome.Text = "Ghost Mode (Invisibilidade)"
+lblGhostNome.TextXAlignment = Enum.TextXAlignment.Left
+lblGhostNome.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(lblGhostNome, 12)
+lblGhostNome.Parent = cardGhost
+
+local lblGhostDesc = Instance.new("TextLabel")
+lblGhostDesc.Size = UDim2.new(1, -66, 0, 18)
+lblGhostDesc.Position = UDim2.new(0, 8, 0, 24)
+lblGhostDesc.BackgroundTransparency = 1
+lblGhostDesc.Text = "Oculta seu personagem dos outros"
+lblGhostDesc.TextXAlignment = Enum.TextXAlignment.Left
+lblGhostDesc.TextColor3 = Color3.fromRGB(150, 150, 155)
+lblGhostDesc.Font = Enum.Font.Gotham
+lblGhostDesc.TextSize = 10
+lblGhostDesc.Parent = cardGhost
+
+local botaoGhostMode = novoBotao(
+	cardGhost,
+	"OFF",
+	UDim2.new(0, 52, 0, 24),
+	UDim2.new(1, -58, 0.5, -12),
+	Color3.fromRGB(50, 50, 56),
+	11
+)
+botaoGhostMode.MouseButton1Click:Connect(function()
+	alternarGhostMode(botaoGhostMode)
+end)
+
+------------------------------------------------------------
+-- ABA 3: COMBATE (Hitbox Expander, Anti-Ragdoll, Fling Info)
+------------------------------------------------------------
+local labelCombate = Instance.new("TextLabel")
+labelCombate.Size = UDim2.new(1, 0, 0, 14)
+labelCombate.Position = UDim2.new(0, 0, 0, 0)
+labelCombate.BackgroundTransparency = 1
+labelCombate.Text = "PODERES DE COMBATE"
+labelCombate.TextXAlignment = Enum.TextXAlignment.Left
+labelCombate.TextColor3 = Color3.fromRGB(140, 140, 145)
+aplicarFonte(labelCombate, 11)
+labelCombate.Parent = containerCombate
+
+-- Card Hitbox Expander
+local cardHitbox = Instance.new("Frame")
+cardHitbox.Size = UDim2.new(1, 0, 0, 76)
+cardHitbox.Position = UDim2.new(0, 0, 0, 18)
+cardHitbox.BackgroundColor3 = Color3.fromRGB(28, 25, 32)
+cardHitbox.BackgroundTransparency = 0.5
+cardHitbox.Parent = containerCombate
+criarUICorner(cardHitbox, 6)
+criarBorda(cardHitbox, Color3.fromRGB(255, 255, 255), 0.75)
+
+local lblHitboxNome = Instance.new("TextLabel")
+lblHitboxNome.Size = UDim2.new(1, -66, 0, 20)
+lblHitboxNome.Position = UDim2.new(0, 8, 0, 4)
+lblHitboxNome.BackgroundTransparency = 1
+lblHitboxNome.Text = "Hitbox Expander"
+lblHitboxNome.TextXAlignment = Enum.TextXAlignment.Left
+lblHitboxNome.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(lblHitboxNome, 12)
+lblHitboxNome.Parent = cardHitbox
+
+local lblHitboxDesc = Instance.new("TextLabel")
+lblHitboxDesc.Size = UDim2.new(1, -66, 0, 18)
+lblHitboxDesc.Position = UDim2.new(0, 8, 0, 22)
+lblHitboxDesc.BackgroundTransparency = 1
+lblHitboxDesc.Text = "Aumenta colisão dos inimigos"
+lblHitboxDesc.TextXAlignment = Enum.TextXAlignment.Left
+lblHitboxDesc.TextColor3 = Color3.fromRGB(150, 150, 155)
+lblHitboxDesc.Font = Enum.Font.Gotham
+lblHitboxDesc.TextSize = 10
+lblHitboxDesc.Parent = cardHitbox
+
+local botaoHitbox = novoBotao(
+	cardHitbox,
+	"OFF",
+	UDim2.new(0, 52, 0, 24),
+	UDim2.new(1, -58, 0, 6),
+	Color3.fromRGB(50, 50, 56),
+	11
+)
+botaoHitbox.MouseButton1Click:Connect(function()
+	alternarHitbox(botaoHitbox)
+end)
+
+-- Linha de ajuste do tamanho da Hitbox
+local lblTamanho = Instance.new("TextLabel")
+lblTamanho.Size = UDim2.new(0, 60, 0, 22)
+lblTamanho.Position = UDim2.new(0, 8, 0, 48)
+lblTamanho.BackgroundTransparency = 1
+lblTamanho.Text = "Tamanho:"
+lblTamanho.TextXAlignment = Enum.TextXAlignment.Left
+lblTamanho.TextColor3 = Color3.fromRGB(200, 200, 205)
+aplicarFonte(lblTamanho, 11)
+lblTamanho.Parent = cardHitbox
+
+local botaoHitboxMenos = novoBotao(cardHitbox, "-", UDim2.new(0, 24, 0, 20), UDim2.new(0, 80, 0, 48), Color3.fromRGB(70, 70, 76), 13)
+local labelHitboxValor = Instance.new("TextLabel")
+labelHitboxValor.Size = UDim2.new(0, 44, 0, 20)
+labelHitboxValor.Position = UDim2.new(0, 108, 0, 48)
+labelHitboxValor.BackgroundTransparency = 1
+labelHitboxValor.Text = tostring(hitboxTamanho) .. " st"
+labelHitboxValor.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(labelHitboxValor, 12)
+labelHitboxValor.Parent = cardHitbox
+local botaoHitboxMais = novoBotao(cardHitbox, "+", UDim2.new(0, 24, 0, 20), UDim2.new(0, 156, 0, 48), Color3.fromRGB(70, 70, 76), 13)
+local botaoHitboxMax = novoBotao(cardHitbox, "Max", UDim2.new(0, 34, 0, 20), UDim2.new(0, 186, 0, 48), Color3.fromRGB(46, 86, 130), 10)
+
+botaoHitboxMenos.MouseButton1Click:Connect(function()
+	hitboxTamanho = math.max(5, hitboxTamanho - 5)
+	labelHitboxValor.Text = tostring(hitboxTamanho) .. " st"
+	if hitboxAtiva then aplicarHitboxNosPlayers() end
+end)
+botaoHitboxMais.MouseButton1Click:Connect(function()
+	hitboxTamanho = math.min(50, hitboxTamanho + 5)
+	labelHitboxValor.Text = tostring(hitboxTamanho) .. " st"
+	if hitboxAtiva then aplicarHitboxNosPlayers() end
+end)
+botaoHitboxMax.MouseButton1Click:Connect(function()
+	hitboxTamanho = 50
+	labelHitboxValor.Text = "50 st"
+	if hitboxAtiva then aplicarHitboxNosPlayers() end
+end)
+
+-- Card Anti-Ragdoll / Anti-Stun
+local cardRagdoll = Instance.new("Frame")
+cardRagdoll.Size = UDim2.new(1, 0, 0, 48)
+cardRagdoll.Position = UDim2.new(0, 0, 0, 102)
+cardRagdoll.BackgroundColor3 = Color3.fromRGB(28, 25, 32)
+cardRagdoll.BackgroundTransparency = 0.5
+cardRagdoll.Parent = containerCombate
+criarUICorner(cardRagdoll, 6)
+criarBorda(cardRagdoll, Color3.fromRGB(255, 255, 255), 0.75)
+
+local lblRagNome = Instance.new("TextLabel")
+lblRagNome.Size = UDim2.new(1, -66, 0, 20)
+lblRagNome.Position = UDim2.new(0, 8, 0, 4)
+lblRagNome.BackgroundTransparency = 1
+lblRagNome.Text = "Anti-Ragdoll / Anti-Stun"
+lblRagNome.TextXAlignment = Enum.TextXAlignment.Left
+lblRagNome.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(lblRagNome, 12)
+lblRagNome.Parent = cardRagdoll
+
+local lblRagDesc = Instance.new("TextLabel")
+lblRagDesc.Size = UDim2.new(1, -66, 0, 18)
+lblRagDesc.Position = UDim2.new(0, 8, 0, 24)
+lblRagDesc.BackgroundTransparency = 1
+lblRagDesc.Text = "Bloqueia quedas, stuns e desmaios"
+lblRagDesc.TextXAlignment = Enum.TextXAlignment.Left
+lblRagDesc.TextColor3 = Color3.fromRGB(150, 150, 155)
+lblRagDesc.Font = Enum.Font.Gotham
+lblRagDesc.TextSize = 10
+lblRagDesc.Parent = cardRagdoll
+
+local botaoAntiRagdoll = novoBotao(
+	cardRagdoll,
+	"OFF",
+	UDim2.new(0, 52, 0, 24),
+	UDim2.new(1, -58, 0.5, -12),
+	Color3.fromRGB(50, 50, 56),
+	11
+)
+botaoAntiRagdoll.MouseButton1Click:Connect(function()
+	alternarAntiRagdoll(botaoAntiRagdoll)
+end)
+
+-- Card informativo de Fling Player
+local cardFlingInfo = Instance.new("Frame")
+cardFlingInfo.Size = UDim2.new(1, 0, 0, 68)
+cardFlingInfo.Position = UDim2.new(0, 0, 0, 158)
+cardFlingInfo.BackgroundColor3 = Color3.fromRGB(30, 15, 20)
+cardFlingInfo.BackgroundTransparency = 0.5
+cardFlingInfo.Parent = containerCombate
+criarUICorner(cardFlingInfo, 6)
+criarBorda(cardFlingInfo, Color3.fromRGB(255, 80, 80), 0.6)
+
+local lblFlingTitulo = Instance.new("TextLabel")
+lblFlingTitulo.Size = UDim2.new(1, -16, 0, 20)
+lblFlingTitulo.Position = UDim2.new(0, 8, 0, 4)
+lblFlingTitulo.BackgroundTransparency = 1
+lblFlingTitulo.Text = "🌪️ Fling Player (Arremessar Alvo)"
+lblFlingTitulo.TextXAlignment = Enum.TextXAlignment.Left
+lblFlingTitulo.TextColor3 = Color3.fromRGB(255, 90, 90)
+aplicarFonte(lblFlingTitulo, 12)
+lblFlingTitulo.Parent = cardFlingInfo
+
+local lblFlingDesc = Instance.new("TextLabel")
+lblFlingDesc.Size = UDim2.new(1, -16, 0, 36)
+lblFlingDesc.Position = UDim2.new(0, 8, 0, 24)
+lblFlingDesc.BackgroundTransparency = 1
+lblFlingDesc.Text = "Disponível na aba 'Jogadores'. Clique em 'Fling' no cartão do alvo para arremessá-lo a 999.999 studs/s!"
+lblFlingDesc.TextXAlignment = Enum.TextXAlignment.Left
+lblFlingDesc.TextWrapped = true
+lblFlingDesc.TextColor3 = Color3.fromRGB(220, 180, 185)
+lblFlingDesc.Font = Enum.Font.Gotham
+lblFlingDesc.TextSize = 10
+lblFlingDesc.Parent = cardFlingInfo
+
+------------------------------------------------------------
+-- ABA 4: JOGADORES (Busca, Barra Espectando, Lista com Scroll)
+------------------------------------------------------------
 local caixaBusca = Instance.new("TextBox")
-caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
-caixaBusca.Position = UDim2.new(0, MARGEM, 0, Y_BUSCA)
+caixaBusca.Size = UDim2.new(1, 0, 0, 28)
+caixaBusca.Position = UDim2.new(0, 0, 0, 0)
 caixaBusca.BackgroundColor3 = Color3.fromRGB(38, 38, 44)
-caixaBusca.BackgroundTransparency = 1 -- busca invisível: só o texto flutua sobre a arte
+caixaBusca.BackgroundTransparency = 1
 caixaBusca.PlaceholderText = "Pesquisar jogador..."
 caixaBusca.PlaceholderColor3 = Color3.fromRGB(130, 130, 135)
 caixaBusca.Text = ""
 caixaBusca.TextColor3 = Color3.fromRGB(255, 255, 255)
 aplicarFonte(caixaBusca, 13)
 caixaBusca.ClearTextOnFocus = false
-caixaBusca.Parent = frame
+caixaBusca.Parent = containerJogadores
 criarUICorner(caixaBusca, 6)
-
 caixaBusca.TextXAlignment = Enum.TextXAlignment.Left
 
--- Pequena margem esquerda pro texto não colar na borda
 local paddingBusca = Instance.new("UIPadding")
 paddingBusca.PaddingLeft = UDim.new(0, 10)
 paddingBusca.Parent = caixaBusca
 
-------------------------------------------------------------
--- BARRA "ESPECTANDO AGORA" (só aparece quando ativo)
-------------------------------------------------------------
-local Y_BARRA_ESPECTANDO_REAL = Y_BUSCA + 28 + 8
-
+-- Barra "Espectando Agora"
 local barraEspectando = Instance.new("Frame")
-barraEspectando.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
-barraEspectando.Position = UDim2.new(0, MARGEM, 0, Y_BARRA_ESPECTANDO_REAL)
+barraEspectando.Size = UDim2.new(1, 0, 0, 28)
+barraEspectando.Position = UDim2.new(0, 0, 0, 34)
 barraEspectando.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
-barraEspectando.BackgroundTransparency = 1 -- barra invisível: só texto + botão Parar flutuam
+barraEspectando.BackgroundTransparency = 1
 barraEspectando.Visible = false
-barraEspectando.Parent = frame
+barraEspectando.Parent = containerJogadores
 criarUICorner(barraEspectando, 6)
 
 local labelEspectando = Instance.new("TextLabel")
@@ -649,36 +1368,31 @@ local botaoPararSpec = novoBotao(
 	12
 )
 
-------------------------------------------------------------
--- LISTA DE JOGADORES (área com scroll)
-------------------------------------------------------------
-local Y_LISTA_SEM_BARRA = Y_BARRA_ESPECTANDO_REAL
-local Y_LISTA_COM_BARRA = Y_BARRA_ESPECTANDO_REAL + 28 + 8
-
+-- Scroll da Lista de Jogadores
 local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_LISTA_SEM_BARRA + MARGEM))
-scrollFrame.Position = UDim2.new(0, MARGEM, 0, Y_LISTA_SEM_BARRA)
+scrollFrame.Size = UDim2.new(1, 0, 1, -34)
+scrollFrame.Position = UDim2.new(0, 0, 0, 34)
 scrollFrame.BackgroundTransparency = 1
 scrollFrame.BorderSizePixel = 0
 scrollFrame.ScrollBarThickness = 5
 scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 95)
 scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-scrollFrame.Parent = frame
+scrollFrame.Parent = containerJogadores
 
 local listLayout = Instance.new("UIListLayout")
 listLayout.Padding = UDim.new(0, 6)
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 listLayout.Parent = scrollFrame
 
--- Ajusta a posição/altura do scroll quando a barra de espectar aparece/some
+-- Ajusta a posição e altura do scroll quando a barra de espectar aparece/some
 local function atualizarLayoutFrame()
 	if barraEspectando.Visible then
-		scrollFrame.Position = UDim2.new(0, MARGEM, 0, Y_LISTA_COM_BARRA)
-		scrollFrame.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_LISTA_COM_BARRA + MARGEM))
+		scrollFrame.Position = UDim2.new(0, 0, 0, 68)
+		scrollFrame.Size = UDim2.new(1, 0, 1, -68)
 	else
-		scrollFrame.Position = UDim2.new(0, MARGEM, 0, Y_LISTA_SEM_BARRA)
-		scrollFrame.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_LISTA_SEM_BARRA + MARGEM))
+		scrollFrame.Position = UDim2.new(0, 0, 0, 34)
+		scrollFrame.Size = UDim2.new(1, 0, 1, -34)
 	end
 end
 
@@ -1494,7 +2208,7 @@ local ALTURA_LINHA = 78
 local LARGURA_FOTO = 40
 local LARGURA_ESTRELA = 26
 local LARGURA_LINHA_INTERNA = LARGURA_UTIL - 4 -- pequena folga p/ scrollbar
-local LARGURA_BOTAO_ACAO = math.floor((LARGURA_LINHA_INTERNA - 8) / 3) -- 3 botões, 2 espaços
+local LARGURA_BOTAO_ACAO = math.floor((LARGURA_LINHA_INTERNA - 12) / 4) -- 4 botões (TP, Spec, Seguir, Fling)
 
 local function atualizarLista()
 	for _, child in ipairs(scrollFrame:GetChildren()) do
@@ -1579,7 +2293,7 @@ local function atualizarLista()
 		botaoFavorito.TextSize = 20
 		botaoFavorito.Parent = linha
 
-		-- Linha de botões de ação (TP / Spec / Seguir), largura igual entre os três
+		-- Linha de botões de ação (TP / Spec / Seguir / Fling), largura igual entre os quatro
 		local Y_ACOES = LARGURA_FOTO + 12
 
 		local botaoTP = novoBotao(
@@ -1611,6 +2325,17 @@ local function atualizarLista()
 		)
 		botaoSeguir.TextColor3 = seguindoEsse and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
 
+		local botaoFling = novoBotao(
+			linha,
+			"Fling",
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
+			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO + 4) * 3, 0, Y_ACOES),
+			Color3.fromRGB(150, 40, 40),
+			12
+		)
+		botaoFling.TextColor3 = Color3.fromRGB(255, 90, 90)
+		criarBorda(botaoFling, Color3.fromRGB(255, 60, 60), 0.6)
+
 		botaoTP.MouseButton1Click:Connect(function()
 			teleportarAte(outroPlayer)
 		end)
@@ -1635,6 +2360,10 @@ local function atualizarLista()
 				seguirAte(outroPlayer)
 			end
 			atualizarLista()
+		end)
+
+		botaoFling.MouseButton1Click:Connect(function()
+			flingPlayer(outroPlayer)
 		end)
 
 		conectarRespawnEspectado(outroPlayer)
@@ -1692,6 +2421,30 @@ destruirPainel = function()
 	if noclipLoop then
 		noclipLoop:Disconnect()
 		noclipLoop = nil
+	end
+
+	-- Limpeza dos Novos Recursos VIP
+	if antiAfkConexao then
+		antiAfkConexao:Disconnect()
+		antiAfkConexao = nil
+	end
+	if jesusHeartbeat then
+		jesusHeartbeat:Disconnect()
+		jesusHeartbeat = nil
+	end
+	if jesusPlataforma then
+		jesusPlataforma:Destroy()
+		jesusPlataforma = nil
+	end
+	if ghostModeAtivo then
+		alternarGhostMode()
+	end
+	if hitboxAtiva then
+		alternarHitbox()
+	end
+	if antiRagdollConexao then
+		antiRagdollConexao:Disconnect()
+		antiRagdollConexao = nil
 	end
 
 	-- 3) some com tudo (painel + botão flutuante)
