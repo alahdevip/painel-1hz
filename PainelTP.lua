@@ -55,6 +55,7 @@ local espObjetos = {} -- [Player] = {highlight = ..., billboard = ...}
 
 local noclipAtivo = false
 local noclipConexao = nil
+local noclipLoop = nil -- Stepped: reforça o noclip a cada frame
 local valoresOriginaisCollide = {} -- [BasePart] = CanCollide original
 
 local favoritos = {} -- [UserId] = true
@@ -1091,15 +1092,41 @@ local function ativarNoclip()
 
 	if noclipConexao then
 		noclipConexao:Disconnect()
+		noclipConexao = nil
 	end
 	noclipConexao = myChar.DescendantAdded:Connect(function(desc)
 		if noclipAtivo then
 			aplicarNoclipParte(desc)
 		end
 	end)
+
+	-- Reforço contínuo: o motor às vezes religa a colisão (física, peças novas,
+	-- ferramentas) — o Stepped desliga de novo a cada frame, antes da física
+	if noclipLoop then
+		noclipLoop:Disconnect()
+		noclipLoop = nil
+	end
+	noclipLoop = RunService.Stepped:Connect(function()
+		if not noclipAtivo then
+			return
+		end
+		local char = player.Character -- busca atual: cobre respawn sem depender do timer
+		if not char then
+			return
+		end
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") and part.CanCollide then
+				aplicarNoclipParte(part)
+			end
+		end
+	end)
 end
 
 local function desativarNoclip()
+	if noclipLoop then
+		noclipLoop:Disconnect()
+		noclipLoop = nil
+	end
 	if noclipConexao then
 		noclipConexao:Disconnect()
 		noclipConexao = nil
@@ -1566,6 +1593,10 @@ destruirPainel = function()
 	if noclipConexao then
 		noclipConexao:Disconnect()
 		noclipConexao = nil
+	end
+	if noclipLoop then
+		noclipLoop:Disconnect()
+		noclipLoop = nil
 	end
 
 	-- 3) some com tudo (painel + botão flutuante)
