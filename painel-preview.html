@@ -207,10 +207,12 @@
   /* dica */
   #dica {
     position: absolute; right: 16px; bottom: 14px;
+    font-size: 11px; color: rgba(255,255,255,0.4);
+  }
+
   /* ===== EFEITOS ESPECIAIS DEMONÍACOS & HUD ===== */
   #demonCanvas {
-    position: fixed; inset: 0; width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 9999;
+    display: none;
   }
   #demonVignette {
     position: fixed; inset: 0; pointer-events: none; z-index: 9998;
@@ -501,96 +503,8 @@
   // Sistema de som desativado a pedido do projeto
   function playSfx() {}
 
-  // ==========================================
-  // MOTOR DE PARTÍCULAS NO CANVAS (HELLFIRE FX)
-  // ==========================================
-  const demonCanvas = document.getElementById('demonCanvas');
-  const dctx = demonCanvas.getContext('2d');
-  let dW = demonCanvas.width = window.innerWidth;
-  let dH = demonCanvas.height = window.innerHeight;
-  window.addEventListener('resize', () => {
-    dW = demonCanvas.width = window.innerWidth;
-    dH = demonCanvas.height = window.innerHeight;
-  });
-
-  const particles = [];
-  function spawnHellParticles(x, y, count = 25, style = 'fire') {
-    for (let i = 0; i < count; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const spd = Math.random() * 6 + 1.5;
-      let cor = '#ff3300';
-      let rune = null;
-
-      if (style === 'fire') {
-        const cores = ['#ff2200', '#ff6600', '#ffaa00', '#ff0044', '#ffdd55'];
-        cor = cores[Math.floor(Math.random() * cores.length)];
-      } else if (style === 'portal') {
-        const cores = ['#00ffaa', '#00e5ff', '#a855f7', '#38bdf8', '#4ade80'];
-        cor = cores[Math.floor(Math.random() * cores.length)];
-      } else if (style === 'void') {
-        const cores = ['#a855f7', '#c026d3', '#e879f9', '#7e22ce'];
-        cor = cores[Math.floor(Math.random() * cores.length)];
-      } else if (style === 'gold') {
-        const cores = ['#fbbf24', '#f59e0b', '#fef08a', '#d97706'];
-        cor = cores[Math.floor(Math.random() * cores.length)];
-      } else if (style === 'blood') {
-        const cores = ['#880000', '#cc0022', '#ff1133', '#550000'];
-        cor = cores[Math.floor(Math.random() * cores.length)];
-      } else if (style === 'runes') {
-        const runas = ['☠', '⚡', '✦', '🔥', '🩸', '👁', '★', '⛓', 'ᛟ', 'ᚱ'];
-        rune = runas[Math.floor(Math.random() * runas.length)];
-        cor = '#ff4444';
-      }
-
-      particles.push({
-        x: x || (dW / 2),
-        y: y || (dH / 2),
-        vx: Math.cos(ang) * spd,
-        vy: Math.sin(ang) * spd - (style === 'fire' || style === 'runes' ? 1.8 : 0),
-        size: Math.random() * 5 + 2,
-        cor: cor,
-        life: 1.0,
-        decay: Math.random() * 0.03 + 0.015,
-        rune: rune
-      });
-    }
-  }
-
-  function loopParticles() {
-    dctx.clearRect(0, 0, dW, dH);
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.05;
-      p.life -= p.decay;
-
-      if (p.life <= 0) {
-        particles.splice(i, 1);
-        continue;
-      }
-
-      dctx.save();
-      dctx.globalAlpha = Math.max(0, p.life);
-      if (p.rune) {
-        dctx.font = '16px "Metal Mania", monospace';
-        dctx.fillStyle = p.cor;
-        dctx.shadowColor = p.cor;
-        dctx.shadowBlur = 10;
-        dctx.fillText(p.rune, p.x, p.y);
-      } else {
-        dctx.fillStyle = p.cor;
-        dctx.shadowColor = p.cor;
-        dctx.shadowBlur = 8;
-        dctx.beginPath();
-        dctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-        dctx.fill();
-      }
-      dctx.restore();
-    }
-    requestAnimationFrame(loopParticles);
-  }
-  requestAnimationFrame(loopParticles);
+  // Partículas ao clicar desativadas a pedido do usuário
+  function spawnHellParticles() {}
 
   // ==========================================
   // FEEDBACK VISUAL: VIGNETTE, SHAKE, FLOATING TEXT, TOAST
