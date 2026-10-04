@@ -82,10 +82,10 @@ local destruirPainel -- definida no fim do script: clique no logo desinjeta tudo
 ------------------------------------------------------------
 -- DIMENSÕES DO PAINEL (usadas para alinhar tudo certinho)
 ------------------------------------------------------------
-local LARGURA_PAINEL = 280
-local ALTURA_PAINEL = 420
-local TAMANHO_ICONE = 40
-local MARGEM = 6
+local LARGURA_PAINEL = 320
+local ALTURA_PAINEL = 526
+local TAMANHO_ICONE = 50
+local MARGEM = 8
 local LARGURA_UTIL = LARGURA_PAINEL - (MARGEM * 2) -- área interna útil
 
 ------------------------------------------------------------
@@ -345,34 +345,34 @@ local imagemToggle = resolverImagem(IMAGEM_BOTAO, "PainelTP_botao")
 
 local botaoToggle = Instance.new("ImageButton")
 botaoToggle.Size = UDim2.new(0, TAMANHO_ICONE, 0, TAMANHO_ICONE)
-botaoToggle.Position = UDim2.new(0, 16, 0.5, -math.floor(ALTURA_PAINEL / 2))
+botaoToggle.Position = UDim2.new(0, 20, 0.5, -180)
 botaoToggle.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
 botaoToggle.Image = imagemToggle -- vazio = mostra o emoji abaixo
 botaoToggle.ScaleType = Enum.ScaleType.Crop -- preenche o círculo todo (Fit espremeria a imagem)
 botaoToggle.AutoButtonColor = true
 botaoToggle.Parent = screenGui
-criarUICorner(botaoToggle, math.floor(TAMANHO_ICONE / 2))
+criarUICorner(botaoToggle, 25)
 
 -- Sem imagem personalizada: exibe o ícone de fallback por cima do fundo
 if imagemToggle == "" then
 	local iconeToggle = Instance.new("TextLabel")
-	iconeToggle.Size = UDim2.new(1, -6, 1, -6)
-	iconeToggle.Position = UDim2.new(0, 3, 0, 3)
+	iconeToggle.Size = UDim2.new(1, -8, 1, -8)
+	iconeToggle.Position = UDim2.new(0, 4, 0, 4)
 	iconeToggle.BackgroundTransparency = 1
 	iconeToggle.Text = ICONE_FALLBACK
 	iconeToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-	aplicarFonte(iconeToggle, 18)
+	aplicarFonte(iconeToggle, 22)
 	iconeToggle.Parent = botaoToggle
 end
 -- Frame principal (painel)
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, LARGURA_PAINEL, 0, ALTURA_PAINEL)
-frame.Position = UDim2.new(0, 16, 0.5, -math.floor(ALTURA_PAINEL / 2))
+frame.Position = UDim2.new(0, 20, 0.5, -233)
 frame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 frame.BorderSizePixel = 0
 frame.Visible = true -- abre automaticamente ao executar
 frame.Parent = screenGui
-criarUICorner(frame, 8)
+criarUICorner(frame, 10)
 
 ------------------------------------------------------------
 -- FUNDO DO PAINEL (imagem + camada escura pra manter a leitura)
@@ -439,20 +439,20 @@ logoTitulo.MouseButton1Click:Connect(function()
 end)
 
 local titulo = Instance.new("TextLabel")
-titulo.Size = UDim2.new(1, -64, 0, 32)
+titulo.Size = UDim2.new(1, -70, 0, 32)
 titulo.Position = UDim2.new(0, MARGEM, 0, 0)
 titulo.BackgroundTransparency = 1
 titulo.Text = "Painel do " .. (player.DisplayName or player.Name)
 titulo.TextXAlignment = Enum.TextXAlignment.Left
 titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
-aplicarFonte(titulo, 15)
+aplicarFonte(titulo, 16)
 titulo.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
 titulo.Visible = (logoTitulo.Image == "") -- só aparece se o logo falhar
 titulo.Parent = frame
 
 local botaoMinimizar = Instance.new("TextButton")
-botaoMinimizar.Size = UDim2.new(0, 22, 0, 22)
-botaoMinimizar.Position = UDim2.new(1, -50, 0, 4)
+botaoMinimizar.Size = UDim2.new(0, 26, 0, 26)
+botaoMinimizar.Position = UDim2.new(1, -62, 0, 3)
 botaoMinimizar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
 botaoMinimizar.BackgroundTransparency = 1
 botaoMinimizar.Text = "-"
@@ -460,7 +460,7 @@ botaoMinimizar.TextColor3 = Color3.fromRGB(200, 200, 205)
 aplicarFonte(botaoMinimizar, 14)
 botaoMinimizar.TextStrokeTransparency = 0.5
 botaoMinimizar.Parent = frame
-criarUICorner(botaoMinimizar, 11)
+criarUICorner(botaoMinimizar, 13)
 criarBorda(botaoMinimizar, Color3.fromRGB(200, 200, 205), 0.6)
 
 local painelMinimizado = false
@@ -478,16 +478,16 @@ botaoMinimizar.MouseButton1Click:Connect(function()
 end)
 
 local botaoFechar = Instance.new("TextButton")
-botaoFechar.Size = UDim2.new(0, 22, 0, 22)
-botaoFechar.Position = UDim2.new(1, -25, 0, 4)
+botaoFechar.Size = UDim2.new(0, 26, 0, 26)
+botaoFechar.Position = UDim2.new(1, -32, 0, 3)
 botaoFechar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
 botaoFechar.BackgroundTransparency = 1
 botaoFechar.Text = "X"
 botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
-aplicarFonte(botaoFechar, 13)
+aplicarFonte(botaoFechar, 14)
 botaoFechar.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
 botaoFechar.Parent = frame
-criarUICorner(botaoFechar, 11)
+criarUICorner(botaoFechar, 13)
 criarBorda(botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
 
 ------------------------------------------------------------
@@ -1524,9 +1524,9 @@ end)
 ------------------------------------------------------------
 -- LISTA DE JOGADORES (favoritos primeiro, cartão organizado)
 ------------------------------------------------------------
-local ALTURA_LINHA = 66
-local LARGURA_FOTO = 34
-local LARGURA_ESTRELA = 22
+local ALTURA_LINHA = 78
+local LARGURA_FOTO = 40
+local LARGURA_ESTRELA = 26
 local LARGURA_LINHA_INTERNA = LARGURA_UTIL - 4 -- pequena folga p/ scrollbar
 local LARGURA_BOTAO_ACAO = math.floor((LARGURA_LINHA_INTERNA - 8) / 3) -- 3 botões, 2 espaços
 
@@ -1589,13 +1589,13 @@ local function atualizarLista()
 
 		-- Nome do jogador
 		local nomeLabel = Instance.new("TextLabel")
-		nomeLabel.Size = UDim2.new(1, -(LARGURA_FOTO + LARGURA_ESTRELA + 18), 0, LARGURA_FOTO)
-		nomeLabel.Position = UDim2.new(0, LARGURA_FOTO + 12, 0, 6)
+		nomeLabel.Size = UDim2.new(1, -(LARGURA_FOTO + LARGURA_ESTRELA + 24), 0, LARGURA_FOTO)
+		nomeLabel.Position = UDim2.new(0, LARGURA_FOTO + 14, 0, 6)
 		nomeLabel.BackgroundTransparency = 1
 		nomeLabel.Text = outroPlayer.Name
 		nomeLabel.TextXAlignment = Enum.TextXAlignment.Left
 		nomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-		aplicarFonte(nomeLabel, 15)
+		aplicarFonte(nomeLabel, 16)
 		nomeLabel.TextTruncate = Enum.TextTruncate.AtEnd
 		nomeLabel.TextStrokeTransparency = 0.5 -- contorno sutil pra ler sobre a arte
 		nomeLabel.Parent = linha
@@ -1604,7 +1604,7 @@ local function atualizarLista()
 		local ehFavorito = favoritos[outroPlayer.UserId] == true
 		local botaoFavorito = Instance.new("TextButton")
 		botaoFavorito.Size = UDim2.new(0, LARGURA_ESTRELA, 0, LARGURA_ESTRELA)
-		botaoFavorito.Position = UDim2.new(1, -(LARGURA_ESTRELA + 6), 0, 6)
+		botaoFavorito.Position = UDim2.new(1, -(LARGURA_ESTRELA + 6), 0, 8)
 		botaoFavorito.BackgroundTransparency = 1
 		botaoFavorito.TextStrokeTransparency = 0.5 -- contorno pra ler sobre a arte
 		botaoFavorito.Text = ehFavorito and "★" or "☆"
@@ -1614,34 +1614,34 @@ local function atualizarLista()
 		botaoFavorito.Parent = linha
 
 		-- Linha de botões de ação (TP / Spec / Seguir), largura igual entre os três
-		local Y_ACOES = LARGURA_FOTO + 6
+		local Y_ACOES = LARGURA_FOTO + 12
 
 		local botaoTP = novoBotao(
 			linha,
 			"TP",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 22),
-			UDim2.new(0, 4, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
+			UDim2.new(0, 6, 0, Y_ACOES),
 			Color3.fromRGB(50, 120, 200),
-			11
+			12
 		)
 
 		local botaoSpec = novoBotao(
 			linha,
 			"Spec",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 22),
-			UDim2.new(0, 4 + LARGURA_BOTAO_ACAO + 4, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
+			UDim2.new(0, 6 + LARGURA_BOTAO_ACAO + 4, 0, Y_ACOES),
 			Color3.fromRGB(90, 90, 95),
-			11
+			12
 		)
 
 		local seguindoEsse = seguindoAlvo == outroPlayer
 		local botaoSeguir = novoBotao(
 			linha,
 			seguindoEsse and "Seguindo" or "Seguir",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 22),
-			UDim2.new(0, 4 + (LARGURA_BOTAO_ACAO + 4) * 2, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
+			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO + 4) * 2, 0, Y_ACOES),
 			seguindoEsse and Color3.fromRGB(60, 160, 90) or Color3.fromRGB(90, 90, 95),
-			11
+			12
 		)
 		botaoSeguir.TextColor3 = seguindoEsse and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
 
