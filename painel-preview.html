@@ -395,15 +395,288 @@
     box-shadow: 0 0 15px rgba(160, 60, 255, 0.45);
   }
 
-  /* ripple demoníaco nos botões */
-  .demon-ripple {
-    position: absolute; border-radius: 50%;
-    transform: scale(0); animation: demonRippleAnim 0.5s ease-out;
-    background: radial-gradient(circle, rgba(255, 80, 80, 0.7) 0%, rgba(255, 0, 0, 0) 70%);
-    pointer-events: none;
+  /* ===== NAVEGADOR DE SERVIDORES (SERVER BROWSER) ===== */
+  #janelaServidores {
+    position: absolute;
+    left: 350px;
+    top: 30px;
+    width: 440px;
+    height: 526px;
+    background: rgba(20, 20, 26, 0.95);
+    border: 1px solid rgba(255, 70, 70, 0.4);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 40, 40, 0.2);
+    backdrop-filter: blur(12px);
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+    overflow: hidden;
+    font-family: 'Metal Mania', cursive, sans-serif;
   }
-  @keyframes demonRippleAnim {
-    to { transform: scale(3.5); opacity: 0; }
+  #janelaServidores.visivel {
+    display: flex;
+    animation: modalPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+  @keyframes modalPop {
+    from { opacity: 0; transform: scale(0.92) translateX(-20px); }
+    to { opacity: 1; transform: scale(1) translateX(0); }
+  }
+
+  .serv-header {
+    height: 44px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(30, 25, 35, 0.85);
+    border-bottom: 1px solid rgba(255, 60, 60, 0.3);
+  }
+  .serv-titulo {
+    font-size: 16px;
+    color: #ff5555;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-shadow: 0 0 10px rgba(255, 40, 40, 0.5);
+  }
+  .serv-fechar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 40, 40, 0.2);
+    border: 1px solid rgba(255, 60, 60, 0.6);
+    color: #ff6666;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+  }
+  .serv-fechar:hover {
+    background: #ff2222;
+    color: #fff;
+    transform: scale(1.1);
+  }
+
+  .serv-controles {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(15, 15, 20, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .serv-busca-box {
+    display: flex;
+    gap: 6px;
+  }
+  #buscaServidor {
+    flex: 1;
+    height: 30px;
+    background: rgba(40, 40, 48, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 12px;
+    padding: 0 10px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    outline: none;
+  }
+  #buscaServidor:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+  }
+  .btn-atualizar-serv {
+    height: 30px;
+    padding: 0 10px;
+    background: rgba(56, 189, 248, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    border-radius: 6px;
+    color: #38bdf8;
+    font-size: 11px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: bold;
+  }
+  .btn-atualizar-serv:hover {
+    background: #38bdf8;
+    color: #000;
+  }
+
+  .serv-filtros {
+    display: flex;
+    gap: 6px;
+  }
+  .serv-filtro-btn {
+    flex: 1;
+    height: 22px;
+    background: rgba(40, 40, 50, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    color: #aaa;
+    font-size: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .serv-filtro-btn.ativo {
+    background: rgba(255, 60, 60, 0.25);
+    border-color: #ff5555;
+    color: #ff8888;
+    font-weight: bold;
+  }
+
+  .serv-lista {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #ff4444 rgba(30, 30, 40, 0.5);
+  }
+  .serv-lista::-webkit-scrollbar { width: 5px; }
+  .serv-lista::-webkit-scrollbar-thumb { background: #ff4444; border-radius: 3px; }
+
+  .serv-card {
+    background: rgba(28, 26, 36, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+  }
+  .serv-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 80, 80, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  }
+  .serv-card.atual {
+    border-color: rgba(74, 222, 128, 0.6);
+    background: rgba(20, 35, 25, 0.7);
+  }
+  .serv-card.destacado {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4) !important;
+  }
+
+  .serv-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .serv-id-badge {
+    font-size: 13px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: bold;
+  }
+  .serv-badges {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .badge-pill {
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-weight: 700;
+  }
+  .badge-ping-verde { background: rgba(74, 222, 128, 0.2); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4); }
+  .badge-ping-amarelo { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+  .badge-ping-vermelho { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); }
+  .badge-fps { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+  .badge-players { background: rgba(192, 132, 252, 0.15); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); }
+  .badge-atual-tag { background: rgba(74, 222, 128, 0.25); color: #4ade80; border: 1px solid #4ade80; font-size: 9px; }
+
+  .serv-players-box {
+    background: rgba(18, 16, 24, 0.7);
+    border-radius: 6px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .serv-players-titulo {
+    font-size: 11px;
+    color: #bbb;
+    display: flex;
+    justify-content: space-between;
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+  .serv-players-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-height: 74px;
+    overflow-y: auto;
+  }
+  .serv-player-chip {
+    background: rgba(45, 45, 55, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 2px 7px;
+    font-size: 10px;
+    color: #eee;
+    font-family: "Segoe UI", Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .serv-player-chip.match {
+    background: rgba(255, 60, 60, 0.4) !important;
+    border-color: #ff4444 !important;
+    color: #fff !important;
+    font-weight: bold;
+    box-shadow: 0 0 6px rgba(255, 40, 40, 0.5);
+  }
+  .serv-player-chip .avatar-mini {
+    width: 14px; height: 14px; border-radius: 50%; background: #555;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: bold;
+  }
+
+  .serv-acoes {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  .btn-serv-conectar {
+    padding: 5px 12px;
+    background: rgba(74, 222, 128, 0.2);
+    border: 1px solid rgba(74, 222, 128, 0.6);
+    border-radius: 5px;
+    color: #4ade80;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .btn-serv-conectar:hover {
+    background: #4ade80;
+    color: #000;
+  }
+  .btn-serv-copiar {
+    padding: 5px 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    color: #ccc;
+    font-size: 11px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .btn-serv-copiar:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
   }
 </style>
 </head>
@@ -447,10 +720,13 @@
       <div class="combate-desc">Impede que o Roblox te desconecte após 20 minutos inativo enviando impulsos virtuais.</div>
     </div>
 
-    <div class="secao-titulo">SERVIDORES (1-CLIQUE)</div>
+    <div class="secao-titulo">SERVIDORES (SERVER HOP)</div>
     <div class="grid-toggles">
-      <button class="botao" id="btnServerHop">Server Hop</button>
-      <button class="botao" id="btnRejoin">Rejoin Instant</button>
+      <button class="botao" id="btnAbrirServidores" style="border-color: rgba(56, 189, 248, 0.7); color: #38bdf8;">🌐 Ver Todos Servidores</button>
+      <button class="botao" id="btnServerHop">⚡ Hop Rápido</button>
+    </div>
+    <div class="grid-toggles" style="margin-top: 6px;">
+      <button class="botao" id="btnRejoin" style="width: 100%;">🔄 Rejoin Instant</button>
     </div>
 
     <div class="servidor-info">
@@ -562,6 +838,33 @@
 
     <!-- lista -->
     <div id="lista"></div>
+</div>
+
+<!-- JANELA DO NAVEGADOR DE SERVIDORES (SERVER BROWSER) -->
+<div id="janelaServidores">
+  <div class="serv-header">
+    <div class="serv-titulo">
+      <span>🌐 NAVEGADOR DE SERVIDORES</span>
+      <span class="badge-pill badge-players" id="badgeTotalServidores">6 Ativos</span>
+    </div>
+    <button class="serv-fechar" id="btnFecharServidores">✕</button>
+  </div>
+
+  <div class="serv-controles">
+    <div class="serv-busca-box">
+      <input type="text" id="buscaServidor" placeholder="🔍 Buscar servidor ou nome de jogador..." autocomplete="off">
+      <button class="btn-atualizar-serv" id="btnRecarregarServidores">🔄 Atualizar</button>
+    </div>
+    <div class="serv-filtros">
+      <button class="serv-filtro-btn ativo" data-filtro="todos">Todos (6)</button>
+      <button class="serv-filtro-btn" data-filtro="ping">Menor Ping 🟢</button>
+      <button class="serv-filtro-btn" data-filtro="vagas">Mais Vagas 👥</button>
+      <button class="serv-filtro-btn" data-filtro="cheios">Quase Cheios 🔥</button>
+    </div>
+  </div>
+
+  <div class="serv-lista" id="listaServidores">
+    <!-- cards de servidores gerados via JS -->
   </div>
 </div>
 
@@ -852,18 +1155,258 @@
     notificar('Anti-AFK Automático', ligado ? 'Conexão VirtualUser ativa · Proteção contra timeout de 20 min!' : 'Anti-AFK Desativado', '🛡', '#fbbf24');
   };
 
+  // ==========================================
+  // ABA GERAL: SERVIDOR & NAVEGADOR DE SERVIDORES
+  // ==========================================
+  const janelaServidores = document.getElementById('janelaServidores');
+  const btnAbrirServidores = document.getElementById('btnAbrirServidores');
+  const btnFecharServidores = document.getElementById('btnFecharServidores');
+  const listaServidores = document.getElementById('listaServidores');
+  const buscaServidor = document.getElementById('buscaServidor');
+  const btnRecarregarServidores = document.getElementById('btnRecarregarServidores');
+
+  // MOCK DE SERVIDORES COM TODOS OS PLAYERS E NOMES REAIS
+  const servidoresMock = [
+    {
+      id: "a9f4-demoniak-8812",
+      nome: "Servidor BR #1 (São Paulo)",
+      ping: 28,
+      fps: 60,
+      maxPlayers: 16,
+      atual: true,
+      players: ["Gabriel_Pro", "DemonX", "DarkKnight", "Viper99", "Você", "Zezinho", "Matheus", "LunaStar", "ShadowNinja", "NinjaBR", "Vortex", "AlahVIP"]
+    },
+    {
+      id: "c7e2-roblox-4419",
+      nome: "Servidor BR #2 (São Paulo)",
+      ping: 34,
+      fps: 60,
+      maxPlayers: 16,
+      atual: false,
+      players: ["KickMatheus", "Zezinho2010", "NoobMaster", "ProPlayerBR", "PedroGamer", "SniperGhost", "AloneWolf", "CyberSamurai"]
+    },
+    {
+      id: "e10b-us-east-9921",
+      nome: "Servidor US-East #1 (Miami)",
+      ping: 78,
+      fps: 59,
+      maxPlayers: 20,
+      atual: false,
+      players: ["GhostRider", "RedDragon", "BlackCat", "Thunder", "FrostByte", "IronMan", "Thor", "Hulk", "Batman", "Joker", "Venom", "Spidey", "CaptainUS", "Deadpool"]
+    },
+    {
+      id: "f441-br-vazio-0012",
+      nome: "Servidor BR #3 (Quase Vazio)",
+      ping: 25,
+      fps: 60,
+      maxPlayers: 16,
+      atual: false,
+      players: ["LucasGamer", "Biazinha"]
+    },
+    {
+      id: "b883-latam-7714",
+      nome: "Servidor LATAM #1 (Santiago)",
+      ping: 92,
+      fps: 58,
+      maxPlayers: 16,
+      atual: false,
+      players: ["Carlos_CL", "Mateo_AR", "Diego_UY", "Facundo99", "ElProChileno", "Nico_Gamer", "SantiPvP", "Valen_01"]
+    },
+    {
+      id: "d991-br-lotado-5520",
+      nome: "Servidor BR #4 (Lotado - 1 Vaga)",
+      ping: 42,
+      fps: 57,
+      maxPlayers: 16,
+      atual: false,
+      players: ["PlayerA", "PlayerB", "PlayerC", "PlayerD", "PlayerE", "PlayerF", "PlayerG", "PlayerH", "PlayerI", "PlayerJ", "PlayerK", "PlayerL", "PlayerM", "PlayerN", "PlayerO"]
+    }
+  ];
+
+  let filtroAtual = 'todos';
+
+  function renderizarServidores(termoBusca = '') {
+    listaServidores.innerHTML = '';
+    const busca = (termoBusca || '').toLowerCase().trim();
+
+    let filtrados = [...servidoresMock];
+
+    if (filtroAtual === 'ping') {
+      filtrados.sort((a, b) => a.ping - b.ping);
+    } else if (filtroAtual === 'vagas') {
+      filtrados.sort((a, b) => (a.maxPlayers - a.players.length) - (b.maxPlayers - b.players.length)).reverse();
+    } else if (filtroAtual === 'cheios') {
+      filtrados.sort((a, b) => b.players.length - a.players.length);
+    }
+
+    let exibidos = 0;
+
+    for (const s of filtrados) {
+      const matchServerNome = s.nome.toLowerCase().includes(busca) || s.id.toLowerCase().includes(busca);
+      const playersMatching = s.players.filter(p => p.toLowerCase().includes(busca));
+      const hasPlayerMatch = busca.length > 0 && playersMatching.length > 0;
+
+      if (busca && !matchServerNome && !hasPlayerMatch) {
+        continue;
+      }
+      exibidos++;
+
+      const card = document.createElement('div');
+      card.className = 'serv-card' + (s.atual ? ' atual' : '') + (hasPlayerMatch ? ' destacado' : '');
+
+      let pingClass = 'badge-ping-verde';
+      if (s.ping > 120) pingClass = 'badge-ping-vermelho';
+      else if (s.ping > 60) pingClass = 'badge-ping-amarelo';
+
+      // Gerar chips de jogadores com destaque se der match na busca
+      const tagsHtml = s.players.map(p => {
+        const isMatch = busca.length > 0 && p.toLowerCase().includes(busca);
+        const inicial = p[0].toUpperCase();
+        return `<span class="serv-player-chip ${isMatch ? 'match' : ''}">
+          <span class="avatar-mini">${inicial}</span>
+          ${p}
+        </span>`;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="serv-topo">
+          <div class="serv-id-badge">
+            <span>🖥️ ${s.nome}</span>
+            ${s.atual ? '<span class="badge-pill badge-atual-tag">★ SEU SERVIDOR</span>' : ''}
+          </div>
+          <div class="serv-badges">
+            <span class="badge-pill ${pingClass}">📶 ${s.ping}ms</span>
+            <span class="badge-pill badge-fps">⚡ ${s.fps} FPS</span>
+            <span class="badge-pill badge-players">👥 ${s.players.length}/${s.maxPlayers}</span>
+          </div>
+        </div>
+
+        <div class="serv-players-box">
+          <div class="serv-players-titulo">
+            <span><strong>Jogadores Conectados (${s.players.length}):</strong></span>
+            <span style="font-size:10px; color:#888">JobId: ${s.id.substring(0, 12)}...</span>
+          </div>
+          <div class="serv-players-tags">
+            ${tagsHtml}
+          </div>
+        </div>
+
+        <div class="serv-acoes">
+          <button class="btn-serv-copiar" data-id="${s.id}">📋 Copiar JobId</button>
+          ${!s.atual ? `<button class="btn-serv-conectar" data-id="${s.id}">🚀 Entrar no Servidor</button>` : '<span style="font-size:11px; color:#4ade80; display:flex; align-items:center; margin-right:6px">Conectado atualmente</span>'}
+        </div>
+      `;
+
+      // Botão Entrar no Servidor
+      const btnConectar = card.querySelector('.btn-serv-conectar');
+      if (btnConectar) {
+        btnConectar.onclick = (e) => {
+          flashVignette('cyan');
+          shakePainel(10);
+          btnConectar.textContent = 'Teleportando...';
+          spawnFloatingText(e.clientX, e.clientY, '🚀 TELEPORTANDO: ' + s.nome, '#38bdf8');
+          notificar('Conectando ao Servidor', `Entrando em ${s.nome} (Ping: ${s.ping}ms · ${s.players.length} players)`, '🌐', '#38bdf8');
+
+          setTimeout(() => {
+            servidoresMock.forEach(item => item.atual = false);
+            s.atual = true;
+            document.getElementById('infoJob').textContent = s.id;
+            document.getElementById('infoPing').textContent = s.ping + 'ms';
+            document.getElementById('infoPlayers').textContent = s.players.length + '/' + s.maxPlayers;
+            renderizarServidores(buscaServidor.value);
+            notificar('Teleporte Concluído!', `Você ingressou no servidor ${s.nome}!`, '✨', '#4ade80');
+          }, 1200);
+        };
+      }
+
+      // Botão Copiar JobId
+      const btnCopiar = card.querySelector('.btn-serv-copiar');
+      if (btnCopiar) {
+        btnCopiar.onclick = (e) => {
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(s.id);
+          }
+          btnCopiar.textContent = '✓ Copiado!';
+          spawnFloatingText(e.clientX, e.clientY, '📋 JobId Copiado!', '#fbbf24');
+          notificar('Área de Transferência', `JobId ${s.id} copiado com sucesso!`, '📋', '#fbbf24');
+          setTimeout(() => btnCopiar.textContent = '📋 Copiar JobId', 1500);
+        };
+      }
+
+      listaServidores.appendChild(card);
+    }
+
+    if (exibidos === 0) {
+      listaServidores.innerHTML = `
+        <div style="text-align:center; padding:30px; color:#888;">
+          <div style="font-size:26px; margin-bottom:8px">🔍</div>
+          <div>Nenhum servidor ou jogador encontrado para "<strong>${termoBusca}</strong>".</div>
+          <div style="font-size:11px; color:#666; margin-top:4px">Tente buscar por outro nome de jogador ou limpe a busca.</div>
+        </div>
+      `;
+    }
+  }
+
+  // ABRIR E FECHAR JANELA DE SERVIDORES
+  btnAbrirServidores.onclick = () => {
+    janelaServidores.classList.add('visivel');
+    flashVignette('cyan');
+    notificar('Navegador de Servidores', 'Varrendo instâncias públicas e listando jogadores...', '🌐', '#38bdf8');
+    renderizarServidores(buscaServidor.value);
+  };
+
+  btnFecharServidores.onclick = () => {
+    janelaServidores.classList.remove('visivel');
+  };
+
+  buscaServidor.oninput = (e) => {
+    renderizarServidores(e.target.value);
+  };
+
+  btnRecarregarServidores.onclick = () => {
+    btnRecarregarServidores.textContent = 'Atualizando...';
+    flashVignette('gold');
+    setTimeout(() => {
+      btnRecarregarServidores.textContent = '🔄 Atualizar';
+      renderizarServidores(buscaServidor.value);
+      notificar('Lista Atualizada', '6 servidores sincronizados com a API em tempo real!', '🔄', '#fbbf24');
+    }, 400);
+  };
+
+  document.querySelectorAll('.serv-filtro-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.serv-filtro-btn').forEach(b => b.classList.remove('ativo'));
+      btn.classList.add('ativo');
+      filtroAtual = btn.dataset.filtro;
+      renderizarServidores(buscaServidor.value);
+    };
+  });
+
+  // HOP RÁPIDO (Escolhe o melhor servidor e conecta direto)
   const btnServerHop = document.getElementById('btnServerHop');
   btnServerHop.onclick = (e) => {
     const c = getCenter(btnServerHop);
     flashVignette('cyan');
     shakePainel(8);
     btnServerHop.textContent = 'Buscando...';
-    spawnFloatingText(e.clientX || c.x, e.clientY || c.y, '🌐 BUSCANDO SERVIDOR...', '#38bdf8');
-    notificar('Server Hop', 'Varrendo lista de servidores públicos com vagas...', '🌐', '#38bdf8');
+    spawnFloatingText(e.clientX || c.x, e.clientY || c.y, '🌐 BUSCANDO MELHOR SERVIDOR...', '#38bdf8');
+    notificar('Hop Rápido', 'Selecionando servidor com menor latência e vagas...', '🌐', '#38bdf8');
     setTimeout(() => {
-      btnServerHop.textContent = 'Conectando!';
-      notificar('Servidor Encontrado!', 'Teleportando para nova instância com menor ping!', '🚀', '#4ade80');
-      setTimeout(() => btnServerHop.textContent = 'Server Hop', 1500);
+      // escolhe o com menor ping que não seja o atual
+      const candidatos = servidoresMock.filter(s => !s.atual && s.players.length < s.maxPlayers);
+      candidatos.sort((a, b) => a.ping - b.ping);
+      const escolhido = candidatos[0] || servidoresMock[1];
+
+      servidoresMock.forEach(item => item.atual = false);
+      escolhido.atual = true;
+      document.getElementById('infoJob').textContent = escolhido.id;
+      document.getElementById('infoPing').textContent = escolhido.ping + 'ms';
+      document.getElementById('infoPlayers').textContent = escolhido.players.length + '/' + escolhido.maxPlayers;
+      renderizarServidores(buscaServidor.value);
+
+      btnServerHop.textContent = 'Conectado!';
+      notificar('Hop Concluído!', `Conectado a ${escolhido.nome} (${escolhido.ping}ms)!`, '🚀', '#4ade80');
+      setTimeout(() => btnServerHop.textContent = '⚡ Hop Rápido', 1500);
     }, 1100);
   };
 
@@ -875,7 +1418,7 @@
     btnRejoin.textContent = 'Reconectando...';
     spawnFloatingText(e.clientX || c.x, e.clientY || c.y, '🔄 REJOIN INSTANTÂNEO', '#c084fc');
     notificar('Rejoin Instantâneo', 'Reconectando imediatamente ao mesmo servidor...', '🔄', '#c084fc');
-    setTimeout(() => btnRejoin.textContent = 'Rejoin Instant', 1500);
+    setTimeout(() => btnRejoin.textContent = '🔄 Rejoin Instant', 1500);
   };
 
   // ==========================================

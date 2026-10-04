@@ -2,6 +2,9 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
@@ -386,6 +389,475 @@ frame.Parent = screenGui
 criarUICorner(frame, 10)
 
 ------------------------------------------------------------
+-- SISTEMA DE EFEITOS VISUAIS E NOTIFICAÇÕES DEMONÍACAS (HUD)
+------------------------------------------------------------
+-- Vinheta de flash na tela
+local vignetteOverlay = Instance.new("ImageLabel")
+vignetteOverlay.Name = "VignetteOverlay"
+vignetteOverlay.Size = UDim2.new(1, 0, 1, 0)
+vignetteOverlay.Position = UDim2.new(0, 0, 0, 0)
+vignetteOverlay.BackgroundTransparency = 1
+vignetteOverlay.Image = "rbxassetid://6551829624"
+vignetteOverlay.ImageColor3 = Color3.fromRGB(255, 40, 40)
+vignetteOverlay.ImageTransparency = 1
+vignetteOverlay.ZIndex = 90
+vignetteOverlay.Parent = screenGui
+
+-- Container de Toasts (Notificações ao lado no estilo Demon Toast)
+local toastContainer = Instance.new("Frame")
+toastContainer.Name = "ToastContainer"
+toastContainer.Size = UDim2.new(0, 240, 1, -80)
+toastContainer.Position = UDim2.new(1, -250, 0, 40)
+toastContainer.BackgroundTransparency = 1
+toastContainer.ZIndex = 100
+toastContainer.Parent = screenGui
+
+local toastLayout = Instance.new("UIListLayout")
+toastLayout.Padding = UDim.new(0, 8)
+toastLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+toastLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+toastLayout.SortOrder = Enum.SortOrder.LayoutOrder
+toastLayout.Parent = toastContainer
+
+local function shakePainel(intensidade)
+	intensidade = intensidade or 8
+	task.spawn(function()
+		local posOrig = frame.Position
+		for i = 1, 5 do
+			local offX = (i % 2 == 0 and 1 or -1) * (intensidade / i)
+			frame.Position = UDim2.new(posOrig.X.Scale, posOrig.X.Offset + offX, posOrig.Y.Scale, posOrig.Y.Offset)
+			task.wait(0.02)
+		end
+		frame.Position = posOrig
+	end)
+end
+
+local function flashVignette(cor)
+	cor = cor or Color3.fromRGB(255, 50, 50)
+	vignetteOverlay.ImageColor3 = cor
+	vignetteOverlay.ImageTransparency = 0.35
+	local tween = TweenService:Create(vignetteOverlay, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		ImageTransparency = 1
+	})
+	tween:Play()
+end
+
+local function spawnFloatingText(texto, cor, posGui)
+	task.spawn(function()
+		cor = cor or Color3.fromRGB(255, 80, 80)
+		local mousePos = posGui or UserInputService:GetMouseLocation()
+		local lbl = Instance.new("TextLabel")
+		lbl.Size = UDim2.new(0, 220, 0, 30)
+		lbl.Position = UDim2.new(0, mousePos.X - 110, 0, mousePos.Y - 15)
+		lbl.BackgroundTransparency = 1
+		lbl.Text = texto
+		lbl.TextColor3 = cor
+		lbl.TextStrokeTransparency = 0.2
+		lbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		aplicarFonte(lbl, 16)
+		lbl.ZIndex = 1000
+		lbl.Parent = screenGui
+
+		local tween = TweenService:Create(lbl, TweenInfo.new(0.85, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.new(0, mousePos.X - 110, 0, mousePos.Y - 65),
+			TextTransparency = 1,
+			TextStrokeTransparency = 1
+		})
+		tween:Play()
+		task.wait(0.9)
+		lbl:Destroy()
+	end)
+end
+
+local function notificar(titulo, desc, icone, cor)
+	task.spawn(function()
+		cor = cor or Color3.fromRGB(255, 60, 60)
+		local toast = Instance.new("Frame")
+		toast.Size = UDim2.new(0, 230, 0, 56)
+		toast.BackgroundColor3 = Color3.fromRGB(22, 18, 26)
+		toast.BackgroundTransparency = 0.15
+		toast.Position = UDim2.new(1, 100, 0, 0)
+		toast.Parent = toastContainer
+		criarUICorner(toast, 8)
+		criarBorda(toast, cor, 0.5)
+
+		local iconeLbl = Instance.new("TextLabel")
+		iconeLbl.Size = UDim2.new(0, 24, 0, 24)
+		iconeLbl.Position = UDim2.new(0, 6, 0, 6)
+		iconeLbl.BackgroundTransparency = 1
+		iconeLbl.Text = icone or "🔥"
+		iconeLbl.TextSize = 16
+		iconeLbl.Parent = toast
+
+		local titLbl = Instance.new("TextLabel")
+		titLbl.Size = UDim2.new(1, -38, 0, 20)
+		titLbl.Position = UDim2.new(0, 34, 0, 6)
+		titLbl.BackgroundTransparency = 1
+		titLbl.Text = titulo
+		titLbl.TextColor3 = cor
+		titLbl.TextXAlignment = Enum.TextXAlignment.Left
+		aplicarFonte(titLbl, 12)
+		titLbl.Parent = toast
+
+		local descLbl = Instance.new("TextLabel")
+		descLbl.Size = UDim2.new(1, -12, 0, 24)
+		descLbl.Position = UDim2.new(0, 6, 0, 28)
+		descLbl.BackgroundTransparency = 1
+		descLbl.Text = desc
+		descLbl.TextColor3 = Color3.fromRGB(220, 220, 225)
+		descLbl.TextXAlignment = Enum.TextXAlignment.Left
+		descLbl.TextWrapped = true
+		descLbl.Font = Enum.Font.Gotham
+		descLbl.TextSize = 10
+		descLbl.Parent = toast
+
+		-- Animação de entrada suave
+		local tweenIn = TweenService:Create(toast, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.new(0, 0, 0, 0)
+		})
+		tweenIn:Play()
+
+		task.wait(3.5)
+
+		-- Animação de saída
+		local tweenOut = TweenService:Create(toast, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Position = UDim2.new(1, 100, 0, 0),
+			BackgroundTransparency = 1
+		})
+		tweenOut:Play()
+		task.wait(0.3)
+		toast:Destroy()
+	end)
+end
+
+------------------------------------------------------------
+-- JANELA DO NAVEGADOR DE SERVIDORES (SERVER BROWSER)
+------------------------------------------------------------
+local janelaServidores = Instance.new("Frame")
+janelaServidores.Name = "JanelaServidores"
+janelaServidores.Size = UDim2.new(0, 350, 0, 526)
+janelaServidores.Position = UDim2.new(0, LARGURA_PAINEL + 30, 0.5, -233)
+janelaServidores.BackgroundColor3 = Color3.fromRGB(20, 18, 24)
+janelaServidores.BorderSizePixel = 0
+janelaServidores.Visible = false
+janelaServidores.Parent = screenGui
+criarUICorner(janelaServidores, 10)
+criarBorda(janelaServidores, Color3.fromRGB(255, 70, 70), 0.5)
+
+-- Barra de arraste da janela de servidores
+local barraArrasteServ = Instance.new("Frame")
+barraArrasteServ.Size = UDim2.new(1, 0, 0, 38)
+barraArrasteServ.Position = UDim2.new(0, 0, 0, 0)
+barraArrasteServ.BackgroundTransparency = 1
+barraArrasteServ.Active = true
+barraArrasteServ.Parent = janelaServidores
+
+local arrastandoServ = false
+local inputArrasteServ = nil
+local posInicialMouseServ = nil
+local posInicialServ = nil
+
+local function atualizarArrasteServ(input)
+	local delta = input.Position - posInicialMouseServ
+	janelaServidores.Position = UDim2.new(
+		posInicialServ.X.Scale,
+		posInicialServ.X.Offset + delta.X,
+		posInicialServ.Y.Scale,
+		posInicialServ.Y.Offset + delta.Y
+	)
+end
+
+barraArrasteServ.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		arrastandoServ = true
+		posInicialMouseServ = input.Position
+		posInicialServ = janelaServidores.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				arrastandoServ = false
+			end
+		end)
+	end
+end)
+
+barraArrasteServ.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		inputArrasteServ = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == inputArrasteServ and arrastandoServ then
+		atualizarArrasteServ(input)
+	end
+end)
+
+-- Header Servidores
+local tituloServ = Instance.new("TextLabel")
+tituloServ.Size = UDim2.new(1, -70, 0, 34)
+tituloServ.Position = UDim2.new(0, 10, 0, 2)
+tituloServ.BackgroundTransparency = 1
+tituloServ.Text = "🌐 NAVEGADOR DE SERVIDORES"
+tituloServ.TextColor3 = Color3.fromRGB(255, 90, 90)
+tituloServ.TextXAlignment = Enum.TextXAlignment.Left
+aplicarFonte(tituloServ, 13)
+tituloServ.Parent = janelaServidores
+
+local botaoFecharServ = novoBotao(
+	janelaServidores,
+	"X",
+	UDim2.new(0, 26, 0, 24),
+	UDim2.new(1, -34, 0, 6),
+	Color3.fromRGB(60, 25, 25),
+	12
+)
+botaoFecharServ.TextColor3 = Color3.fromRGB(255, 100, 100)
+botaoFecharServ.MouseButton1Click:Connect(function()
+	janelaServidores.Visible = false
+end)
+
+-- Barra de busca e recarga
+local caixaBuscaServ = Instance.new("TextBox")
+caixaBuscaServ.Size = UDim2.new(1, -68, 0, 28)
+caixaBuscaServ.Position = UDim2.new(0, 10, 0, 40)
+caixaBuscaServ.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+caixaBuscaServ.BackgroundTransparency = 0.3
+caixaBuscaServ.PlaceholderText = "Pesquisar servidor ou jogador..."
+caixaBuscaServ.PlaceholderColor3 = Color3.fromRGB(140, 140, 145)
+caixaBuscaServ.Text = ""
+caixaBuscaServ.TextColor3 = Color3.fromRGB(255, 255, 255)
+caixaBuscaServ.Font = Enum.Font.Gotham
+caixaBuscaServ.TextSize = 11
+caixaBuscaServ.TextXAlignment = Enum.TextXAlignment.Left
+caixaBuscaServ.ClearTextOnFocus = false
+caixaBuscaServ.Parent = janelaServidores
+criarUICorner(caixaBuscaServ, 6)
+criarBorda(caixaBuscaServ, Color3.fromRGB(255, 255, 255), 0.7)
+
+local padBuscaServ = Instance.new("UIPadding")
+padBuscaServ.PaddingLeft = UDim.new(0, 8)
+padBuscaServ.Parent = caixaBuscaServ
+
+local botaoRecarregarServ = novoBotao(
+	janelaServidores,
+	"🔄",
+	UDim2.new(0, 42, 0, 28),
+	UDim2.new(1, -52, 0, 40),
+	Color3.fromRGB(45, 55, 70),
+	12
+)
+criarBorda(botaoRecarregarServ, Color3.fromRGB(56, 189, 248), 0.5)
+
+-- Substatus de contagem
+local labelStatusServ = Instance.new("TextLabel")
+labelStatusServ.Size = UDim2.new(1, -20, 0, 18)
+labelStatusServ.Position = UDim2.new(0, 10, 0, 72)
+labelStatusServ.BackgroundTransparency = 1
+labelStatusServ.Text = "Clique em '🔄' para varrer os servidores públicos..."
+labelStatusServ.TextColor3 = Color3.fromRGB(160, 160, 170)
+labelStatusServ.TextXAlignment = Enum.TextXAlignment.Left
+labelStatusServ.Font = Enum.Font.Gotham
+labelStatusServ.TextSize = 10
+labelStatusServ.Parent = janelaServidores
+
+-- Scroll da Lista de Servidores
+local scrollServ = Instance.new("ScrollingFrame")
+scrollServ.Size = UDim2.new(1, -20, 1, -100)
+scrollServ.Position = UDim2.new(0, 10, 0, 92)
+scrollServ.BackgroundTransparency = 1
+scrollServ.BorderSizePixel = 0
+scrollServ.ScrollBarThickness = 5
+scrollServ.ScrollBarImageColor3 = Color3.fromRGB(255, 60, 60)
+scrollServ.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollServ.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollServ.Parent = janelaServidores
+
+local layoutServ = Instance.new("UIListLayout")
+layoutServ.Padding = UDim.new(0, 8)
+layoutServ.SortOrder = Enum.SortOrder.LayoutOrder
+layoutServ.Parent = scrollServ
+
+local function atualizarListaServidores(filtro)
+	filtro = (filtro or caixaBuscaServ.Text or ""):lower()
+	for _, c in ipairs(scrollServ:GetChildren()) do
+		if c:IsA("Frame") then c:Destroy() end
+	end
+
+	labelStatusServ.Text = "Buscando servidores na API do Roblox..."
+	labelStatusServ.TextColor3 = Color3.fromRGB(255, 220, 100)
+
+	task.spawn(function()
+		local placeId = game.PlaceId
+		local ok, corpo = pcall(function()
+			return game:HttpGet("https://games.roblox.com/v1/games/" .. tostring(placeId) .. "/servers/Public?sortOrder=Asc&limit=100")
+		end)
+
+		if not ok or not corpo then
+			labelStatusServ.Text = "Erro ao buscar servidores. Tente novamente."
+			labelStatusServ.TextColor3 = Color3.fromRGB(255, 90, 90)
+			return
+		end
+
+		local okJson, dados = pcall(function()
+			return HttpService:JSONDecode(corpo)
+		end)
+
+		if not okJson or not dados or not dados.data then
+			labelStatusServ.Text = "Nenhum servidor retornado pela API."
+			labelStatusServ.TextColor3 = Color3.fromRGB(255, 90, 90)
+			return
+		end
+
+		local servidores = dados.data
+		local achouAtual = false
+		for _, s in ipairs(servidores) do
+			if s.id == game.JobId then
+				achouAtual = true
+				break
+			end
+		end
+		if not achouAtual then
+			table.insert(servidores, 1, {
+				id = game.JobId,
+				maxPlayers = 20,
+				playing = #Players:GetPlayers(),
+				fps = 60,
+				ping = 28,
+				eAtual = true
+			})
+		end
+
+		local exibidos = 0
+		for _, s in ipairs(servidores) do
+			local eAtual = (s.id == game.JobId or s.eAtual == true)
+			local idCurto = tostring(s.id):sub(1, 8) .. "..."
+			local pingNum = math.floor(s.ping or 50)
+			local fpsNum = math.floor(s.fps or 60)
+			local playersNum = s.playing or 0
+			local maxNum = s.maxPlayers or 20
+
+			-- Obter nomes reais de todos os jogadores do servidor atual
+			local nomesJogadores = {}
+			if eAtual then
+				for _, pl in ipairs(Players:GetPlayers()) do
+					table.insert(nomesJogadores, pl.DisplayName .. " (@" .. pl.Name .. ")")
+				end
+			end
+			local textoPlayersLocal = table.concat(nomesJogadores, ", ")
+
+			local textoParaBusca = (s.id .. " " .. textoPlayersLocal):lower()
+			if filtro ~= "" and not textoParaBusca:find(filtro, 1, true) then
+				continue
+			end
+			exibidos = exibidos + 1
+
+			local card = Instance.new("Frame")
+			card.Size = UDim2.new(1, -6, 0, eAtual and 96 or 82)
+			card.BackgroundColor3 = eAtual and Color3.fromRGB(24, 38, 28) or Color3.fromRGB(30, 28, 36)
+			card.BackgroundTransparency = 0.3
+			card.Parent = scrollServ
+			criarUICorner(card, 6)
+			criarBorda(card, eAtual and Color3.fromRGB(74, 222, 128) or Color3.fromRGB(255, 80, 80), 0.6)
+
+			-- Linha 1: Status
+			local lblTop = Instance.new("TextLabel")
+			lblTop.Size = UDim2.new(1, -12, 0, 20)
+			lblTop.Position = UDim2.new(0, 6, 0, 4)
+			lblTop.BackgroundTransparency = 1
+			lblTop.TextXAlignment = Enum.TextXAlignment.Left
+			lblTop.Font = Enum.Font.GothamBold
+			lblTop.TextSize = 11
+			local corPing = pingNum < 70 and "4ade80" or (pingNum < 130 and "fbbf24" or "ef4444")
+			lblTop.RichText = true
+			lblTop.Text = string.format(
+				"<font color='#%s'>📶 %dms</font>  |  <font color='#38bdf8'>⚡ %dfps</font>  |  <font color='#c084fc'>👥 %d/%d</font> %s",
+				corPing,
+				pingNum,
+				fpsNum,
+				playersNum,
+				maxNum,
+				eAtual and "<font color='#4ade80'><b>[SEU SERVIDOR]</b></font>" or ""
+			)
+			lblTop.TextColor3 = Color3.fromRGB(255, 255, 255)
+			lblTop.Parent = card
+
+			-- Linha 2: Jogadores / JobId
+			local lblInfo = Instance.new("TextLabel")
+			lblInfo.Size = UDim2.new(1, -12, 0, eAtual and 34 or 20)
+			lblInfo.Position = UDim2.new(0, 6, 0, 24)
+			lblInfo.BackgroundTransparency = 1
+			lblInfo.TextXAlignment = Enum.TextXAlignment.Left
+			lblInfo.TextYAlignment = Enum.TextYAlignment.Top
+			lblInfo.TextWrapped = true
+			lblInfo.Font = Enum.Font.Gotham
+			lblInfo.TextSize = 10
+			lblInfo.TextColor3 = Color3.fromRGB(190, 190, 195)
+			if eAtual then
+				lblInfo.Text = "Jogadores (" .. #nomesJogadores .. "): " .. textoPlayersLocal
+			else
+				lblInfo.Text = "JobId: " .. tostring(s.id):sub(1, 24) .. "... (" .. playersNum .. " jogadores conectados)"
+			end
+			lblInfo.Parent = card
+
+			-- Linha 3: Botões de Ação
+			local Y_BOTOES = eAtual and 62 or 48
+
+			local botaoCopiar = novoBotao(
+				card,
+				"📋 Copiar JobId",
+				UDim2.new(0, 110, 0, 24),
+				UDim2.new(0, 6, 0, Y_BOTOES),
+				Color3.fromRGB(45, 45, 52),
+				10
+			)
+			botaoCopiar.MouseButton1Click:Connect(function()
+				if setclipboard then
+					setclipboard(tostring(s.id))
+					botaoCopiar.Text = "✓ Copiado!"
+					spawnFloatingText("📋 JobId Copiado!", Color3.fromRGB(251, 191, 36))
+					notificar("Área de Transferência", "JobId copiado com sucesso!", "📋", Color3.fromRGB(251, 191, 36))
+					task.wait(1.2)
+					botaoCopiar.Text = "📋 Copiar JobId"
+				end
+			end)
+
+			if not eAtual then
+				local botaoEntrar = novoBotao(
+					card,
+					"🚀 Entrar",
+					UDim2.new(0, 80, 0, 24),
+					UDim2.new(1, -86, 0, Y_BOTOES),
+					Color3.fromRGB(30, 80, 45),
+					11
+				)
+				botaoEntrar.TextColor3 = Color3.fromRGB(90, 255, 150)
+				criarBorda(botaoEntrar, Color3.fromRGB(74, 222, 128), 0.6)
+				botaoEntrar.MouseButton1Click:Connect(function()
+					botaoEntrar.Text = "Entrando..."
+					flashVignette(Color3.fromRGB(56, 189, 248))
+					shakePainel(8)
+					spawnFloatingText("🚀 TELEPORTANDO!", Color3.fromRGB(56, 189, 248))
+					notificar("Conectando ao Servidor", "Teleportando para nova instância com " .. playersNum .. " jogadores!", "🌐", Color3.fromRGB(56, 189, 248))
+					TeleportService:TeleportToPlaceInstance(placeId, s.id, player)
+				end)
+			end
+		end
+
+		labelStatusServ.Text = string.format("Encontrados %d servidores públicos no PlaceId %d", exibidos, placeId)
+		labelStatusServ.TextColor3 = Color3.fromRGB(74, 222, 128)
+	end)
+end
+
+botaoRecarregarServ.MouseButton1Click:Connect(function()
+	atualizarListaServidores(caixaBuscaServ.Text)
+end)
+
+caixaBuscaServ:GetPropertyChangedSignal("Text"):Connect(function()
+	atualizarListaServidores(caixaBuscaServ.Text)
+end)
+
+------------------------------------------------------------
 -- FUNDO DO PAINEL (imagem + camada escura pra manter a leitura)
 ------------------------------------------------------------
 local imagemFundo = resolverImagem(IMAGEM_FUNDO, "PainelTP_fundo")
@@ -493,6 +965,9 @@ local function alternarAntiAFK(btn)
 			btn.Text = "ON"
 			btn.TextColor3 = Color3.fromRGB(90, 255, 150)
 		end
+		flashVignette(Color3.fromRGB(251, 191, 36))
+		spawnFloatingText("🛡️ ANTI-AFK ATIVADO", Color3.fromRGB(251, 191, 36))
+		notificar("Anti-AFK Automático", "Conexão VirtualUser ativa · Proteção contra timeout de 20 min!", "🛡️", Color3.fromRGB(251, 191, 36))
 	else
 		if antiAfkConexao then
 			antiAfkConexao:Disconnect()
@@ -502,6 +977,8 @@ local function alternarAntiAFK(btn)
 			btn.Text = "OFF"
 			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 		end
+		spawnFloatingText("🛡️ ANTI-AFK OFF", Color3.fromRGB(251, 191, 36))
+		notificar("Anti-AFK Automático", "Proteção Anti-AFK Desativada.", "🛡️", Color3.fromRGB(251, 191, 36))
 	end
 	return antiAfkAtivo
 end
@@ -512,9 +989,12 @@ local function serverHop(btn)
 		btn.Text = "Buscando..."
 		btn.TextColor3 = Color3.fromRGB(255, 220, 100)
 	end
+	flashVignette(Color3.fromRGB(56, 189, 248))
+	shakePainel(8)
+	spawnFloatingText("🌐 BUSCANDO SERVIDOR...", Color3.fromRGB(56, 189, 248))
+	notificar("Server Hop Rápido", "Varrendo lista de servidores públicos com vagas...", "🌐", Color3.fromRGB(56, 189, 248))
+
 	task.spawn(function()
-		local TeleportService = game:GetService("TeleportService")
-		local HttpService = game:GetService("HttpService")
 		local placeId = game.PlaceId
 		local ok, corpo = pcall(function()
 			return game:HttpGet("https://games.roblox.com/v1/games/" .. tostring(placeId) .. "/servers/Public?sortOrder=Asc&limit=100")
@@ -530,6 +1010,7 @@ local function serverHop(btn)
 							btn.Text = "Entrando!"
 							btn.TextColor3 = Color3.fromRGB(90, 255, 150)
 						end
+						notificar("Servidor Encontrado!", "Teleportando para nova instância com menor ping!", "🚀", Color3.fromRGB(74, 222, 128))
 						TeleportService:TeleportToPlaceInstance(placeId, s.id, player)
 						return
 					end
@@ -546,9 +1027,18 @@ local function rejoinInstant(btn)
 		btn.Text = "Reconectando..."
 		btn.TextColor3 = Color3.fromRGB(255, 220, 100)
 	end
-	local TeleportService = game:GetService("TeleportService")
+	flashVignette(Color3.fromRGB(192, 132, 252))
+	shakePainel(8)
+	spawnFloatingText("🔄 REJOIN INSTANTÂNEO", Color3.fromRGB(192, 132, 252))
+	notificar("Rejoin Instantâneo", "Reconectando imediatamente ao mesmo servidor...", "🔄", Color3.fromRGB(192, 132, 252))
 	pcall(function()
 		TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+	end)
+	task.delay(1.5, function()
+		if btn then
+			btn.Text = "Rejoin Instant"
+			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
 	end)
 end
 
@@ -576,6 +1066,9 @@ local function alternarJesusWalk(btn)
 			btn.Text = "ON"
 			btn.TextColor3 = Color3.fromRGB(90, 255, 150)
 		end
+		flashVignette(Color3.fromRGB(56, 189, 248))
+		spawnFloatingText("🌊 JESUS WALK ATIVO", Color3.fromRGB(56, 189, 248))
+		notificar("Jesus Walk (Água/Lava)", "Plataforma invisível sob os pés · Corra sobre água e lava sem afundar!", "🌊", Color3.fromRGB(56, 189, 248))
 	else
 		if jesusHeartbeat then
 			jesusHeartbeat:Disconnect()
@@ -589,6 +1082,8 @@ local function alternarJesusWalk(btn)
 			btn.Text = "OFF"
 			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 		end
+		spawnFloatingText("🌊 JESUS WALK OFF", Color3.fromRGB(56, 189, 248))
+		notificar("Jesus Walk", "Jesus Walk Desativado.", "🌊", Color3.fromRGB(56, 189, 248))
 	end
 	return jesusWalkAtivo
 end
@@ -611,6 +1106,9 @@ local function alternarGhostMode(btn)
 			btn.Text = "ON"
 			btn.TextColor3 = Color3.fromRGB(90, 255, 150)
 		end
+		flashVignette(Color3.fromRGB(192, 132, 252))
+		spawnFloatingText("👤 GHOST MODE ATIVO", Color3.fromRGB(192, 132, 252))
+		notificar("Invisibilidade Fantasma", "Seu avatar, acessórios e roupas foram 100% ocultados dos outros!", "👤", Color3.fromRGB(192, 132, 252))
 	else
 		for part, transp in pairs(ghostPartsOriginal) do
 			if part and part.Parent then
@@ -622,6 +1120,8 @@ local function alternarGhostMode(btn)
 			btn.Text = "OFF"
 			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 		end
+		spawnFloatingText("👤 GHOST MODE OFF", Color3.fromRGB(192, 132, 252))
+		notificar("Invisibilidade Fantasma", "Visibilidade normal restaurada.", "👤", Color3.fromRGB(192, 132, 252))
 	end
 	return ghostModeAtivo
 end
@@ -658,6 +1158,10 @@ local function alternarHitbox(btn)
 			btn.Text = "ON"
 			btn.TextColor3 = Color3.fromRGB(90, 255, 150)
 		end
+		flashVignette(Color3.fromRGB(255, 60, 60))
+		shakePainel(8)
+		spawnFloatingText("🎯 HITBOX: " .. tostring(hitboxTamanho) .. " ST", Color3.fromRGB(255, 60, 60))
+		notificar("Hitbox Expander", "Hitbox dos inimigos aumentada para " .. tostring(hitboxTamanho) .. " studs! Tiros e golpes fáceis", "🎯", Color3.fromRGB(255, 60, 60))
 	else
 		if hitboxLoop then
 			hitboxLoop:Disconnect()
@@ -668,6 +1172,8 @@ local function alternarHitbox(btn)
 			btn.Text = "OFF"
 			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 		end
+		spawnFloatingText("🎯 HITBOX RESTAURADA", Color3.fromRGB(255, 60, 60))
+		notificar("Hitbox Expander", "Hitbox dos jogadores restaurada ao padrão.", "🎯", Color3.fromRGB(255, 60, 60))
 	end
 	return hitboxAtiva
 end
@@ -704,6 +1210,9 @@ local function alternarAntiRagdoll(btn)
 			btn.Text = "ON"
 			btn.TextColor3 = Color3.fromRGB(90, 255, 150)
 		end
+		flashVignette(Color3.fromRGB(251, 191, 36))
+		spawnFloatingText("🛡️ ANTI-RAGDOLL ATIVO", Color3.fromRGB(251, 191, 36))
+		notificar("Anti-Ragdoll / Anti-Stun", "Proteção total: quedas, stuns, desmaios e congelamento bloqueados!", "🛡️", Color3.fromRGB(251, 191, 36))
 	else
 		if antiRagdollConexao then
 			antiRagdollConexao:Disconnect()
@@ -713,6 +1222,8 @@ local function alternarAntiRagdoll(btn)
 			btn.Text = "OFF"
 			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 		end
+		spawnFloatingText("🛡️ ANTI-RAGDOLL OFF", Color3.fromRGB(251, 191, 36))
+		notificar("Anti-Ragdoll", "Proteção Anti-Ragdoll desativada.", "🛡️", Color3.fromRGB(251, 191, 36))
 	end
 	return antiRagdollAtivo
 end
@@ -731,6 +1242,12 @@ local function flingPlayer(alvo)
 	local alvoChar = alvo and alvo.Character
 	local alvoHrp = alvoChar and alvoChar:FindFirstChild("HumanoidRootPart")
 	if not myHrp or not alvoHrp then return end
+
+	local nomeAlvo = alvo.DisplayName or alvo.Name
+	flashVignette(Color3.fromRGB(255, 40, 40))
+	shakePainel(18)
+	spawnFloatingText("🌪️ FLING EXTREMO: " .. nomeAlvo, Color3.fromRGB(255, 40, 40))
+	notificar("Fling Player Astral", nomeAlvo .. " arremessado para o espaço a 999.999 studs/s!", "🌪️", Color3.fromRGB(255, 40, 40))
 
 	task.spawn(function()
 		local cframeOriginal = myHrp.CFrame
@@ -921,19 +1438,39 @@ end)
 
 local labelServidores = Instance.new("TextLabel")
 labelServidores.Size = UDim2.new(1, 0, 0, 14)
-labelServidores.Position = UDim2.new(0, 0, 0, 150)
+labelServidores.Position = UDim2.new(0, 0, 0, 148)
 labelServidores.BackgroundTransparency = 1
-labelServidores.Text = "SERVIDORES (1-CLIQUE)"
+labelServidores.Text = "SERVIDORES (SERVER HOP)"
 labelServidores.TextXAlignment = Enum.TextXAlignment.Left
 labelServidores.TextColor3 = Color3.fromRGB(140, 140, 145)
 aplicarFonte(labelServidores, 11)
 labelServidores.Parent = containerGeral
 
+local botaoVerServidores = novoBotao(
+	containerGeral,
+	"🌐 Ver Servidores",
+	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
+	UDim2.new(0, 0, 0, 166),
+	Color3.fromRGB(45, 55, 70),
+	12
+)
+botaoVerServidores.TextColor3 = Color3.fromRGB(56, 189, 248)
+criarBorda(botaoVerServidores, Color3.fromRGB(56, 189, 248), 0.6)
+botaoVerServidores.MouseButton1Click:Connect(function()
+	janelaServidores.Visible = not janelaServidores.Visible
+	if janelaServidores.Visible then
+		flashVignette(Color3.fromRGB(56, 189, 248))
+		spawnFloatingText("🌐 ABRINDO SERVIDORES...", Color3.fromRGB(56, 189, 248))
+		notificar("Navegador de Servidores", "Varrendo instâncias públicas e listando jogadores...", "🌐", Color3.fromRGB(56, 189, 248))
+		atualizarListaServidores()
+	end
+end)
+
 local botaoServerHop = novoBotao(
 	containerGeral,
-	"Server Hop",
+	"⚡ Hop Rápido",
 	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
-	UDim2.new(0, 0, 0, 168),
+	UDim2.new(0, LARGURA_FERRAMENTA + 8, 0, 166),
 	Color3.fromRGB(55, 55, 60),
 	12
 )
@@ -943,9 +1480,9 @@ end)
 
 local botaoRejoin = novoBotao(
 	containerGeral,
-	"Rejoin Instant",
-	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
-	UDim2.new(0, LARGURA_FERRAMENTA + 8, 0, 168),
+	"🔄 Rejoin Instant",
+	UDim2.new(1, 0, 0, 26),
+	UDim2.new(0, 0, 0, 200),
 	Color3.fromRGB(55, 55, 60),
 	12
 )
@@ -955,8 +1492,8 @@ end)
 
 -- Card de Info do Servidor
 local cardInfoServidor = Instance.new("Frame")
-cardInfoServidor.Size = UDim2.new(1, 0, 0, 80)
-cardInfoServidor.Position = UDim2.new(0, 0, 0, 206)
+cardInfoServidor.Size = UDim2.new(1, 0, 0, 78)
+cardInfoServidor.Position = UDim2.new(0, 0, 0, 232)
 cardInfoServidor.BackgroundColor3 = Color3.fromRGB(20, 16, 24)
 cardInfoServidor.BackgroundTransparency = 0.5
 cardInfoServidor.Parent = containerGeral
@@ -1230,16 +1767,22 @@ botaoHitboxMenos.MouseButton1Click:Connect(function()
 	hitboxTamanho = math.max(5, hitboxTamanho - 5)
 	labelHitboxValor.Text = tostring(hitboxTamanho) .. " st"
 	if hitboxAtiva then aplicarHitboxNosPlayers() end
+	spawnFloatingText("Hitbox: " .. hitboxTamanho .. " st", Color3.fromRGB(255, 60, 60))
 end)
 botaoHitboxMais.MouseButton1Click:Connect(function()
 	hitboxTamanho = math.min(50, hitboxTamanho + 5)
 	labelHitboxValor.Text = tostring(hitboxTamanho) .. " st"
 	if hitboxAtiva then aplicarHitboxNosPlayers() end
+	spawnFloatingText("Hitbox: " .. hitboxTamanho .. " st", Color3.fromRGB(255, 60, 60))
 end)
 botaoHitboxMax.MouseButton1Click:Connect(function()
 	hitboxTamanho = 50
 	labelHitboxValor.Text = "50 st"
 	if hitboxAtiva then aplicarHitboxNosPlayers() end
+	flashVignette(Color3.fromRGB(255, 60, 60))
+	shakePainel(10)
+	spawnFloatingText("💥 HITBOX MAX: 50 st", Color3.fromRGB(255, 60, 60))
+	notificar("Hitbox Expander", "Hitbox ajustada no máximo de 50 studs!", "💥", Color3.fromRGB(255, 60, 60))
 end)
 
 -- Card Anti-Ragdoll / Anti-Stun
@@ -1520,7 +2063,7 @@ end)
 ------------------------------------------------------------
 -- TELEPORTE
 ------------------------------------------------------------
-local function teleportarAte(alvo)
+local function teleportarAte(alvo, silencioso)
 	local myChar = getCharacter(player)
 	local myHRP = myChar:WaitForChild("HumanoidRootPart")
 
@@ -1531,6 +2074,13 @@ local function teleportarAte(alvo)
 	local alvoHRP = alvoChar:FindFirstChild("HumanoidRootPart")
 	if alvoHRP then
 		myHRP.CFrame = alvoHRP.CFrame * CFrame.new(0, 0, 3)
+		if not silencioso then
+			local nomeAlvo = alvo.DisplayName or alvo.Name
+			flashVignette(Color3.fromRGB(56, 189, 248))
+			shakePainel(6)
+			spawnFloatingText("🌀 TP -> " .. nomeAlvo, Color3.fromRGB(56, 189, 248))
+			notificar("Teleporte Dimensional", "Viajou instantaneamente até " .. nomeAlvo, "🌀", Color3.fromRGB(56, 189, 248))
+		end
 	end
 end
 
@@ -1538,12 +2088,21 @@ end
 -- AUTO TP / SEGUIR (fica colado no alvo pra sempre)
 ------------------------------------------------------------
 local function pararSeguir()
+	if seguindoAlvo then
+		local nomeAlvo = seguindoAlvo.DisplayName or seguindoAlvo.Name
+		spawnFloatingText("👥 PAROU DE SEGUIR", Color3.fromRGB(52, 211, 153))
+		notificar("Rastro de Sombra", "Perseguição encerrada para " .. nomeAlvo, "👥", Color3.fromRGB(52, 211, 153))
+	end
 	seguindoAlvo = nil
 end
 
 local function seguirAte(alvo)
 	seguindoAlvo = alvo
-	teleportarAte(alvo)
+	teleportarAte(alvo, true)
+	local nomeAlvo = alvo.DisplayName or alvo.Name
+	flashVignette(Color3.fromRGB(52, 211, 153))
+	spawnFloatingText("👥 SEGUINDO: " .. nomeAlvo, Color3.fromRGB(52, 211, 153))
+	notificar("Rastro de Sombra", "Travado em " .. nomeAlvo .. "! Você acompanhará cada passo.", "👥", Color3.fromRGB(52, 211, 153))
 end
 
 seguirHeartbeat = RunService.Heartbeat:Connect(function()
@@ -1629,6 +2188,10 @@ local function salvarLocal()
 	persistirLocal()
 	atualizarBotaoRetornar()
 
+	flashVignette(Color3.fromRGB(74, 222, 128))
+	spawnFloatingText("🌀 LOCAL SALVO!", Color3.fromRGB(74, 222, 128))
+	notificar("Coordenadas Gravadas", "Posição dimensional salva com sucesso!", "🌀", Color3.fromRGB(74, 222, 128))
+
 	botaoSalvarLocal.Text = "Salvo ✓"
 	botaoSalvarLocal.TextColor3 = Color3.fromRGB(90, 255, 150)
 	task.delay(1.5, function()
@@ -1641,6 +2204,8 @@ local function retornarLocal()
 	if not posicaoSalva then
 		botaoRetornarLocal.Text = "Nada salvo!"
 		botaoRetornarLocal.TextColor3 = Color3.fromRGB(255, 120, 120)
+		spawnFloatingText("⚠️ NADA SALVO!", Color3.fromRGB(255, 120, 120))
+		notificar("Teleporte Dimensional", "Nenhuma coordenada gravada anteriormente!", "⚠️", Color3.fromRGB(255, 120, 120))
 		task.delay(1.2, function()
 			atualizarBotaoRetornar()
 		end)
@@ -1655,6 +2220,10 @@ local function retornarLocal()
 	local myChar = getCharacter(player)
 	local myHRP = myChar:WaitForChild("HumanoidRootPart")
 	myHRP.CFrame = posicaoSalva
+
+	flashVignette(Color3.fromRGB(56, 189, 248))
+	spawnFloatingText("🌀 RETORNADO!", Color3.fromRGB(56, 189, 248))
+	notificar("Teleporte Dimensional", "Você foi puxado de volta às suas coordenadas salvas!", "🌀", Color3.fromRGB(56, 189, 248))
 end
 
 botaoSalvarLocal.MouseButton1Click:Connect(salvarLocal)
@@ -1680,6 +2249,9 @@ local function pararEspectar()
 
 	barraEspectando.Visible = false
 	atualizarLayoutFrame()
+
+	spawnFloatingText("👁️ CÂMERA NORMAL", Color3.fromRGB(168, 85, 247))
+	notificar("Modo Espectador", "Câmera retornada ao seu personagem.", "👁️", Color3.fromRGB(168, 85, 247))
 end
 
 local function espectarAte(alvo)
@@ -1701,6 +2273,11 @@ local function espectarAte(alvo)
 	labelEspectando.Text = "Espectando: " .. alvo.Name
 	barraEspectando.Visible = true
 	atualizarLayoutFrame()
+
+	local nomeAlvo = alvo.DisplayName or alvo.Name
+	flashVignette(Color3.fromRGB(168, 85, 247))
+	spawnFloatingText("👁️ ESPECTANDO: " .. nomeAlvo, Color3.fromRGB(168, 85, 247))
+	notificar("Modo Espectador", "Observando visão de " .. nomeAlvo, "👁️", Color3.fromRGB(168, 85, 247))
 end
 
 botaoPararSpec.MouseButton1Click:Connect(pararEspectar)
@@ -1827,9 +2404,14 @@ botaoESP.MouseButton1Click:Connect(function()
 	if espAtivo then
 		botaoESP.Text = "ESP: ON"
 		botaoESP.TextColor3 = Color3.fromRGB(90, 255, 150)
+		flashVignette(Color3.fromRGB(192, 132, 252))
+		spawnFloatingText("👁️ ESP ATIVADO", Color3.fromRGB(192, 132, 252))
+		notificar("Visão Espectral (ESP)", "Todos os jogadores revelados através de paredes!", "👁️", Color3.fromRGB(192, 132, 252))
 	else
 		botaoESP.Text = "ESP: OFF"
 		botaoESP.TextColor3 = Color3.fromRGB(255, 255, 255)
+		spawnFloatingText("👁️ ESP OFF", Color3.fromRGB(192, 132, 252))
+		notificar("Visão Espectral", "ESP Desativado.", "👁️", Color3.fromRGB(192, 132, 252))
 	end
 	atualizarESPTodos()
 end)
@@ -1954,10 +2536,15 @@ botaoNoclip.MouseButton1Click:Connect(function()
 	if noclipAtivo then
 		botaoNoclip.Text = "Noclip: ON"
 		botaoNoclip.TextColor3 = Color3.fromRGB(90, 255, 150)
+		flashVignette(Color3.fromRGB(56, 189, 248))
+		spawnFloatingText("👻 NOCLIP ATIVO", Color3.fromRGB(56, 189, 248))
+		notificar("Noclip Dimensional", "Paredes e pisos agora são ilusão!", "👻", Color3.fromRGB(56, 189, 248))
 		ativarNoclip()
 	else
 		botaoNoclip.Text = "Noclip: OFF"
 		botaoNoclip.TextColor3 = Color3.fromRGB(255, 255, 255)
+		spawnFloatingText("👻 NOCLIP OFF", Color3.fromRGB(56, 189, 248))
+		notificar("Noclip Dimensional", "Colisões normais restauradas.", "👻", Color3.fromRGB(56, 189, 248))
 		desativarNoclip()
 	end
 end)
@@ -1989,12 +2576,14 @@ botaoSpeedMenos.MouseButton1Click:Connect(function()
 	valorSpeed = math.max(SPEED_MIN, valorSpeed - SPEED_PASSO)
 	labelSpeedValor.Text = tostring(valorSpeed)
 	aplicarSpeed()
+	spawnFloatingText("Velocidade: " .. valorSpeed, Color3.fromRGB(255, 120, 120))
 end)
 
 botaoSpeedMais.MouseButton1Click:Connect(function()
 	valorSpeed = math.min(SPEED_MAX, valorSpeed + SPEED_PASSO)
 	labelSpeedValor.Text = tostring(valorSpeed)
 	aplicarSpeed()
+	spawnFloatingText("Velocidade: " .. valorSpeed, Color3.fromRGB(255, 120, 120))
 end)
 
 -- Max: Speed direto pro limite máximo
@@ -2002,6 +2591,10 @@ botaoSpeedMax.MouseButton1Click:Connect(function()
 	valorSpeed = SPEED_MAX
 	labelSpeedValor.Text = tostring(valorSpeed)
 	aplicarSpeed()
+	flashVignette(Color3.fromRGB(251, 191, 36))
+	shakePainel(10)
+	spawnFloatingText("🔥 SPEED OVERDRIVE: " .. SPEED_MAX, Color3.fromRGB(251, 191, 36))
+	notificar("SPEED OVERDRIVE", "Velocidade no limite máximo de " .. SPEED_MAX .. "!", "🔥", Color3.fromRGB(251, 191, 36))
 end)
 
 -- Normal: Speed de volta pro padrão
@@ -2009,6 +2602,7 @@ botaoSpeedNormal.MouseButton1Click:Connect(function()
 	valorSpeed = SPEED_NORMAL
 	labelSpeedValor.Text = tostring(valorSpeed)
 	aplicarSpeed()
+	spawnFloatingText("Velocidade: Normal (16)", Color3.fromRGB(200, 200, 200))
 end)
 
 ------------------------------------------------------------
@@ -2027,12 +2621,14 @@ botaoJumpMenos.MouseButton1Click:Connect(function()
 	valorJump = math.max(JUMP_MIN, valorJump - JUMP_PASSO)
 	labelJumpValor.Text = tostring(valorJump)
 	aplicarJump()
+	spawnFloatingText("Salto: " .. valorJump, Color3.fromRGB(255, 120, 120))
 end)
 
 botaoJumpMais.MouseButton1Click:Connect(function()
 	valorJump = math.min(JUMP_MAX, valorJump + JUMP_PASSO)
 	labelJumpValor.Text = tostring(valorJump)
 	aplicarJump()
+	spawnFloatingText("Salto: " .. valorJump, Color3.fromRGB(255, 120, 120))
 end)
 
 -- Max: Salto direto pro limite máximo
@@ -2040,6 +2636,10 @@ botaoJumpMax.MouseButton1Click:Connect(function()
 	valorJump = JUMP_MAX
 	labelJumpValor.Text = tostring(valorJump)
 	aplicarJump()
+	flashVignette(Color3.fromRGB(251, 191, 36))
+	shakePainel(10)
+	spawnFloatingText("🔥 SALTO OVERDRIVE: " .. JUMP_MAX, Color3.fromRGB(251, 191, 36))
+	notificar("SALTO OVERDRIVE", "Salto no limite máximo de " .. JUMP_MAX .. "!", "🔥", Color3.fromRGB(251, 191, 36))
 end)
 
 -- Normal: Salto de volta pro padrão
@@ -2047,6 +2647,7 @@ botaoJumpNormal.MouseButton1Click:Connect(function()
 	valorJump = JUMP_NORMAL
 	labelJumpValor.Text = tostring(valorJump)
 	aplicarJump()
+	spawnFloatingText("Salto: Normal (50)", Color3.fromRGB(200, 200, 200))
 end)
 
 -- Reaplica Speed e Salto automaticamente quando o personagem respawna
@@ -2084,6 +2685,8 @@ local function pararFly()
 
 	botaoFlyToggle.Text = "OFF"
 	botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+	spawnFloatingText("🦅 FLY OFF", Color3.fromRGB(56, 189, 248))
+	notificar("Modo Voo", "Voo desativado.", "🦅", Color3.fromRGB(56, 189, 248))
 end
 
 local function iniciarFly()
@@ -2113,6 +2716,10 @@ local function iniciarFly()
 
 	botaoFlyToggle.Text = "ON"
 	botaoFlyToggle.TextColor3 = Color3.fromRGB(90, 255, 150)
+
+	flashVignette(Color3.fromRGB(56, 189, 248))
+	spawnFloatingText("🦅 FLY ATIVADO", Color3.fromRGB(56, 189, 248))
+	notificar("Modo Voo (Fly)", "Use WASD, Espaço e Ctrl para voar livremente!", "🦅", Color3.fromRGB(56, 189, 248))
 
 	RunService:BindToRenderStep("PainelTP_Fly", Enum.RenderPriority.Character.Value, function()
 		if not flyBodyVelocity or not flyBodyGyro then
@@ -2161,23 +2768,30 @@ end)
 botaoFlySpeedMenos.MouseButton1Click:Connect(function()
 	valorFlySpeed = math.max(FLYSPEED_MIN, valorFlySpeed - FLYSPEED_PASSO)
 	labelFlySpeedValor.Text = tostring(valorFlySpeed)
+	spawnFloatingText("Voo: " .. valorFlySpeed, Color3.fromRGB(56, 189, 248))
 end)
 
 botaoFlySpeedMais.MouseButton1Click:Connect(function()
 	valorFlySpeed = math.min(FLYSPEED_MAX, valorFlySpeed + FLYSPEED_PASSO)
 	labelFlySpeedValor.Text = tostring(valorFlySpeed)
+	spawnFloatingText("Voo: " .. valorFlySpeed, Color3.fromRGB(56, 189, 248))
 end)
 
 -- Max: velocidade do fly direto pro limite máximo
 botaoFlyMax.MouseButton1Click:Connect(function()
 	valorFlySpeed = FLYSPEED_MAX
 	labelFlySpeedValor.Text = tostring(valorFlySpeed)
+	flashVignette(Color3.fromRGB(56, 189, 248))
+	shakePainel(10)
+	spawnFloatingText("🚀 VOO OVERDRIVE: " .. FLYSPEED_MAX, Color3.fromRGB(56, 189, 248))
+	notificar("VOO OVERDRIVE", "Velocidade de voo no máximo de " .. FLYSPEED_MAX .. "!", "🚀", Color3.fromRGB(56, 189, 248))
 end)
 
 -- Normal: velocidade do fly de volta pro padrão
 botaoFlyNormal.MouseButton1Click:Connect(function()
 	valorFlySpeed = FLYSPEED_NORMAL
 	labelFlySpeedValor.Text = tostring(valorFlySpeed)
+	spawnFloatingText("Voo: Normal (50)", Color3.fromRGB(200, 200, 200))
 end)
 
 -- Se o personagem respawnar enquanto voando, desliga o fly (evita bug com o novo boneco)
@@ -2345,10 +2959,16 @@ local function atualizarLista()
 		end)
 
 		botaoFavorito.MouseButton1Click:Connect(function()
+			local nomeAlvo = outroPlayer.DisplayName or outroPlayer.Name
 			if favoritos[outroPlayer.UserId] then
 				favoritos[outroPlayer.UserId] = nil
+				spawnFloatingText("☆ DESAFIXADO", Color3.fromRGB(160, 160, 170))
+				notificar("Lista de Favoritos", nomeAlvo .. " removido dos favoritos.", "☆", Color3.fromRGB(160, 160, 170))
 			else
 				favoritos[outroPlayer.UserId] = true
+				flashVignette(Color3.fromRGB(250, 204, 21))
+				spawnFloatingText("★ FAVORITO FIXADO!", Color3.fromRGB(250, 204, 21))
+				notificar("Lista de Favoritos", nomeAlvo .. " fixado no topo da lista!", "★", Color3.fromRGB(250, 204, 21))
 			end
 			atualizarLista()
 		end)
@@ -2447,7 +3067,13 @@ destruirPainel = function()
 		antiRagdollConexao = nil
 	end
 
-	-- 3) some com tudo (painel + botão flutuante)
+	-- 3) some com tudo (painel + botão flutuante + navegador de servidores + toasts)
+	if janelaServidores and janelaServidores.Parent then
+		janelaServidores:Destroy()
+	end
+	if toastContainer and toastContainer.Parent then
+		toastContainer:Destroy()
+	end
 	if screenGui then
 		screenGui:Destroy()
 	end
