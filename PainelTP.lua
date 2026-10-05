@@ -54,6 +54,11 @@ local noclipConexao = nil
 local noclipLoop = nil -- Stepped: reforça o noclip a cada frame
 local valoresOriginaisCollide = {} -- [BasePart] = CanCollide original
 
+local antiCairAtivo = false
+local antiCairLoop = nil
+local antiCairStateConn = nil
+local ultimoChaoSeguro = nil
+
 local favoritos = {} -- [UserId] = true
 
 local seguindoAlvo = nil -- Player sendo seguido (só um por vez)
@@ -498,24 +503,33 @@ criarBorda(botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
 -- CABEÇALHO — linha 2: barra de ferramentas (Noclip / ESP)
 ------------------------------------------------------------
 local Y_TOOLBAR = 42
-local LARGURA_FERRAMENTA = (LARGURA_UTIL - 8) / 2
+local LARGURA_3 = math.floor((LARGURA_UTIL - 16) / 3) -- (304 - 16) / 3 = 96
 
 local botaoNoclip = novoBotao(
 	frame,
 	"Noclip: OFF",
-	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
+	UDim2.new(0, LARGURA_3, 0, 28),
 	UDim2.new(0, MARGEM, 0, Y_TOOLBAR),
 	Color3.fromRGB(55, 55, 60),
-	12
+	11
 )
 
 local botaoESP = novoBotao(
 	frame,
 	"ESP: OFF",
-	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
-	UDim2.new(0, MARGEM + LARGURA_FERRAMENTA + 8, 0, Y_TOOLBAR),
+	UDim2.new(0, LARGURA_3, 0, 28),
+	UDim2.new(0, MARGEM + LARGURA_3 + 8, 0, Y_TOOLBAR),
 	Color3.fromRGB(55, 55, 60),
-	12
+	11
+)
+
+local botaoAntiCair = novoBotao(
+	frame,
+	"Anti-Cair: OFF",
+	UDim2.new(0, LARGURA_3, 0, 28),
+	UDim2.new(0, MARGEM + (LARGURA_3 + 8) * 2, 0, Y_TOOLBAR),
+	Color3.fromRGB(55, 55, 60),
+	11
 )
 
 ------------------------------------------------------------
@@ -1296,6 +1310,132 @@ player.CharacterAdded:Connect(function(novoChar)
 		task.wait(0.3)
 		ativarNoclip()
 	end
+	if antiCairAtivo then
+		task.wait(0.3)
+		ativarAntiCair()
+	end
+end)
+
+------------------------------------------------------------
+-- ANTI-CAIR (o boneco não cai / não tropeça / anti-ragdoll / anti-queda)
+------------------------------------------------------------
+local function aplicarAntiCairHum(hum)
+	if not hum then return end
+	pcall(function()
+		hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+		hum:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, false)
+	end)
+end
+
+local function restaurarAntiCairHum(hum)
+	if not hum then return end
+	pcall(function()
+		hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
+		hum:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, true)
+	end)
+end
+
+function ativarAntiCair()
+	local myChar = player.Character
+	local humanoid = myChar and myChar:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		aplicarAntiCairHum(humanoid)
+		if antiCairStateConn then
+			antiCairStateConn:Disconnect()
+			antiCairStateConn = nil
+		end
+		antiCairStateConn = humanoid.StateChanged:Connect(function(_, novoEstado)
+			if not antiCairAtivo then return end
+			if novoEstado == Enum.HumanoidStateType.FallingDown
+				or novoEstado == Enum.HumanoidStateType.Ragdoll
+				or novoEstado == Enum.HumanoidStateType.PlatformStanding then
+				pcall(function()
+					humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+				end)
+			end
+		end)
+	end
+
+	if antiCairLoop then
+		antiCairLoop:Disconnect()
+		antiCairLoop = nil
+	end
+
+	antiCairLoop = RunService.Heartbeat:Connect(function()
+		if not antiCairAtivo then return end
+		local char = player.Character
+		if not char then return end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if not hum or not hrp then return end
+
+		-- 1) Impede o boneco de tombar ou desabar (PlatformStand = false, levanta imediatamente se tropeçar)
+		if hum.PlatformStand then
+			hum.PlatformStand = false
+		end
+		local estado = hum:GetState()
+		if estado == Enum.HumanoidStateType.FallingDown or estado == Enum.HumanoidStateType.Ragdoll then
+			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+		end
+
+		-- 2) Mantém o boneco firme em pé (zera giros e inclinações anormais na física)
+		local angVel = hrp.AssemblyAngularVelocity
+		if math.abs(angVel.X) > 5 or math.abs(angVel.Z) > 5 then
+			hrp.AssemblyAngularVelocity = Vector3.new(0, angVel.Y, 0)
+		end
+
+		-- 3) Salva a posição em terra firme sempre que estiver no chão
+		if hum.FloorMaterial ~= Enum.Material.Air and hrp.Position.Y > (workspace.FallenPartsDestroyHeight + 60) then
+			ultimoChaoSeguro = hrp.CFrame
+		end
+
+		-- 4) Amortece quedas extremas para não se esborrachar ao aterrissar
+		if hrp.AssemblyLinearVelocity.Y < -90 then
+			hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, -60, hrp.AssemblyLinearVelocity.Z)
+		end
+
+		-- 5) Anti-void: se despencar no abismo, teletransporta de volta imediatamente com velocidade zerada
+		local limiteQueda = workspace.FallenPartsDestroyHeight + 40
+		if hrp.Position.Y < limiteQueda then
+			hrp.AssemblyLinearVelocity = Vector3.zero
+			if ultimoChaoSeguro then
+				hrp.CFrame = ultimoChaoSeguro + Vector3.new(0, 3, 0)
+			else
+				hrp.CFrame = CFrame.new(hrp.Position.X, 50, hrp.Position.Z)
+			end
+		end
+	end)
+end
+
+function desativarAntiCair()
+	if antiCairLoop then
+		antiCairLoop:Disconnect()
+		antiCairLoop = nil
+	end
+	if antiCairStateConn then
+		antiCairStateConn:Disconnect()
+		antiCairStateConn = nil
+	end
+	local myChar = player.Character
+	local humanoid = myChar and myChar:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		restaurarAntiCairHum(humanoid)
+	end
+end
+
+botaoAntiCair.MouseButton1Click:Connect(function()
+	antiCairAtivo = not antiCairAtivo
+	if antiCairAtivo then
+		botaoAntiCair.Text = "Anti-Cair: ON"
+		botaoAntiCair.TextColor3 = Color3.fromRGB(90, 255, 150)
+		ativarAntiCair()
+	else
+		botaoAntiCair.Text = "Anti-Cair: OFF"
+		botaoAntiCair.TextColor3 = Color3.fromRGB(255, 255, 255)
+		desativarAntiCair()
+	end
 end)
 
 ------------------------------------------------------------
@@ -1710,6 +1850,9 @@ destruirPainel = function()
 	end
 	if noclipAtivo then
 		desativarNoclip()
+	end
+	if antiCairAtivo then
+		desativarAntiCair()
 	end
 
 	-- 2) remove os ESPs e desliga os loops por frame

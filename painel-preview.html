@@ -109,10 +109,11 @@
   .azul { color: #8ec5fc !important; border-color: rgba(142,197,252,.85) !important; }
   .vermelho { color: #ff7878 !important; border-color: rgba(255,120,120,.85) !important; }
 
-  /* linha 1: Noclip / ESP */
-  .toolbar { top: 42px; width: 148px; height: 28px; }
-  .toolbar.esq { left: 8px; }
-  .toolbar.dir { left: 164px; }
+  /* linha 1: Noclip / ESP / Anti-Cair */
+  .toolbar { top: 42px; width: 96px; height: 28px; font-size: 11px; }
+  .toolbar.b1 { left: 8px; }
+  .toolbar.b2 { left: 112px; }
+  .toolbar.b3 { left: 216px; }
 
   /* linha 2: Salvar / Retornar */
   .locais { top: 78px; width: 148px; height: 28px; }
@@ -290,9 +291,10 @@
   <button id="minimizar" title="Minimizar">-</button>
   <button id="fechar" title="Fechar">X</button>
 
-  <!-- linha 1: Noclip / ESP -->
-  <button class="botao toolbar esq" id="noclip">Noclip: OFF</button>
-  <button class="botao toolbar dir" id="esp">ESP: OFF</button>
+  <!-- linha 1: Noclip / ESP / Anti-Cair -->
+  <button class="botao toolbar b1" id="noclip">Noclip: OFF</button>
+  <button class="botao toolbar b2" id="esp">ESP: OFF</button>
+  <button class="botao toolbar b3" id="antiCair">Anti-Cair: OFF</button>
 
   <!-- linha 2: Salvar / Retornar -->
   <button class="botao locais esq" id="salvar">Salvar Local</button>
@@ -443,7 +445,7 @@
   addEventListener('mouseup', () => flutArrastando = false);
 
   // ==========================================
-  // NOCLIP / ESP
+  // NOCLIP / ESP / ANTI-CAIR
   // ==========================================
   const btnNoclip = document.getElementById('noclip');
   btnNoclip.onclick = () => {
@@ -455,6 +457,12 @@
   btnEsp.onclick = () => {
     const ligado = btnEsp.classList.toggle('on');
     btnEsp.textContent = ligado ? 'ESP: ON' : 'ESP: OFF';
+  };
+
+  const btnAntiCair = document.getElementById('antiCair');
+  btnAntiCair.onclick = () => {
+    const ligado = btnAntiCair.classList.toggle('on');
+    btnAntiCair.textContent = ligado ? 'Anti-Cair: ON' : 'Anti-Cair: OFF';
   };
 
   // ==========================================
