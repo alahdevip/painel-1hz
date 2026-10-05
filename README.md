@@ -117,11 +117,25 @@ O painel é organizado em **4 Abas Especializadas**, projetadas para máxima efi
 - **Barra de Pesquisa em Tempo Real**: Filtre instantaneamente por *Username* ou *DisplayName*.
 - **Sistema de Favoritos (★)**: Marque jogadores com a estrela para fixá-los com prioridade no topo da lista.
 - **Identificação Visual**: Foto do avatar/rosto em alta resolução de cada jogador no servidor.
-- **4 Botões de Ação por Cartão**:
+- **4 Botões de Ação Principais**:
   - `TP`: Teleporte instantâneo até o jogador selecionado.
   - `Spec`: Câmera focada em terceira pessoa no jogador com barra de status superior e botão de cancelamento. Reconecta a câmera automaticamente se o alvo respawnar.
   - `Seguir`: Gruda suavemente atrás do jogador mantendo distância configurável (padrão de 3 studs).
   - `Fling`: Arremessa o jogador específico para o vazio.
+- **Interações Avançadas de Jogador**:
+  - `Mochila (Attach)`: Gruda na cabeça ou costas do jogador como carona sem cair.
+  - `Orbit`: Orbita em círculos velozes ao redor do jogador alvo.
+  - `Olhar (Auto-Look)`: Fixa o olhar e a orientação do seu avatar de frente para o jogador.
+  - `Copiar Skin`: Clona instantaneamente as roupas, acessórios, estilo e aparência do jogador no seu personagem via `ApplyDescription`.
+  - `Ver Inventário`: Abre uma janela modal exclusiva listando todas as ferramentas equipadas na mão e guardadas na mochila do jogador, com botão para copiar a ferramenta para si.
+- **Ferramentas Extras da Toolbar**:
+  - `Ghost Mode (Invisibilidade)`: Deixa seu personagem translúcido e furtivo.
+  - `Anti-Cair`: Plataforma de resgate automático para não cair no vazio.
+  - `Anti-Freeze`: Libera o personagem caso congelado por outros jogadores.
+  - `Spinbot`: Rotação contínua em 360 graus.
+  - `Spider-Man`: Escalar qualquer parede vertical livremente.
+  - `Click TP`: Teleporte instantâneo ao clicar em qualquer ponto do chão/cenário.
+  - `Emotes & Danças Raras`: Menu com catálogo de emotes e suporte a qualquer AnimationId customizado.
 
 ---
 

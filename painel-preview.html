@@ -116,10 +116,16 @@
   .toolbar { width: 96px; height: 24px; font-size: 11px; }
   .toolbar.r1 { top: 36px; }
   .toolbar.r2 { top: 64px; }
-  .toolbar.r3 { top: 92px; }
   .toolbar.c1 { left: 8px; }
   .toolbar.c2 { left: 112px; }
   .toolbar.c3 { left: 216px; }
+
+  /* linha 3: Click TP / Fantasma / Rejoin / Servidores */
+  .toolbar.r3 { top: 92px; width: 73px; font-size: 10px; }
+  .toolbar.r3.k1 { left: 8px; }
+  .toolbar.r3.k2 { left: 85px; }
+  .toolbar.r3.k3 { left: 162px; }
+  .toolbar.r3.k4 { left: 239px; }
 
   /* linha 4: Salvar / Retornar / Anti-AFK / Emotes */
   .toolbar.r4 { top: 120px; width: 73px; font-size: 10px; }
@@ -240,7 +246,7 @@
   #lista::-webkit-scrollbar-thumb { background: #5a5a5f; border-radius: 3px; }
 
   .card {
-    flex: 0 0 104px; background: transparent; border-radius: 8px; position: relative;
+    flex: 0 0 130px; background: transparent; border-radius: 8px; position: relative;
     border: 1px solid rgba(255,255,255,0.35);
   }
   .foto {
@@ -284,10 +290,51 @@
     position: static; flex: 1; height: 22px; font-size: 10px;
     background: transparent; border-color: rgba(255, 255, 255, 0.45); color: #fff;
   }
+  .acoes-3 {
+    position: absolute; left: 6px; top: 102px;
+    display: flex; gap: 4px; width: calc(100% - 12px);
+  }
+  .acoes-3 .botao {
+    position: static; flex: 1; height: 22px; font-size: 10px;
+    background: transparent; border-color: rgba(255, 255, 255, 0.45); color: #fff;
+  }
   .acoes-1 .btn-fling:hover {
     color: #ff7878 !important;
     border-color: rgba(255, 120, 120, 0.85) !important;
   }
+  .acoes-3 .btn-copiar-skin:hover, .acoes-3 .btn-ver-itens:hover {
+    filter: brightness(1.3); border-color: rgba(90,255,150,0.85); color: #5aff96;
+  }
+
+  /* janela de inventário */
+  #janelaInventario {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    border-radius: 10px; background: rgba(14, 14, 18, 0.9);
+    display: none; flex-direction: column; z-index: 1100;
+    backdrop-filter: blur(10px);
+  }
+  #janelaInventario.visivel { display: flex; }
+  .inv-lista {
+    flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px;
+    scrollbar-width: thin; scrollbar-color: #5a5a5f transparent;
+  }
+  .card-inv {
+    background: transparent; border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-inv-info { display: flex; align-items: center; gap: 8px; }
+  .card-inv-icone { font-size: 18px; width: 28px; text-align: center; }
+  .card-inv-texto { display: flex; flex-direction: column; gap: 2px; }
+  .card-inv-nome { font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000; }
+  .card-inv-status { font-size: 10px; color: #b4b4be; text-shadow: 0 1px 2px #000; }
+  .card-inv-status.equipado { color: #5aff96; }
+  .btn-copiar-item {
+    width: 60px; height: 22px; font-size: 10px;
+    border: 1px solid rgba(255,255,255,0.45); border-radius: 5px;
+    background: transparent; color: #fff; cursor: pointer; font-family: inherit; font-weight: 700;
+    text-shadow: 0 1px 2px #000;
+  }
+  .btn-copiar-item:hover { filter: brightness(1.3); border-color: rgba(90,255,150,0.85); color: #5aff96; }
 
   /* janela de emotes */
   #janelaEmotes {
@@ -381,10 +428,11 @@
   <button class="botao toolbar r2 c2" id="spinbot">Spinbot: OFF</button>
   <button class="botao toolbar r2 c3" id="spider">Spider: OFF</button>
 
-  <!-- linha 3: Click TP / Rejoin / Servidores -->
-  <button class="botao toolbar r3 c1" id="clickTp">Click TP: OFF</button>
-  <button class="botao toolbar r3 c2" id="rejoin">Rejoin</button>
-  <button class="botao toolbar r3 c3" id="servidores">Servidores</button>
+  <!-- linha 3: Click TP / Fantasma / Rejoin / Servidores -->
+  <button class="botao toolbar r3 k1" id="clickTp">Click TP: OFF</button>
+  <button class="botao toolbar r3 k2" id="fantasma">Ghost: OFF</button>
+  <button class="botao toolbar r3 k3" id="rejoin">Rejoin</button>
+  <button class="botao toolbar r3 k4" id="servidores">Servidores</button>
 
   <!-- linha 4: Salvar / Retornar / Anti-AFK / Emotes -->
   <button class="botao toolbar r4 k1" id="salvar">Salvar</button>
@@ -458,6 +506,16 @@
       <button id="btnTocarCustom" class="botao" style="position:static; width:68px; height:24px;">▶ Tocar</button>
     </div>
     <div class="emotes-grid" id="gridEmotes"></div>
+  </div>
+
+  <!-- janela de inventário -->
+  <div id="janelaInventario">
+    <div class="serv-topo">
+      <button id="btnVoltarInv" class="botao" style="position:static; width:68px; height:24px;">← Voltar</button>
+      <span class="serv-titulo" id="tituloInv">INVENTÁRIO</span>
+      <button id="btnAtualizarInv" class="botao" style="position:static; width:72px; height:24px;">🔄 Atualizar</button>
+    </div>
+    <div class="inv-lista" id="listaInventario"></div>
   </div>
 </div>
 
@@ -605,6 +663,12 @@
     clickTpAtivo = !clickTpAtivo;
     btnClickTp.classList.toggle('on', clickTpAtivo);
     btnClickTp.textContent = clickTpAtivo ? 'Click TP: ON' : 'Click TP: OFF';
+  };
+
+  const btnFantasma = document.getElementById('fantasma');
+  btnFantasma.onclick = () => {
+    const ligado = btnFantasma.classList.toggle('on');
+    btnFantasma.textContent = ligado ? 'Ghost: ON' : 'Ghost: OFF';
   };
 
   // Click TP interativo na tela
@@ -801,6 +865,89 @@
   };
 
   // ==========================================
+  // JANELA DE INVENTÁRIO (INSPECIONAR FERRAMENTAS)
+  // ==========================================
+  const janelaInventario = document.getElementById('janelaInventario');
+  const btnVoltarInv = document.getElementById('btnVoltarInv');
+  const btnAtualizarInv = document.getElementById('btnAtualizarInv');
+  const listaInventario = document.getElementById('listaInventario');
+  const tituloInv = document.getElementById('tituloInv');
+
+  const itensMock = {
+    '6yelt': [
+      { nome: 'Darkheart (Espada Sombria)', icone: '🗡️', equipado: true },
+      { nome: 'Speed Coil', icone: '⚡', equipado: false },
+      { nome: 'Poção de Invisibilidade', icone: '🧪', equipado: false },
+      { nome: 'Maçã Dourada', icone: '🍎', equipado: false },
+    ],
+    '75ef': [
+      { nome: 'Laser Blaster Ray Gun', icone: '🔫', equipado: true },
+      { nome: 'Granada de Plasma', icone: '💣', equipado: false },
+      { nome: 'Gravity Coil', icone: '🌀', equipado: false },
+    ],
+    'Aircale': [
+      { nome: 'Katana Demoníaca', icone: '⚔️', equipado: true },
+      { nome: 'Shuriken de Fogo', icone: '⭐', equipado: false },
+    ],
+    'Vampire99': [
+      { nome: 'Cálice de Sangue', icone: '🍷', equipado: true },
+      { nome: 'Asas de Morcego', icone: '🦇', equipado: false },
+    ],
+    'GothicGirl': [
+      { nome: 'Rosa Negra', icone: '🌹', equipado: true },
+      { nome: 'Livro de Feitiços', icone: '📖', equipado: false },
+    ],
+  };
+
+  let jogadorInspecionadoPreview = null;
+
+  function renderizarInventario(nome) {
+    jogadorInspecionadoPreview = nome;
+    tituloInv.textContent = 'INVENTÁRIO: ' + nome;
+    listaInventario.innerHTML = '';
+
+    const itens = itensMock[nome] || [
+      { nome: 'Espada Padrão', icone: '🗡️', equipado: true },
+      { nome: 'Lanterna', icone: '🔦', equipado: false },
+    ];
+
+    itens.forEach(it => {
+      const card = document.createElement('div');
+      card.className = 'card-inv';
+      card.innerHTML = `
+        <div class="card-inv-info">
+          <div class="card-inv-icone">${it.icone}</div>
+          <div class="card-inv-texto">
+            <div class="card-inv-nome">${it.nome}</div>
+            <div class="card-inv-status ${it.equipado ? 'equipado' : ''}">${it.equipado ? '⚔️ Equipado (Na Mão)' : '🎒 Na Mochila'}</div>
+          </div>
+        </div>
+        <button class="btn-copiar-item">Copiar</button>
+      `;
+      const btnCopiar = card.querySelector('.btn-copiar-item');
+      btnCopiar.onclick = () => {
+        btnCopiar.textContent = 'Copiado!';
+        btnCopiar.style.color = '#5aff96';
+        setTimeout(() => {
+          btnCopiar.textContent = 'Copiar';
+          btnCopiar.style.color = '#fff';
+        }, 1000);
+      };
+      listaInventario.appendChild(card);
+    });
+  }
+
+  btnVoltarInv.onclick = () => {
+    janelaInventario.classList.remove('visivel');
+    jogadorInspecionadoPreview = null;
+  };
+  btnAtualizarInv.onclick = () => {
+    if (jogadorInspecionadoPreview) {
+      renderizarInventario(jogadorInspecionadoPreview);
+    }
+  };
+
+  // ==========================================
   // CONTROLES DE MOVIMENTO
   // ==========================================
   const configs = {
@@ -909,6 +1056,10 @@
           <button class="botao btn-attach ${attachEsse ? 'on' : ''}">${attachEsse ? 'Mochila: ON' : 'Mochila'}</button>
           <button class="botao btn-orbit ${orbitEsse ? 'on' : ''}">${orbitEsse ? 'Orbit: ON' : 'Orbit'}</button>
           <button class="botao btn-look ${lookEsse ? 'on' : ''}">${lookEsse ? 'Olhar: ON' : 'Olhar'}</button>
+        </div>
+        <div class="acoes-3">
+          <button class="botao btn-copiar-skin">Copiar Skin</button>
+          <button class="botao btn-ver-itens">Ver Inventário</button>
         </div>`;
 
       // Estrela de favorito
@@ -970,6 +1121,24 @@
       btnLook.onclick = () => {
         lookAtual = (lookAtual === j.nome) ? null : j.nome;
         pintar(document.getElementById('busca').value);
+      };
+
+      // Copiar Skin
+      const btnCopiarSkin = card.querySelector('.btn-copiar-skin');
+      btnCopiarSkin.onclick = () => {
+        btnCopiarSkin.textContent = 'Copiado! ✓';
+        btnCopiarSkin.style.color = '#5aff96';
+        setTimeout(() => {
+          btnCopiarSkin.textContent = 'Copiar Skin';
+          btnCopiarSkin.style.color = '#fff';
+        }, 1200);
+      };
+
+      // Ver Inventário
+      const btnVerItens = card.querySelector('.btn-ver-itens');
+      btnVerItens.onclick = () => {
+        janelaInventario.classList.add('visivel');
+        renderizarInventario(j.nome);
       };
 
       listaEl.appendChild(card);

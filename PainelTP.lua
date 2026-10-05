@@ -92,6 +92,10 @@ local autoLookLoop = nil
 
 local animacaoAtualTrack = nil
 
+local fantasmaAtivo = false
+local partesTransparenciaOriginal = {}
+local jogadorInspecionadoAtual = nil
+
 local favoritos = {} -- [UserId] = true
 
 local seguindoAlvo = nil -- Player sendo seguido (só um por vez)
@@ -599,36 +603,46 @@ local botaoSpider = novoBotao(
 	11
 )
 
--- Linha 3: Click TP / Rejoin / Servidores
+local LARGURA_4 = math.floor((LARGURA_UTIL - 12) / 4) -- (304 - 12) / 4 = 73
+
+-- Linha 3: Click TP / Fantasma / Rejoin / Servidores
 local botaoClickTp = novoBotao(
 	frame,
 	"Click TP: OFF",
-	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
 	UDim2.new(0, MARGEM, 0, Y_ROW3),
 	Color3.fromRGB(55, 55, 60),
-	11
+	10
+)
+
+local botaoFantasma = novoBotao(
+	frame,
+	"Ghost: OFF",
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_4 + 4) * 1, 0, Y_ROW3),
+	Color3.fromRGB(55, 55, 60),
+	10
 )
 
 local botaoRejoin = novoBotao(
 	frame,
 	"Rejoin",
-	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
-	UDim2.new(0, MARGEM + LARGURA_3 + 8, 0, Y_ROW3),
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_4 + 4) * 2, 0, Y_ROW3),
 	Color3.fromRGB(55, 55, 60),
-	11
+	10
 )
 
 local botaoServidores = novoBotao(
 	frame,
 	"Servidores",
-	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
-	UDim2.new(0, MARGEM + (LARGURA_3 + 8) * 2, 0, Y_ROW3),
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_4 + 4) * 3, 0, Y_ROW3),
 	Color3.fromRGB(55, 55, 60),
-	11
+	10
 )
 
 -- Linha 4: Salvar / Retornar / Anti-AFK / Emotes
-local LARGURA_4 = math.floor((LARGURA_UTIL - 12) / 4) -- (304 - 12) / 4 = 73
 
 local botaoSalvarLocal = novoBotao(
 	frame,
@@ -1698,6 +1712,57 @@ botaoClickTp.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
+-- FANTASMA / INVISIBILIDADE (avatar translúcido/invisível)
+------------------------------------------------------------
+local function aplicarFantasmaChar(char)
+	if not char then return end
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+			if partesTransparenciaOriginal[part] == nil then
+				partesTransparenciaOriginal[part] = part.Transparency
+			end
+			part.Transparency = 0.8
+		elseif part:IsA("Decal") then
+			if partesTransparenciaOriginal[part] == nil then
+				partesTransparenciaOriginal[part] = part.Transparency
+			end
+			part.Transparency = 0.85
+		end
+	end
+end
+
+local function restaurarFantasmaChar()
+	for part, transp in pairs(partesTransparenciaOriginal) do
+		if part and part.Parent then
+			pcall(function() part.Transparency = transp end)
+		end
+	end
+	partesTransparenciaOriginal = {}
+end
+
+local function ativarFantasma()
+	local char = player.Character
+	if char then aplicarFantasmaChar(char) end
+end
+
+local function desativarFantasma()
+	restaurarFantasmaChar()
+end
+
+botaoFantasma.MouseButton1Click:Connect(function()
+	fantasmaAtivo = not fantasmaAtivo
+	if fantasmaAtivo then
+		botaoFantasma.Text = "Ghost: ON"
+		botaoFantasma.TextColor3 = Color3.fromRGB(90, 255, 150)
+		ativarFantasma()
+	else
+		botaoFantasma.Text = "Ghost: OFF"
+		botaoFantasma.TextColor3 = Color3.fromRGB(255, 255, 255)
+		desativarFantasma()
+	end
+end)
+
+------------------------------------------------------------
 -- REJOIN (reconectar ao mesmo servidor)
 ------------------------------------------------------------
 local TeleportService = game:GetService("TeleportService")
@@ -2268,6 +2333,227 @@ botaoEmotes.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
+-- COPIAR SKIN (Clona a aparência, roupas e acessórios do jogador)
+------------------------------------------------------------
+local function copiarSkin(alvo)
+	local alvoChar = alvo and alvo.Character
+	local myChar = player.Character
+	if not alvoChar or not myChar then return end
+	local myHum = myChar:FindFirstChildOfClass("Humanoid")
+	if not myHum then return end
+
+	local ok = pcall(function()
+		local desc = Players:GetHumanoidDescriptionFromUserId(alvo.UserId)
+		if desc then
+			myHum:ApplyDescription(desc)
+		end
+	end)
+
+	if not ok then
+		pcall(function()
+			for _, item in ipairs(myChar:GetChildren()) do
+				if item:IsA("Accessory") or item:IsA("Clothing") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") then
+					item:Destroy()
+				end
+			end
+			for _, item in ipairs(alvoChar:GetChildren()) do
+				if item:IsA("Accessory") or item:IsA("Clothing") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") then
+					item:Clone().Parent = myChar
+				end
+			end
+		end)
+	end
+end
+
+------------------------------------------------------------
+-- JANELA DE INVENTÁRIO (Inspecionar ferramentas e mochila)
+------------------------------------------------------------
+local janelaInventario = Instance.new("Frame")
+janelaInventario.Name = "JanelaInventario"
+janelaInventario.Size = UDim2.new(1, 0, 1, 0)
+janelaInventario.Position = UDim2.new(0, 0, 0, 0)
+janelaInventario.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+janelaInventario.BackgroundTransparency = 0.15
+janelaInventario.Visible = false
+janelaInventario.ZIndex = 25
+janelaInventario.Parent = frame
+criarUICorner(janelaInventario, 10)
+
+local topoInv = Instance.new("Frame")
+topoInv.Size = UDim2.new(1, 0, 0, 36)
+topoInv.BackgroundTransparency = 1
+topoInv.ZIndex = 26
+topoInv.Parent = janelaInventario
+
+local btnVoltarInv = novoBotao(topoInv, "← Voltar", UDim2.new(0, 68, 0, 24), UDim2.new(0, 8, 0, 6), Color3.fromRGB(50, 50, 55), 11)
+btnVoltarInv.ZIndex = 27
+
+local tituloInv = Instance.new("TextLabel")
+tituloInv.Size = UDim2.new(1, -160, 0, 24)
+tituloInv.Position = UDim2.new(0, 80, 0, 6)
+tituloInv.BackgroundTransparency = 1
+tituloInv.Text = "INVENTÁRIO"
+tituloInv.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(tituloInv, 13)
+tituloInv.TextStrokeTransparency = 0.2
+tituloInv.ZIndex = 27
+tituloInv.Parent = topoInv
+
+local btnAtualizarInv = novoBotao(topoInv, "🔄 Atualizar", UDim2.new(0, 72, 0, 24), UDim2.new(1, -80, 0, 6), Color3.fromRGB(50, 50, 55), 11)
+btnAtualizarInv.ZIndex = 27
+
+local scrollInventario = Instance.new("ScrollingFrame")
+scrollInventario.Size = UDim2.new(1, -16, 1, -44)
+scrollInventario.Position = UDim2.new(0, 8, 0, 38)
+scrollInventario.BackgroundTransparency = 1
+scrollInventario.BorderSizePixel = 0
+scrollInventario.ScrollBarThickness = 4
+scrollInventario.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 95)
+scrollInventario.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollInventario.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollInventario.ZIndex = 26
+scrollInventario.Parent = janelaInventario
+
+local listLayoutInv = Instance.new("UIListLayout")
+listLayoutInv.Padding = UDim.new(0, 6)
+listLayoutInv.SortOrder = Enum.SortOrder.LayoutOrder
+listLayoutInv.Parent = scrollInventario
+
+local function renderizarInventario(alvo)
+	jogadorInspecionadoAtual = alvo
+	for _, child in ipairs(scrollInventario:GetChildren()) do
+		if child:IsA("Frame") or child:IsA("TextLabel") then
+			child:Destroy()
+		end
+	end
+
+	local nomeAlvo = alvo and (alvo.DisplayName or alvo.Name) or "-"
+	tituloInv.Text = "INVENTÁRIO: " .. nomeAlvo
+
+	if not alvo or not alvo.Parent then
+		local labelVazio = Instance.new("TextLabel")
+		labelVazio.Size = UDim2.new(1, 0, 0, 40)
+		labelVazio.BackgroundTransparency = 1
+		labelVazio.Text = "Jogador saiu do jogo."
+		labelVazio.TextColor3 = Color3.fromRGB(180, 180, 185)
+		aplicarFonte(labelVazio, 12)
+		labelVazio.ZIndex = 27
+		labelVazio.Parent = scrollInventario
+		return
+	end
+
+	local itensEncontrados = {}
+
+	-- Ferramentas na mão
+	local char = alvo.Character
+	if char then
+		for _, child in ipairs(char:GetChildren()) do
+			if child:IsA("Tool") then
+				table.insert(itensEncontrados, { tool = child, status = "Equipado (Na Mão)" })
+			end
+		end
+	end
+
+	-- Ferramentas na mochila
+	local bp = alvo:FindFirstChildOfClass("Backpack")
+	if bp then
+		for _, child in ipairs(bp:GetChildren()) do
+			if child:IsA("Tool") then
+				table.insert(itensEncontrados, { tool = child, status = "Na Mochila" })
+			end
+		end
+	end
+
+	if #itensEncontrados == 0 then
+		local labelVazio = Instance.new("TextLabel")
+		labelVazio.Size = UDim2.new(1, 0, 0, 50)
+		labelVazio.BackgroundTransparency = 1
+		labelVazio.Text = "Nenhum item ou ferramenta no inventário."
+		labelVazio.TextColor3 = Color3.fromRGB(180, 180, 185)
+		aplicarFonte(labelVazio, 12)
+		labelVazio.TextStrokeTransparency = 0.2
+		labelVazio.ZIndex = 27
+		labelVazio.Parent = scrollInventario
+		return
+	end
+
+	for i, itemData in ipairs(itensEncontrados) do
+		local tool = itemData.tool
+		local cardItem = Instance.new("Frame")
+		cardItem.Size = UDim2.new(1, 0, 0, 44)
+		cardItem.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+		cardItem.BackgroundTransparency = 1
+		cardItem.LayoutOrder = i
+		cardItem.ZIndex = 27
+		cardItem.Parent = scrollInventario
+		criarUICorner(cardItem, 6)
+		criarBorda(cardItem, Color3.fromRGB(255, 255, 255), 0.5)
+
+		local iconeItem = Instance.new("ImageLabel")
+		iconeItem.Size = UDim2.new(0, 32, 0, 32)
+		iconeItem.Position = UDim2.new(0, 6, 0.5, -16)
+		iconeItem.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+		iconeItem.BackgroundTransparency = 0.3
+		iconeItem.Image = (tool.TextureId and tool.TextureId ~= "") and tool.TextureId or "rbxassetid://10849911878"
+		iconeItem.ZIndex = 28
+		iconeItem.Parent = cardItem
+		criarUICorner(iconeItem, 4)
+
+		local nomeItem = Instance.new("TextLabel")
+		nomeItem.Size = UDim2.new(1, -120, 0, 18)
+		nomeItem.Position = UDim2.new(0, 44, 0, 4)
+		nomeItem.BackgroundTransparency = 1
+		nomeItem.Text = tool.Name
+		nomeItem.TextXAlignment = Enum.TextXAlignment.Left
+		nomeItem.TextColor3 = Color3.fromRGB(255, 255, 255)
+		aplicarFonte(nomeItem, 12)
+		nomeItem.TextStrokeTransparency = 0.2
+		nomeItem.ZIndex = 28
+		nomeItem.Parent = cardItem
+
+		local statusItem = Instance.new("TextLabel")
+		statusItem.Size = UDim2.new(1, -120, 0, 16)
+		statusItem.Position = UDim2.new(0, 44, 0, 22)
+		statusItem.BackgroundTransparency = 1
+		statusItem.Text = (itemData.status == "Equipado (Na Mão)") and "⚔️ " .. itemData.status or "🎒 " .. itemData.status
+		statusItem.TextXAlignment = Enum.TextXAlignment.Left
+		statusItem.TextColor3 = (itemData.status == "Equipado (Na Mão)") and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(180, 180, 190)
+		aplicarFonte(statusItem, 11)
+		statusItem.TextStrokeTransparency = 0.2
+		statusItem.ZIndex = 28
+		statusItem.Parent = cardItem
+
+		local btnPegar = novoBotao(cardItem, "Copiar", UDim2.new(0, 60, 0, 24), UDim2.new(1, -66, 0.5, -12), Color3.fromRGB(50, 50, 55), 10)
+		btnPegar.ZIndex = 28
+		btnPegar.MouseButton1Click:Connect(function()
+			pcall(function()
+				local clone = tool:Clone()
+				clone.Parent = player:FindFirstChildOfClass("Backpack") or player.Character
+			end)
+			btnPegar.Text = "Copiado!"
+			btnPegar.TextColor3 = Color3.fromRGB(90, 255, 150)
+			task.delay(1, function()
+				if btnPegar and btnPegar.Parent then
+					btnPegar.Text = "Copiar"
+					btnPegar.TextColor3 = Color3.fromRGB(255, 255, 255)
+				end
+			end)
+		end)
+	end
+end
+
+btnVoltarInv.MouseButton1Click:Connect(function()
+	janelaInventario.Visible = false
+	jogadorInspecionadoAtual = nil
+end)
+
+btnAtualizarInv.MouseButton1Click:Connect(function()
+	if jogadorInspecionadoAtual then
+		renderizarInventario(jogadorInspecionadoAtual)
+	end
+end)
+
+------------------------------------------------------------
 -- SPEED (velocidade de andar ajustável)
 ------------------------------------------------------------
 local function aplicarSpeed()
@@ -2497,12 +2783,13 @@ end)
 ------------------------------------------------------------
 -- LISTA DE JOGADORES (favoritos primeiro, cartão organizado)
 ------------------------------------------------------------
-local ALTURA_LINHA = 104
+local ALTURA_LINHA = 130
 local LARGURA_FOTO = 40
 local LARGURA_ESTRELA = 26
 local LARGURA_LINHA_INTERNA = LARGURA_UTIL - 4 -- pequena folga p/ scrollbar
 local LARGURA_BOTAO_ACAO_4 = math.floor((LARGURA_LINHA_INTERNA - 12 - 6) / 4) -- 4 botões: 70px
 local LARGURA_BOTAO_ACAO_3 = math.floor((LARGURA_LINHA_INTERNA - 12 - 4) / 3) -- 3 botões: 94px
+local LARGURA_BOTAO_ACAO_2 = math.floor((LARGURA_LINHA_INTERNA - 12 - 4) / 2) -- 2 botões: 142px
 local ALTURA_BTN_ACAO = 22
 
 local function atualizarLista()
@@ -2667,6 +2954,27 @@ local function atualizarLista()
 		)
 		botaoLook.TextColor3 = lookEsse and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
 
+		-- Linha 3 de botões de ação (Copiar Skin / Ver Inventário)
+		local Y_ACOES_3 = Y_ACOES_2 + ALTURA_BTN_ACAO + 4 -- 102
+
+		local botaoCopiarSkin = novoBotao(
+			linha,
+			"Copiar Skin",
+			UDim2.new(0, LARGURA_BOTAO_ACAO_2, 0, ALTURA_BTN_ACAO),
+			UDim2.new(0, 6, 0, Y_ACOES_3),
+			Color3.fromRGB(55, 55, 60),
+			10
+		)
+
+		local botaoVerItens = novoBotao(
+			linha,
+			"Ver Inventário",
+			UDim2.new(0, LARGURA_BOTAO_ACAO_2, 0, ALTURA_BTN_ACAO),
+			UDim2.new(0, 6 + LARGURA_BOTAO_ACAO_2 + 4, 0, Y_ACOES_3),
+			Color3.fromRGB(55, 55, 60),
+			10
+		)
+
 		botaoFling.MouseButton1Click:Connect(function()
 			botaoFling.Text = "Fling..."
 			botaoFling.TextColor3 = Color3.fromRGB(255, 120, 120)
@@ -2730,6 +3038,23 @@ local function atualizarLista()
 			atualizarLista()
 		end)
 
+		botaoCopiarSkin.MouseButton1Click:Connect(function()
+			copiarSkin(outroPlayer)
+			botaoCopiarSkin.Text = "Copiado! ✓"
+			botaoCopiarSkin.TextColor3 = Color3.fromRGB(90, 255, 150)
+			task.delay(1.5, function()
+				if botaoCopiarSkin and botaoCopiarSkin.Parent then
+					botaoCopiarSkin.Text = "Copiar Skin"
+					botaoCopiarSkin.TextColor3 = Color3.fromRGB(255, 255, 255)
+				end
+			end)
+		end)
+
+		botaoVerItens.MouseButton1Click:Connect(function()
+			janelaInventario.Visible = true
+			renderizarInventario(outroPlayer)
+		end)
+
 		conectarRespawnEspectado(outroPlayer)
 	end
 end
@@ -2778,6 +3103,7 @@ destruirPainel = function()
 	end
 	clickTpAtivo = false
 	desativarAntiAfk()
+	desativarFantasma()
 	pararAttach()
 	pararOrbit()
 	pararAutoLook()
