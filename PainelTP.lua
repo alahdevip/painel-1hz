@@ -112,12 +112,14 @@ local CFG = {
 	SPEED_MIN = 8, SPEED_MAX = 1000, SPEED_PASSO = 20,
 	JUMP_MIN = 20, JUMP_MAX = 1000, JUMP_PASSO = 50,
 	FLYSPEED_MIN = 10, FLYSPEED_MAX = 1000, FLYSPEED_PASSO = 50,
+	SPIN_NORMAL = 28, SPIN_MIN = 5, SPIN_MAX = 360, SPIN_PASSO = 10,
 	ORBIT_RAIO = 6.5, ORBIT_ALTURA = 1.5, ORBIT_VELOCIDADE = 9,
 	DISTANCIA_MAXIMA_SEGUIR = 3,
 }
 local valorSpeed = CFG.SPEED_NORMAL
 local valorJump = CFG.JUMP_NORMAL
 local valorFlySpeed = CFG.FLYSPEED_NORMAL
+local valorSpinSpeed = CFG.SPIN_NORMAL
 
 local flyAtivo = false
 local flyBodyVelocity = nil
@@ -132,7 +134,7 @@ local destruirPainel -- definida no fim do script: clique no logo desinjeta tudo
 -- DIMENSÕES DO PAINEL (usadas para alinhar tudo certinho)
 ------------------------------------------------------------
 local LARGURA_PAINEL = 320
-local ALTURA_PAINEL = 556
+local ALTURA_PAINEL = 584
 local TAMANHO_ICONE = 50
 local MARGEM = 8
 local LARGURA_UTIL = LARGURA_PAINEL - (MARGEM * 2) -- área interna útil
@@ -779,10 +781,27 @@ UI.botaoFlyToggle.Parent = linhaFly
 criarUICorner(UI.botaoFlyToggle, 5)
 criarBorda(UI.botaoFlyToggle)
 
+-- Linha Spin / Giro (label + botão liga/desliga + controles de velocidade)
+local Y_LINHA_SPIN = Y_LINHA_FLY + ALTURA_LINHA_MOV + GAP_LINHA_MOV
+local linhaSpin; linhaSpin, UI.botaoSpinSpeedMenos, UI.labelSpinSpeedValor, UI.botaoSpinSpeedMais, UI.botaoSpinMax, UI.botaoSpinNormal = criarLinhaAjuste(Y_LINHA_SPIN, "Giro", valorSpinSpeed, "°")
+
+UI.botaoSpinToggle = Instance.new("TextButton")
+UI.botaoSpinToggle.Size = UDim2.new(0, 28, 0, 18)
+UI.botaoSpinToggle.Position = UDim2.new(0, 164, 0.5, -9)
+UI.botaoSpinToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+UI.botaoSpinToggle.BackgroundTransparency = 1
+UI.botaoSpinToggle.Text = "OFF"
+UI.botaoSpinToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(UI.botaoSpinToggle, 10)
+UI.botaoSpinToggle.TextStrokeTransparency = 0.2
+UI.botaoSpinToggle.Parent = linhaSpin
+criarUICorner(UI.botaoSpinToggle, 5)
+criarBorda(UI.botaoSpinToggle)
+
 ------------------------------------------------------------
 -- CAIXA DE BUSCA (filtra a lista por nome digitado)
 ------------------------------------------------------------
-local Y_BUSCA = Y_LINHA_FLY + ALTURA_LINHA_MOV + 8 -- logo abaixo da seção Movimento
+local Y_BUSCA = Y_LINHA_SPIN + ALTURA_LINHA_MOV + 8 -- logo abaixo da seção Movimento
 
 UI.caixaBusca = Instance.new("TextBox")
 UI.caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 26)
@@ -1774,8 +1793,29 @@ UI.botaoAntiFreeze.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
--- SPINBOT (giro rápido em 360°)
+-- SPINBOT (giro rápido em 360° com controle de velocidade)
 ------------------------------------------------------------
+local function atualizarTextoSpin()
+	if spinbotAtivo then
+		UI.botaoSpinbot.Text = "Spin: " .. valorSpinSpeed .. "°"
+		UI.botaoSpinbot.TextColor3 = Color3.fromRGB(90, 255, 150)
+		if UI.botaoSpinToggle then
+			UI.botaoSpinToggle.Text = "ON"
+			UI.botaoSpinToggle.TextColor3 = Color3.fromRGB(90, 255, 150)
+		end
+	else
+		UI.botaoSpinbot.Text = "Spin: OFF"
+		UI.botaoSpinbot.TextColor3 = Color3.fromRGB(255, 255, 255)
+		if UI.botaoSpinToggle then
+			UI.botaoSpinToggle.Text = "OFF"
+			UI.botaoSpinToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end
+	if UI.labelSpinSpeedValor then
+		UI.labelSpinSpeedValor.Text = tostring(valorSpinSpeed) .. "°"
+	end
+end
+
 local function ativarSpinbot()
 	if spinbotLoop then spinbotLoop:Disconnect() end
 	spinbotLoop = RunService.RenderStepped:Connect(function()
@@ -1783,7 +1823,7 @@ local function ativarSpinbot()
 		local char = player.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 		if hrp then
-			hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(28), 0)
+			hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(valorSpinSpeed), 0)
 		end
 	end)
 end
@@ -1798,14 +1838,21 @@ end
 UI.botaoSpinbot.MouseButton1Click:Connect(function()
 	spinbotAtivo = not spinbotAtivo
 	if spinbotAtivo then
-		UI.botaoSpinbot.Text = "Spinbot: ON"
-		UI.botaoSpinbot.TextColor3 = Color3.fromRGB(90, 255, 150)
 		ativarSpinbot()
 	else
-		UI.botaoSpinbot.Text = "Spinbot: OFF"
-		UI.botaoSpinbot.TextColor3 = Color3.fromRGB(255, 255, 255)
 		desativarSpinbot()
 	end
+	atualizarTextoSpin()
+end)
+
+-- Botão direito na toolbar altera a velocidade rápido
+UI.botaoSpinbot.MouseButton2Click:Connect(function()
+	local proximo = valorSpinSpeed + 20
+	if proximo > 150 then
+		proximo = CFG.SPIN_MIN
+	end
+	valorSpinSpeed = proximo
+	atualizarTextoSpin()
 end)
 
 ------------------------------------------------------------
@@ -2931,6 +2978,39 @@ end)
 UI.botaoFlyNormal.MouseButton1Click:Connect(function()
 	valorFlySpeed = CFG.FLYSPEED_NORMAL
 	UI.labelFlySpeedValor.Text = tostring(valorFlySpeed)
+end)
+
+------------------------------------------------------------
+-- CONTROLES DE GIRO (SPINBOT)
+------------------------------------------------------------
+UI.botaoSpinToggle.MouseButton1Click:Connect(function()
+	spinbotAtivo = not spinbotAtivo
+	if spinbotAtivo then
+		ativarSpinbot()
+	else
+		desativarSpinbot()
+	end
+	atualizarTextoSpin()
+end)
+
+UI.botaoSpinSpeedMenos.MouseButton1Click:Connect(function()
+	valorSpinSpeed = math.max(CFG.SPIN_MIN, valorSpinSpeed - CFG.SPIN_PASSO)
+	atualizarTextoSpin()
+end)
+
+UI.botaoSpinSpeedMais.MouseButton1Click:Connect(function()
+	valorSpinSpeed = math.min(CFG.SPIN_MAX, valorSpinSpeed + CFG.SPIN_PASSO)
+	atualizarTextoSpin()
+end)
+
+UI.botaoSpinMax.MouseButton1Click:Connect(function()
+	valorSpinSpeed = 150
+	atualizarTextoSpin()
+end)
+
+UI.botaoSpinNormal.MouseButton1Click:Connect(function()
+	valorSpinSpeed = CFG.SPIN_NORMAL
+	atualizarTextoSpin()
 end)
 
 -- Se o personagem respawnar enquanto voando, desliga o fly (evita bug com o novo boneco)

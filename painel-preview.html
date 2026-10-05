@@ -47,8 +47,8 @@
 
   /* ===== painel ===== */
   #painel {
-    position: absolute; left: 90px; top: 50%; margin-top: -278px;
-    width: 320px; height: 556px;
+    position: absolute; left: 90px; top: 50%; margin-top: -292px;
+    width: 320px; height: 584px;
     background: #18181c; border-radius: 10px;
     box-shadow: 0 12px 45px rgba(0,0,0,.75);
     overflow: hidden; display: none;
@@ -154,6 +154,7 @@
   .linhaMov.v1 { top: 168px; }
   .linhaMov.v2 { top: 195px; }
   .linhaMov.v3 { top: 222px; }
+  .linhaMov.v4 { top: 249px; }
 
   .linhaMov .lbl {
     position: absolute; left: 8px; top: 0; width: 70px; height: 100%;
@@ -190,20 +191,20 @@
     font-size: 12px; font-weight: 700;
     text-shadow: 0 1px 2px rgba(0,0,0,.95), 0 0 1px #000;
   }
-  #flyToggle {
+  #flyToggle, #spinToggle {
     position: absolute; left: 164px; top: 3px; width: 28px; height: 18px;
     border: 1px solid rgba(255,255,255,.45); border-radius: 5px; background: transparent;
     color: #fff; font-weight: 700; font-size: 10px; cursor: pointer;
     text-shadow: 0 1px 2px rgba(0,0,0,.95), 0 0 1px #000;
   }
-  #flyToggle.on {
+  #flyToggle.on, #spinToggle.on {
     color: #5aff96 !important;
     border-color: rgba(90,255,150,.85) !important;
   }
 
   /* busca */
   #busca {
-    position: absolute; left: 8px; top: 254px; width: 304px; height: 26px;
+    position: absolute; left: 8px; top: 281px; width: 304px; height: 26px;
     background: transparent; border: 1px solid rgba(255,255,255,0.45); border-radius: 6px;
     color: #fff; font-family: inherit; font-size: 12px;
     padding-left: 10px; outline: none;
@@ -213,7 +214,7 @@
 
   /* barra espectando */
   #barraEspectando {
-    position: absolute; left: 8px; top: 286px; width: 304px; height: 26px;
+    position: absolute; left: 8px; top: 313px; width: 304px; height: 26px;
     background: transparent; border: 1px solid rgba(255,255,255,0.45);
     border-radius: 6px; display: none; align-items: center; padding: 0 8px; gap: 8px;
   }
@@ -241,7 +242,7 @@
 
   /* lista de jogadores */
   #lista {
-    position: absolute; left: 8px; top: 286px;
+    position: absolute; left: 8px; top: 313px;
     width: 304px; height: 262px;
     overflow-y: auto; overflow-x: hidden;
     display: flex; flex-direction: column; gap: 6px;
@@ -478,6 +479,16 @@
     <button class="btnMais" data-alvo="fly" data-dir="+">+</button>
   </div>
 
+  <div class="linhaMov v4">
+    <span class="lbl">Giro</span>
+    <button id="spinToggle">OFF</button>
+    <button class="btnMax" data-alvo="spin" data-dir="max">Max</button>
+    <button class="btnNormal" data-alvo="spin" data-dir="normal">Normal</button>
+    <button class="btnMenos" data-alvo="spin" data-dir="-">-</button>
+    <span class="valor" id="vSpin">28°</span>
+    <button class="btnMais" data-alvo="spin" data-dir="+">+</button>
+  </div>
+
   <!-- busca -->
   <input id="busca" placeholder="Pesquisar jogador...">
 
@@ -659,10 +670,38 @@
   };
 
   const btnSpinbot = document.getElementById('spinbot');
+  let spinAtivo = false;
+  function atualizarTextoSpinbotPreview() {
+    const val = parseInt(document.getElementById('vSpin').textContent, 10);
+    const spinToggle = document.getElementById('spinToggle');
+    btnSpinbot.classList.toggle('on', spinAtivo);
+    if (spinToggle) {
+      spinToggle.classList.toggle('on', spinAtivo);
+      spinToggle.textContent = spinAtivo ? 'ON' : 'OFF';
+    }
+    btnSpinbot.textContent = spinAtivo ? ('Spin: ' + val + '°') : 'Spin: OFF';
+  }
+
   btnSpinbot.onclick = () => {
-    const ligado = btnSpinbot.classList.toggle('on');
-    btnSpinbot.textContent = ligado ? 'Spinbot: ON' : 'Spinbot: OFF';
+    spinAtivo = !spinAtivo;
+    atualizarTextoSpinbotPreview();
   };
+
+  btnSpinbot.oncontextmenu = (e) => {
+    e.preventDefault();
+    let val = parseInt(document.getElementById('vSpin').textContent, 10);
+    val = (val >= 150) ? 20 : (val + 20);
+    document.getElementById('vSpin').textContent = val + '°';
+    atualizarTextoSpinbotPreview();
+  };
+
+  const btnSpinToggle = document.getElementById('spinToggle');
+  if (btnSpinToggle) {
+    btnSpinToggle.onclick = () => {
+      spinAtivo = !spinAtivo;
+      atualizarTextoSpinbotPreview();
+    };
+  }
 
   const btnSpider = document.getElementById('spider');
   btnSpider.onclick = () => {
@@ -964,9 +1003,10 @@
   // CONTROLES DE MOVIMENTO
   // ==========================================
   const configs = {
-    speed: { el: 'vSpeed', nome: 'Velocidade', min: 8,  max: 1000, passo: 20, normal: 16 },
-    jump:  { el: 'vJump',  nome: 'Salto',      min: 20, max: 1000, passo: 50, normal: 50 },
-    fly:   { el: 'vFly',   nome: 'Voar',       min: 10, max: 1000, passo: 50, normal: 50 },
+    speed: { el: 'vSpeed', nome: 'Velocidade', min: 8,  max: 1000, passo: 20, normal: 16, sufixo: '' },
+    jump:  { el: 'vJump',  nome: 'Salto',      min: 20, max: 1000, passo: 50, normal: 50, sufixo: '' },
+    fly:   { el: 'vFly',   nome: 'Voar',       min: 10, max: 1000, passo: 50, normal: 50, sufixo: '' },
+    spin:  { el: 'vSpin',  nome: 'Giro',       min: 5,  max: 360,  passo: 10, normal: 28, sufixo: '°' },
   };
 
   document.querySelectorAll('[data-alvo]').forEach(btn => {
@@ -977,7 +1017,7 @@
       let v = parseInt(el.textContent, 10);
 
       if (btn.dataset.dir === 'max') {
-        v = c.max;
+        v = (alvo === 'spin') ? 150 : c.max;
       } else if (btn.dataset.dir === 'normal') {
         v = c.normal;
       } else if (btn.dataset.dir === '+') {
@@ -986,7 +1026,10 @@
         v -= c.passo;
       }
 
-      el.textContent = Math.max(c.min, Math.min(c.max, v));
+      el.textContent = Math.max(c.min, Math.min(c.max, v)) + (c.sufixo || '');
+      if (alvo === 'spin') {
+        atualizarTextoSpinbotPreview();
+      }
     };
   });
 
@@ -1007,14 +1050,14 @@
 
   btnPararSpec.onclick = () => {
     barraEspectando.classList.remove('visivel');
-    listaEl.style.top = '286px';
+    listaEl.style.top = '313px';
     listaEl.style.height = '262px';
   };
 
   function iniciarEspectar(nome) {
     labelEspectando.textContent = 'Espectando: ' + nome;
     barraEspectando.classList.add('visivel');
-    listaEl.style.top = '318px';
+    listaEl.style.top = '345px';
     listaEl.style.height = '230px';
   }
 
