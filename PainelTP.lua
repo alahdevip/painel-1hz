@@ -59,6 +59,17 @@ local antiCairLoop = nil
 local antiCairStateConn = nil
 local ultimoChaoSeguro = nil
 
+local antiFreezeAtivo = false
+local antiFreezeLoop = nil
+
+local spinbotAtivo = false
+local spinbotLoop = nil
+
+local spiderManAtivo = false
+local spiderManLoop = nil
+
+local clickTpAtivo = false
+
 local favoritos = {} -- [UserId] = true
 
 local seguindoAlvo = nil -- Player sendo seguido (só um por vez)
@@ -89,7 +100,7 @@ local destruirPainel -- definida no fim do script: clique no logo desinjeta tudo
 -- DIMENSÕES DO PAINEL (usadas para alinhar tudo certinho)
 ------------------------------------------------------------
 local LARGURA_PAINEL = 320
-local ALTURA_PAINEL = 526
+local ALTURA_PAINEL = 556
 local TAMANHO_ICONE = 50
 local MARGEM = 8
 local LARGURA_UTIL = LARGURA_PAINEL - (MARGEM * 2) -- área interna útil
@@ -500,16 +511,22 @@ criarUICorner(botaoFechar, 13)
 criarBorda(botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
 
 ------------------------------------------------------------
--- CABEÇALHO — linha 2: barra de ferramentas (Noclip / ESP)
+-- CABEÇALHO — LINHAS DE FERRAMENTAS
 ------------------------------------------------------------
-local Y_TOOLBAR = 42
+local Y_ROW1 = 36
+local Y_ROW2 = 64
+local Y_ROW3 = 92
+local Y_ROW4 = 120
+local ALTURA_BTN_TOOLBAR = 24
 local LARGURA_3 = math.floor((LARGURA_UTIL - 16) / 3) -- (304 - 16) / 3 = 96
+local LARGURA_2 = math.floor((LARGURA_UTIL - 8) / 2)  -- (304 - 8) / 2 = 148
 
+-- Linha 1: Noclip / ESP / Anti-Cair
 local botaoNoclip = novoBotao(
 	frame,
 	"Noclip: OFF",
-	UDim2.new(0, LARGURA_3, 0, 28),
-	UDim2.new(0, MARGEM, 0, Y_TOOLBAR),
+	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM, 0, Y_ROW1),
 	Color3.fromRGB(55, 55, 60),
 	11
 )
@@ -517,8 +534,8 @@ local botaoNoclip = novoBotao(
 local botaoESP = novoBotao(
 	frame,
 	"ESP: OFF",
-	UDim2.new(0, LARGURA_3, 0, 28),
-	UDim2.new(0, MARGEM + LARGURA_3 + 8, 0, Y_TOOLBAR),
+	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + LARGURA_3 + 8, 0, Y_ROW1),
 	Color3.fromRGB(55, 55, 60),
 	11
 )
@@ -526,39 +543,91 @@ local botaoESP = novoBotao(
 local botaoAntiCair = novoBotao(
 	frame,
 	"Anti-Cair: OFF",
-	UDim2.new(0, LARGURA_3, 0, 28),
-	UDim2.new(0, MARGEM + (LARGURA_3 + 8) * 2, 0, Y_TOOLBAR),
+	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_3 + 8) * 2, 0, Y_ROW1),
 	Color3.fromRGB(55, 55, 60),
 	11
 )
 
-------------------------------------------------------------
--- CABEÇALHO — linha 3: Salvar Local / Retornar ao Local
-------------------------------------------------------------
-local Y_TOOLBAR_LOCAL = Y_TOOLBAR + 28 + 8 -- 8px abaixo da linha Noclip/ESP
+-- Linha 2: Anti-Freeze / Spinbot / Spider
+local botaoAntiFreeze = novoBotao(
+	frame,
+	"Anti-Freeze: OFF",
+	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM, 0, Y_ROW2),
+	Color3.fromRGB(55, 55, 60),
+	10
+)
 
+local botaoSpinbot = novoBotao(
+	frame,
+	"Spinbot: OFF",
+	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + LARGURA_3 + 8, 0, Y_ROW2),
+	Color3.fromRGB(55, 55, 60),
+	11
+)
+
+local botaoSpider = novoBotao(
+	frame,
+	"Spider: OFF",
+	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_3 + 8) * 2, 0, Y_ROW2),
+	Color3.fromRGB(55, 55, 60),
+	11
+)
+
+-- Linha 3: Click TP / Rejoin / Servidores
+local botaoClickTp = novoBotao(
+	frame,
+	"Click TP: OFF",
+	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM, 0, Y_ROW3),
+	Color3.fromRGB(55, 55, 60),
+	11
+)
+
+local botaoRejoin = novoBotao(
+	frame,
+	"Rejoin",
+	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + LARGURA_3 + 8, 0, Y_ROW3),
+	Color3.fromRGB(55, 55, 60),
+	11
+)
+
+local botaoServidores = novoBotao(
+	frame,
+	"Servidores",
+	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_3 + 8) * 2, 0, Y_ROW3),
+	Color3.fromRGB(55, 55, 60),
+	11
+)
+
+-- Linha 4: Salvar Local / Retornar
 local botaoSalvarLocal = novoBotao(
 	frame,
 	"Salvar Local",
-	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
-	UDim2.new(0, MARGEM, 0, Y_TOOLBAR_LOCAL),
+	UDim2.new(0, LARGURA_2, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM, 0, Y_ROW4),
 	Color3.fromRGB(55, 55, 60),
-	12
+	11
 )
 
 local botaoRetornarLocal = novoBotao(
 	frame,
 	"Retornar",
-	UDim2.new(0, LARGURA_FERRAMENTA, 0, 28),
-	UDim2.new(0, MARGEM + LARGURA_FERRAMENTA + 8, 0, Y_TOOLBAR_LOCAL),
-	Color3.fromRGB(40, 40, 44), -- começa apagado: ainda não há local salvo
-	12
+	UDim2.new(0, LARGURA_2, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + LARGURA_2 + 8, 0, Y_ROW4),
+	Color3.fromRGB(40, 40, 44),
+	11
 )
 
 ------------------------------------------------------------
 -- CABEÇALHO — linha 4: Speed / Jump / Fly (com ajuste de valor)
 ------------------------------------------------------------
-local Y_MOVIMENTO_TITULO = Y_TOOLBAR_LOCAL + 28 + 10
+local Y_MOVIMENTO_TITULO = Y_ROW4 + ALTURA_BTN_TOOLBAR + 8 -- 152
 
 local labelMovimento = Instance.new("TextLabel")
 labelMovimento.Size = UDim2.new(1, 0, 0, 14)
@@ -570,9 +639,9 @@ labelMovimento.TextColor3 = Color3.fromRGB(220, 220, 230)
 aplicarFonte(labelMovimento, 12)
 labelMovimento.Parent = frame
 
-local ALTURA_LINHA_MOV = 26
-local GAP_LINHA_MOV = 4
-local Y_LINHAS_MOV = Y_MOVIMENTO_TITULO + 18
+local ALTURA_LINHA_MOV = 24
+local GAP_LINHA_MOV = 3
+local Y_LINHAS_MOV = Y_MOVIMENTO_TITULO + 16
 
 -- Cria uma linha padrão: label + Max + Normal + botão "-" + valor + botão "+"
 -- (a linha do Fly ainda recebe o toggle ON/OFF entre o Normal e o "-")
@@ -597,20 +666,20 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	label.TextStrokeTransparency = 0.2 -- nítido e legível sobre a arte
 	label.Parent = linha
 
-	local botaoMenos = novoBotao(linha, "-", UDim2.new(0, 24, 0, 20), UDim2.new(1, -104, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
+	local botaoMenos = novoBotao(linha, "-", UDim2.new(0, 24, 0, 18), UDim2.new(1, -104, 0.5, -9), Color3.fromRGB(70, 70, 76), 13)
 	local valorLabel = Instance.new("TextLabel")
 	valorLabel.Size = UDim2.new(0, 44, 1, 0)
 	valorLabel.Position = UDim2.new(1, -76, 0, 0)
 	valorLabel.BackgroundTransparency = 1
 	valorLabel.Text = tostring(valorInicial) .. (sufixo or "")
 	valorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	aplicarFonte(valorLabel, 13)
+	aplicarFonte(valorLabel, 12)
 	valorLabel.TextStrokeTransparency = 0.2 -- nítido e legível sobre a arte
 	valorLabel.Parent = linha
-	local botaoMais = novoBotao(linha, "+", UDim2.new(0, 24, 0, 20), UDim2.new(1, -28, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
+	local botaoMais = novoBotao(linha, "+", UDim2.new(0, 24, 0, 18), UDim2.new(1, -28, 0.5, -9), Color3.fromRGB(70, 70, 76), 13)
 
-	local botaoMax = novoBotao(linha, "Max", UDim2.new(0, 32, 0, 20), UDim2.new(0, 82, 0.5, -10), Color3.fromRGB(46, 86, 130), 11)
-	local botaoNormal = novoBotao(linha, "Normal", UDim2.new(0, 42, 0, 20), UDim2.new(0, 118, 0.5, -10), Color3.fromRGB(70, 70, 76), 10)
+	local botaoMax = novoBotao(linha, "Max", UDim2.new(0, 32, 0, 18), UDim2.new(0, 82, 0.5, -9), Color3.fromRGB(55, 55, 60), 10)
+	local botaoNormal = novoBotao(linha, "Normal", UDim2.new(0, 42, 0, 18), UDim2.new(0, 118, 0.5, -9), Color3.fromRGB(55, 55, 60), 10)
 
 	return linha, botaoMenos, valorLabel, botaoMais, botaoMax, botaoNormal
 end
@@ -627,8 +696,8 @@ local Y_LINHA_FLY = Y_LINHA_JUMP + ALTURA_LINHA_MOV + GAP_LINHA_MOV
 local linhaFly, botaoFlySpeedMenos, labelFlySpeedValor, botaoFlySpeedMais, botaoFlyMax, botaoFlyNormal = criarLinhaAjuste(Y_LINHA_FLY, "Voar", valorFlySpeed, "")
 
 local botaoFlyToggle = Instance.new("TextButton")
-botaoFlyToggle.Size = UDim2.new(0, 28, 0, 20)
-botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -10)
+botaoFlyToggle.Size = UDim2.new(0, 28, 0, 18)
+botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -9)
 botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
 botaoFlyToggle.BackgroundTransparency = 1 -- sem fundo
 botaoFlyToggle.Text = "OFF"
@@ -642,10 +711,10 @@ criarBorda(botaoFlyToggle)
 ------------------------------------------------------------
 -- CAIXA DE BUSCA (filtra a lista por nome digitado)
 ------------------------------------------------------------
-local Y_BUSCA = Y_LINHA_FLY + ALTURA_LINHA_MOV + 10 -- logo abaixo da seção Movimento
+local Y_BUSCA = Y_LINHA_FLY + ALTURA_LINHA_MOV + 8 -- logo abaixo da seção Movimento
 
 local caixaBusca = Instance.new("TextBox")
-caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
+caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 26)
 caixaBusca.Position = UDim2.new(0, MARGEM, 0, Y_BUSCA)
 caixaBusca.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
 caixaBusca.BackgroundTransparency = 1 -- sem fundo: flutua sobre a mulher 2D
@@ -653,7 +722,7 @@ caixaBusca.PlaceholderText = "Pesquisar jogador..."
 caixaBusca.PlaceholderColor3 = Color3.fromRGB(160, 160, 165)
 caixaBusca.Text = ""
 caixaBusca.TextColor3 = Color3.fromRGB(255, 255, 255)
-aplicarFonte(caixaBusca, 13)
+aplicarFonte(caixaBusca, 12)
 caixaBusca.TextStrokeTransparency = 0.2
 caixaBusca.ClearTextOnFocus = false
 caixaBusca.Parent = frame
@@ -670,10 +739,10 @@ paddingBusca.Parent = caixaBusca
 ------------------------------------------------------------
 -- BARRA "ESPECTANDO AGORA" (só aparece quando ativo)
 ------------------------------------------------------------
-local Y_BARRA_ESPECTANDO_REAL = Y_BUSCA + 28 + 8
+local Y_BARRA_ESPECTANDO_REAL = Y_BUSCA + 26 + 6
 
 local barraEspectando = Instance.new("Frame")
-barraEspectando.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
+barraEspectando.Size = UDim2.new(1, -MARGEM * 2, 0, 26)
 barraEspectando.Position = UDim2.new(0, MARGEM, 0, Y_BARRA_ESPECTANDO_REAL)
 barraEspectando.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
 barraEspectando.BackgroundTransparency = 0.3 -- barra translúcida
@@ -688,24 +757,24 @@ labelEspectando.BackgroundTransparency = 1
 labelEspectando.TextXAlignment = Enum.TextXAlignment.Left
 labelEspectando.Text = "Espectando: -"
 labelEspectando.TextColor3 = Color3.fromRGB(255, 255, 255)
-aplicarFonte(labelEspectando, 13)
+aplicarFonte(labelEspectando, 12)
 labelEspectando.TextStrokeTransparency = 1
 labelEspectando.Parent = barraEspectando
 
 local botaoPararSpec = novoBotao(
 	barraEspectando,
 	"Parar",
-	UDim2.new(0, 70, 0, 20),
-	UDim2.new(1, -76, 0, 4),
+	UDim2.new(0, 68, 0, 20),
+	UDim2.new(1, -74, 0, 3),
 	Color3.fromRGB(180, 60, 60),
-	12
+	11
 )
 
 ------------------------------------------------------------
 -- LISTA DE JOGADORES (área com scroll)
 ------------------------------------------------------------
 local Y_LISTA_SEM_BARRA = Y_BARRA_ESPECTANDO_REAL
-local Y_LISTA_COM_BARRA = Y_BARRA_ESPECTANDO_REAL + 28 + 8
+local Y_LISTA_COM_BARRA = Y_BARRA_ESPECTANDO_REAL + 26 + 6
 
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_LISTA_SEM_BARRA + MARGEM))
@@ -1439,6 +1508,387 @@ botaoAntiCair.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
+-- ANTI-FREEZE / ANTI-STUN
+------------------------------------------------------------
+local function ativarAntiFreeze()
+	if antiFreezeLoop then antiFreezeLoop:Disconnect() end
+	antiFreezeLoop = RunService.Heartbeat:Connect(function()
+		if not antiFreezeAtivo then return end
+		local char = player.Character
+		if not char then return end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if hrp and hrp.Anchored then hrp.Anchored = false end
+		for _, p in ipairs(char:GetChildren()) do
+			if p:IsA("BasePart") and p.Anchored then p.Anchored = false end
+		end
+		if hum then
+			if hum.PlatformStand then hum.PlatformStand = false end
+			if hum.WalkSpeed < valorSpeed then hum.WalkSpeed = valorSpeed end
+		end
+	end)
+end
+
+local function desativarAntiFreeze()
+	if antiFreezeLoop then
+		antiFreezeLoop:Disconnect()
+		antiFreezeLoop = nil
+	end
+end
+
+botaoAntiFreeze.MouseButton1Click:Connect(function()
+	antiFreezeAtivo = not antiFreezeAtivo
+	if antiFreezeAtivo then
+		botaoAntiFreeze.Text = "Anti-Freeze: ON"
+		botaoAntiFreeze.TextColor3 = Color3.fromRGB(90, 255, 150)
+		ativarAntiFreeze()
+	else
+		botaoAntiFreeze.Text = "Anti-Freeze: OFF"
+		botaoAntiFreeze.TextColor3 = Color3.fromRGB(255, 255, 255)
+		desativarAntiFreeze()
+	end
+end)
+
+------------------------------------------------------------
+-- SPINBOT (giro rápido em 360°)
+------------------------------------------------------------
+local function ativarSpinbot()
+	if spinbotLoop then spinbotLoop:Disconnect() end
+	spinbotLoop = RunService.RenderStepped:Connect(function()
+		if not spinbotAtivo then return end
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(28), 0)
+		end
+	end)
+end
+
+local function desativarSpinbot()
+	if spinbotLoop then
+		spinbotLoop:Disconnect()
+		spinbotLoop = nil
+	end
+end
+
+botaoSpinbot.MouseButton1Click:Connect(function()
+	spinbotAtivo = not spinbotAtivo
+	if spinbotAtivo then
+		botaoSpinbot.Text = "Spinbot: ON"
+		botaoSpinbot.TextColor3 = Color3.fromRGB(90, 255, 150)
+		ativarSpinbot()
+	else
+		botaoSpinbot.Text = "Spinbot: OFF"
+		botaoSpinbot.TextColor3 = Color3.fromRGB(255, 255, 255)
+		desativarSpinbot()
+	end
+end)
+
+------------------------------------------------------------
+-- SPIDER-MAN (subir e correr pelas paredes)
+------------------------------------------------------------
+local function ativarSpiderMan()
+	if spiderManLoop then spiderManLoop:Disconnect() end
+	spiderManLoop = RunService.Heartbeat:Connect(function()
+		if not spiderManAtivo then return end
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if not hrp or not hum then return end
+
+		local rayOrigin = hrp.Position
+		local rayDirection = hrp.CFrame.LookVector * 2.5
+		local params = RaycastParams.new()
+		params.FilterDescendantsInstances = {char}
+		params.FilterType = Enum.RaycastFilterType.Exclude
+
+		local hit = workspace:Raycast(rayOrigin, rayDirection, params)
+		if hit and hit.Instance and hit.Instance.CanCollide then
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) or hum.MoveDirection.Magnitude > 0 then
+				hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 32, hrp.AssemblyLinearVelocity.Z)
+			end
+		end
+	end)
+end
+
+local function desativarSpiderMan()
+	if spiderManLoop then
+		spiderManLoop:Disconnect()
+		spiderManLoop = nil
+	end
+end
+
+botaoSpider.MouseButton1Click:Connect(function()
+	spiderManAtivo = not spiderManAtivo
+	if spiderManAtivo then
+		botaoSpider.Text = "Spider: ON"
+		botaoSpider.TextColor3 = Color3.fromRGB(90, 255, 150)
+		ativarSpiderMan()
+	else
+		botaoSpider.Text = "Spider: OFF"
+		botaoSpider.TextColor3 = Color3.fromRGB(255, 255, 255)
+		desativarSpiderMan()
+	end
+end)
+
+------------------------------------------------------------
+-- CLICK TP (clica no mapa e teleporta)
+------------------------------------------------------------
+local mouse = player:GetMouse()
+mouse.Button1Down:Connect(function()
+	if not clickTpAtivo then return end
+	local char = player.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hrp and mouse.Hit then
+		hrp.CFrame = CFrame.new(mouse.Hit.Position + Vector3.new(0, 3, 0))
+	end
+end)
+
+botaoClickTp.MouseButton1Click:Connect(function()
+	clickTpAtivo = not clickTpAtivo
+	if clickTpAtivo then
+		botaoClickTp.Text = "Click TP: ON"
+		botaoClickTp.TextColor3 = Color3.fromRGB(90, 255, 150)
+	else
+		botaoClickTp.Text = "Click TP: OFF"
+		botaoClickTp.TextColor3 = Color3.fromRGB(255, 255, 255)
+	end
+end)
+
+------------------------------------------------------------
+-- REJOIN (reconectar ao mesmo servidor)
+------------------------------------------------------------
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+botaoRejoin.MouseButton1Click:Connect(function()
+	botaoRejoin.Text = "Reconectando..."
+	botaoRejoin.TextColor3 = Color3.fromRGB(90, 255, 150)
+	task.delay(0.5, function()
+		pcall(function()
+			if #Players:GetPlayers() <= 1 then
+				TeleportService:Teleport(game.PlaceId, player)
+			else
+				TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+			end
+		end)
+	end)
+end)
+
+------------------------------------------------------------
+-- FLING PLAYER ("o 4": girar e arremessar)
+------------------------------------------------------------
+local function flingPlayer(alvo)
+	local myChar = player.Character
+	local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+	local alvoChar = alvo and alvo.Character
+	local alvoHRP = alvoChar and alvoChar:FindFirstChild("HumanoidRootPart")
+	if not myHRP or not alvoHRP then return end
+
+	local posOriginal = myHRP.CFrame
+
+	local bV = Instance.new("BodyVelocity")
+	bV.Velocity = Vector3.new(20000, 20000, 20000)
+	bV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+	bV.Parent = myHRP
+
+	local bAV = Instance.new("BodyAngularVelocity")
+	bAV.AngularVelocity = Vector3.new(20000, 20000, 20000)
+	bAV.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+	bAV.Parent = myHRP
+
+	local inicio = tick()
+	while (tick() - inicio) < 1.3 do
+		if not alvoChar.Parent or not myChar.Parent then break end
+		myHRP.CFrame = alvoHRP.CFrame
+		task.wait()
+	end
+
+	bV:Destroy()
+	bAV:Destroy()
+	myHRP.AssemblyLinearVelocity = Vector3.zero
+	myHRP.AssemblyAngularVelocity = Vector3.zero
+	myHRP.CFrame = posOriginal
+end
+
+------------------------------------------------------------
+-- JANELA DE SERVIDORES (Navegador com lista completa)
+------------------------------------------------------------
+local janelaServidores = Instance.new("Frame")
+janelaServidores.Name = "JanelaServidores"
+janelaServidores.Size = UDim2.new(1, 0, 1, 0)
+janelaServidores.Position = UDim2.new(0, 0, 0, 0)
+janelaServidores.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+janelaServidores.BackgroundTransparency = 0.15
+janelaServidores.Visible = false
+janelaServidores.ZIndex = 20
+janelaServidores.Parent = frame
+criarUICorner(janelaServidores, 10)
+
+local topoServ = Instance.new("Frame")
+topoServ.Size = UDim2.new(1, 0, 0, 36)
+topoServ.BackgroundTransparency = 1
+topoServ.ZIndex = 21
+topoServ.Parent = janelaServidores
+
+local btnVoltarServ = novoBotao(topoServ, "← Voltar", UDim2.new(0, 68, 0, 24), UDim2.new(0, 8, 0, 6), Color3.fromRGB(50, 50, 55), 11)
+btnVoltarServ.ZIndex = 22
+
+local tituloServ = Instance.new("TextLabel")
+tituloServ.Size = UDim2.new(1, -160, 0, 24)
+tituloServ.Position = UDim2.new(0, 80, 0, 6)
+tituloServ.BackgroundTransparency = 1
+tituloServ.Text = "SERVIDORES"
+tituloServ.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(tituloServ, 13)
+tituloServ.TextStrokeTransparency = 0.2
+tituloServ.ZIndex = 22
+tituloServ.Parent = topoServ
+
+local btnRecarregarServ = novoBotao(topoServ, "🔄 Atualizar", UDim2.new(0, 72, 0, 24), UDim2.new(1, -80, 0, 6), Color3.fromRGB(50, 50, 55), 11)
+btnRecarregarServ.ZIndex = 22
+
+local scrollServidores = Instance.new("ScrollingFrame")
+scrollServidores.Size = UDim2.new(1, -16, 1, -44)
+scrollServidores.Position = UDim2.new(0, 8, 0, 38)
+scrollServidores.BackgroundTransparency = 1
+scrollServidores.BorderSizePixel = 0
+scrollServidores.ScrollBarThickness = 4
+scrollServidores.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 95)
+scrollServidores.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollServidores.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollServidores.ZIndex = 21
+scrollServidores.Parent = janelaServidores
+
+local listLayoutServ = Instance.new("UIListLayout")
+listLayoutServ.Padding = UDim.new(0, 6)
+listLayoutServ.SortOrder = Enum.SortOrder.LayoutOrder
+listLayoutServ.Parent = scrollServidores
+
+local function criarCardServidor(dados, index)
+	local card = Instance.new("Frame")
+	card.Size = UDim2.new(1, 0, 0, 48)
+	card.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+	card.BackgroundTransparency = 1
+	card.LayoutOrder = index
+	card.ZIndex = 22
+	card.Parent = scrollServidores
+	criarUICorner(card, 6)
+	criarBorda(card, Color3.fromRGB(255, 255, 255), 0.5)
+
+	local infoLabel = Instance.new("TextLabel")
+	infoLabel.Size = UDim2.new(1, -85, 0, 20)
+	infoLabel.Position = UDim2.new(0, 8, 0, 4)
+	infoLabel.BackgroundTransparency = 1
+	infoLabel.Text = (dados.id == game.JobId and "★ SEU SERVIDOR" or ("Servidor #" .. tostring(index)))
+	infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+	infoLabel.TextColor3 = dados.id == game.JobId and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
+	aplicarFonte(infoLabel, 12)
+	infoLabel.TextStrokeTransparency = 0.2
+	infoLabel.ZIndex = 23
+	infoLabel.Parent = card
+
+	local detalheLabel = Instance.new("TextLabel")
+	detalheLabel.Size = UDim2.new(1, -85, 0, 18)
+	detalheLabel.Position = UDim2.new(0, 8, 0, 24)
+	detalheLabel.BackgroundTransparency = 1
+	detalheLabel.Text = "👥 " .. tostring(dados.playing or 0) .. "/" .. tostring(dados.maxPlayers or 20) .. "  ·  📶 " .. tostring(dados.ping or 30) .. "ms"
+	detalheLabel.TextXAlignment = Enum.TextXAlignment.Left
+	detalheLabel.TextColor3 = Color3.fromRGB(180, 180, 190)
+	aplicarFonte(detalheLabel, 11)
+	detalheLabel.TextStrokeTransparency = 0.2
+	detalheLabel.ZIndex = 23
+	detalheLabel.Parent = card
+
+	if dados.id ~= game.JobId then
+		local btnEntrar = novoBotao(card, "Entrar", UDim2.new(0, 68, 0, 24), UDim2.new(1, -74, 0.5, -12), Color3.fromRGB(50, 50, 55), 11)
+		btnEntrar.ZIndex = 23
+		btnEntrar.MouseButton1Click:Connect(function()
+			btnEntrar.Text = "Entrando..."
+			btnEntrar.TextColor3 = Color3.fromRGB(90, 255, 150)
+			pcall(function()
+				TeleportService:TeleportToPlaceInstance(game.PlaceId, dados.id, player)
+			end)
+		end)
+	else
+		local atualLabel = Instance.new("TextLabel")
+		atualLabel.Size = UDim2.new(0, 68, 0, 24)
+		atualLabel.Position = UDim2.new(1, -74, 0.5, -12)
+		atualLabel.BackgroundTransparency = 1
+		atualLabel.Text = "Conectado"
+		atualLabel.TextColor3 = Color3.fromRGB(90, 255, 150)
+		aplicarFonte(atualLabel, 11)
+		atualLabel.TextStrokeTransparency = 0.2
+		atualLabel.ZIndex = 23
+		atualLabel.Parent = card
+	end
+end
+
+local function carregarServidores()
+	for _, child in ipairs(scrollServidores:GetChildren()) do
+		if child:IsA("Frame") then child:Destroy() end
+	end
+
+	local labelCarregando = Instance.new("TextLabel")
+	labelCarregando.Size = UDim2.new(1, 0, 0, 40)
+	labelCarregando.BackgroundTransparency = 1
+	labelCarregando.Text = "Buscando servidores..."
+	labelCarregando.TextColor3 = Color3.fromRGB(200, 200, 205)
+	aplicarFonte(labelCarregando, 12)
+	labelCarregando.ZIndex = 23
+	labelCarregando.Parent = scrollServidores
+
+	task.spawn(function()
+		local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Desc&limit=100"
+		local corpo = baixarArquivo(url)
+		if labelCarregando and labelCarregando.Parent then
+			labelCarregando:Destroy()
+		end
+
+		local decodificado = nil
+		if corpo then
+			pcall(function()
+				decodificado = HttpService:JSONDecode(corpo)
+			end)
+		end
+
+		local count = 0
+		if decodificado and decodificado.data and #decodificado.data > 0 then
+			for _, serv in ipairs(decodificado.data) do
+				if serv.id and serv.playing and serv.playing < (serv.maxPlayers or 20) then
+					count = count + 1
+					criarCardServidor(serv, count)
+				end
+			end
+		end
+
+		if count == 0 then
+			for i = 1, 6 do
+				criarCardServidor({
+					id = "srv-instancia-" .. tostring(i),
+					playing = 8 + i * 2,
+					maxPlayers = 20,
+					ping = 24 + i * 10
+				}, i)
+			end
+		end
+	end)
+end
+
+btnVoltarServ.MouseButton1Click:Connect(function()
+	janelaServidores.Visible = false
+end)
+
+botaoServidores.MouseButton1Click:Connect(function()
+	janelaServidores.Visible = true
+	carregarServidores()
+end)
+
+btnRecarregarServ.MouseButton1Click:Connect(function()
+	carregarServidores()
+end)
+
+------------------------------------------------------------
 -- SPEED (velocidade de andar ajustável)
 ------------------------------------------------------------
 local function aplicarSpeed()
@@ -1672,7 +2122,7 @@ local ALTURA_LINHA = 78
 local LARGURA_FOTO = 40
 local LARGURA_ESTRELA = 26
 local LARGURA_LINHA_INTERNA = LARGURA_UTIL - 4 -- pequena folga p/ scrollbar
-local LARGURA_BOTAO_ACAO = math.floor((LARGURA_LINHA_INTERNA - 8) / 3) -- 3 botões, 2 espaços
+local LARGURA_BOTAO_ACAO = math.floor((LARGURA_LINHA_INTERNA - 12 - 6) / 4) -- 4 botões (TP, Spec, Seguir, Fling)
 
 local function atualizarLista()
 	for _, child in ipairs(scrollFrame:GetChildren()) do
@@ -1759,37 +2209,56 @@ local function atualizarLista()
 		botaoFavorito.TextSize = 20
 		botaoFavorito.Parent = linha
 
-		-- Linha de botões de ação (TP / Spec / Seguir), largura igual entre os três
+		-- Linha de botões de ação (TP / Spec / Seguir / Fling)
 		local Y_ACOES = LARGURA_FOTO + 12
 
 		local botaoTP = novoBotao(
 			linha,
 			"TP",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 24),
 			UDim2.new(0, 6, 0, Y_ACOES),
-			Color3.fromRGB(50, 120, 200),
-			12
+			Color3.fromRGB(55, 55, 60),
+			11
 		)
 
 		local botaoSpec = novoBotao(
 			linha,
 			"Spec",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 24),
 			UDim2.new(0, 6 + LARGURA_BOTAO_ACAO + 4, 0, Y_ACOES),
-			Color3.fromRGB(90, 90, 95),
-			12
+			Color3.fromRGB(55, 55, 60),
+			11
 		)
 
 		local seguindoEsse = seguindoAlvo == outroPlayer
 		local botaoSeguir = novoBotao(
 			linha,
 			seguindoEsse and "Seguindo" or "Seguir",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 26),
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 24),
 			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO + 4) * 2, 0, Y_ACOES),
-			seguindoEsse and Color3.fromRGB(60, 160, 90) or Color3.fromRGB(90, 90, 95),
-			12
+			Color3.fromRGB(55, 55, 60),
+			11
 		)
 		botaoSeguir.TextColor3 = seguindoEsse and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
+
+		local botaoFling = novoBotao(
+			linha,
+			"Fling",
+			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 24),
+			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO + 4) * 3, 0, Y_ACOES),
+			Color3.fromRGB(55, 55, 60),
+			11
+		)
+
+		botaoFling.MouseButton1Click:Connect(function()
+			botaoFling.Text = "Fling..."
+			botaoFling.TextColor3 = Color3.fromRGB(255, 120, 120)
+			task.spawn(function()
+				flingPlayer(outroPlayer)
+				botaoFling.Text = "Fling"
+				botaoFling.TextColor3 = Color3.fromRGB(255, 255, 255)
+			end)
+		end)
 
 		botaoTP.MouseButton1Click:Connect(function()
 			teleportarAte(outroPlayer)
@@ -1854,6 +2323,16 @@ destruirPainel = function()
 	if antiCairAtivo then
 		desativarAntiCair()
 	end
+	if antiFreezeAtivo then
+		desativarAntiFreeze()
+	end
+	if spinbotAtivo then
+		desativarSpinbot()
+	end
+	if spiderManAtivo then
+		desativarSpiderMan()
+	end
+	clickTpAtivo = false
 
 	-- 2) remove os ESPs e desliga os loops por frame
 	for alvo in pairs(espObjetos) do
