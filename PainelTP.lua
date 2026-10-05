@@ -24,8 +24,9 @@ local ICONE_FALLBACK = "📍"
 -- IMAGEM_FUNDO aceita os mesmos 3 formatos do botão:
 --   1) URL (https://...)      2) "rbxassetid://1234..."   3) "" = cor sólida
 ------------------------------------------------------------
-local IMAGEM_FUNDO = "https://i.pinimg.com/736x/74/5e/83/745e835eca5be13b1df753fcb279b35e.jpg"
-local ESCURECER_FUNDO = 0.22 -- arte bem visível e vibrante com efeito glass translúcido
+local IMAGEM_FUNDO = "https://raw.githubusercontent.com/alahdevip/painel-1hz/main/fundo-painel.jpg"
+local IMAGEM_FUNDO_2 = "https://i.pinimg.com/736x/74/5e/83/745e835eca5be13b1df753fcb279b35e.jpg"
+local ESCURECER_FUNDO = 0.08 -- mulher 2D em preto e branco totalmente à mostra (sem escurecimento pesado)
 
 ------------------------------------------------------------
 -- LOGO DO CABEÇALHO (no lugar do texto "Painel do ...")
@@ -218,16 +219,16 @@ local function novoBotao(pai, texto, tamanho, posicao, corFundo, tamanhoFonte)
 	local botao = Instance.new("TextButton")
 	botao.Size = tamanho
 	botao.Position = posicao
-	botao.BackgroundColor3 = corFundo or Color3.fromRGB(20, 20, 26)
-	botao.BackgroundTransparency = 0.52 -- efeito dark glass translúcido: a arte de fundo fica bem visível
+	botao.BackgroundColor3 = corFundo or Color3.fromRGB(35, 35, 40)
+	botao.BackgroundTransparency = 1 -- SEM FUNDO: 100% transparente para a mulher 2D ficar totalmente à mostra
 	botao.Text = texto
 	botao.TextColor3 = Color3.fromRGB(255, 255, 255)
-	botao.TextStrokeTransparency = 1 -- sem contorno cinza
+	botao.TextStrokeTransparency = 0.2 -- contorno preto nítido e definido (sem embaçar)
 	aplicarFonte(botao, tamanhoFonte or 13)
 	botao.AutoButtonColor = true
 	botao.Parent = pai
 	criarUICorner(botao, 6)
-	criarBorda(botao, Color3.fromRGB(255, 255, 255), 0.5)
+	criarBorda(botao, Color3.fromRGB(255, 255, 255), 0.45)
 	return botao
 end
 
@@ -378,6 +379,9 @@ criarUICorner(frame, 10)
 -- FUNDO DO PAINEL (imagem + camada escura pra manter a leitura)
 ------------------------------------------------------------
 local imagemFundo = resolverImagem(IMAGEM_FUNDO, "PainelTP_fundo")
+if imagemFundo == "" and IMAGEM_FUNDO_2 then
+	imagemFundo = resolverImagem(IMAGEM_FUNDO_2, "PainelTP_fundo")
+end
 
 -- Imagem de fundo (primeiro filho do frame = fica atrás de tudo)
 local fundoPainel = Instance.new("ImageLabel")
@@ -453,12 +457,12 @@ titulo.Parent = frame
 local botaoMinimizar = Instance.new("TextButton")
 botaoMinimizar.Size = UDim2.new(0, 26, 0, 26)
 botaoMinimizar.Position = UDim2.new(1, -62, 0, 3)
-botaoMinimizar.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
-botaoMinimizar.BackgroundTransparency = 0.5
+botaoMinimizar.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+botaoMinimizar.BackgroundTransparency = 1 -- sem fundo
 botaoMinimizar.Text = "-"
 botaoMinimizar.TextColor3 = Color3.fromRGB(220, 220, 230)
 aplicarFonte(botaoMinimizar, 14)
-botaoMinimizar.TextStrokeTransparency = 1
+botaoMinimizar.TextStrokeTransparency = 0.2
 botaoMinimizar.Parent = frame
 criarUICorner(botaoMinimizar, 13)
 criarBorda(botaoMinimizar, Color3.fromRGB(200, 200, 205), 0.5)
@@ -481,11 +485,11 @@ local botaoFechar = Instance.new("TextButton")
 botaoFechar.Size = UDim2.new(0, 26, 0, 26)
 botaoFechar.Position = UDim2.new(1, -32, 0, 3)
 botaoFechar.BackgroundColor3 = Color3.fromRGB(55, 20, 20)
-botaoFechar.BackgroundTransparency = 0.5
+botaoFechar.BackgroundTransparency = 1 -- sem fundo
 botaoFechar.Text = "X"
 botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
 aplicarFonte(botaoFechar, 14)
-botaoFechar.TextStrokeTransparency = 1
+botaoFechar.TextStrokeTransparency = 0.2
 botaoFechar.Parent = frame
 criarUICorner(botaoFechar, 13)
 criarBorda(botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
@@ -563,10 +567,9 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	linha.Size = UDim2.new(1, -MARGEM * 2, 0, ALTURA_LINHA_MOV)
 	linha.Position = UDim2.new(0, MARGEM, 0, y)
 	linha.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-	linha.BackgroundTransparency = 0.52 -- vidro translúcido para revelar a arte
+	linha.BackgroundTransparency = 1 -- SEM FUNDO: a imagem de fundo fica visível
 	linha.Parent = frame
 	criarUICorner(linha, 6)
-	criarBorda(linha, Color3.fromRGB(255, 255, 255), 0.75)
 
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(0, 70, 1, 0)
@@ -576,8 +579,8 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextColor3 = Color3.fromRGB(255, 255, 255)
 	aplicarFonte(label, 12)
-	label.TextTruncate = Enum.TextTruncate.AtEnd -- segurança: nunca invade o botão Max
-	label.TextStrokeTransparency = 1 -- nítido e limpo
+	label.TextTruncate = Enum.TextTruncate.AtEnd
+	label.TextStrokeTransparency = 0.2 -- nítido e legível sobre a arte
 	label.Parent = linha
 
 	local botaoMenos = novoBotao(linha, "-", UDim2.new(0, 24, 0, 20), UDim2.new(1, -104, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
@@ -588,14 +591,11 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 	valorLabel.Text = tostring(valorInicial) .. (sufixo or "")
 	valorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 	aplicarFonte(valorLabel, 13)
-	valorLabel.TextStrokeTransparency = 1 -- nítido e limpo
+	valorLabel.TextStrokeTransparency = 0.2 -- nítido e legível sobre a arte
 	valorLabel.Parent = linha
 	local botaoMais = novoBotao(linha, "+", UDim2.new(0, 24, 0, 20), UDim2.new(1, -28, 0.5, -10), Color3.fromRGB(70, 70, 76), 14)
 
-	-- Botão "Max": leva o valor direto pro máximo dessa linha
 	local botaoMax = novoBotao(linha, "Max", UDim2.new(0, 32, 0, 20), UDim2.new(0, 82, 0.5, -10), Color3.fromRGB(46, 86, 130), 11)
-
-	-- Botão "Normal": volta pro valor padrão dessa linha
 	local botaoNormal = novoBotao(linha, "Normal", UDim2.new(0, 42, 0, 20), UDim2.new(0, 118, 0.5, -10), Color3.fromRGB(70, 70, 76), 10)
 
 	return linha, botaoMenos, valorLabel, botaoMais, botaoMax, botaoNormal
@@ -616,11 +616,11 @@ local botaoFlyToggle = Instance.new("TextButton")
 botaoFlyToggle.Size = UDim2.new(0, 28, 0, 20)
 botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -10)
 botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
-botaoFlyToggle.BackgroundTransparency = 0.5
+botaoFlyToggle.BackgroundTransparency = 1 -- sem fundo
 botaoFlyToggle.Text = "OFF"
 botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 aplicarFonte(botaoFlyToggle, 10)
-botaoFlyToggle.TextStrokeTransparency = 1
+botaoFlyToggle.TextStrokeTransparency = 0.2
 botaoFlyToggle.Parent = linhaFly
 criarUICorner(botaoFlyToggle, 5)
 criarBorda(botaoFlyToggle)
@@ -634,17 +634,17 @@ local caixaBusca = Instance.new("TextBox")
 caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 28)
 caixaBusca.Position = UDim2.new(0, MARGEM, 0, Y_BUSCA)
 caixaBusca.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-caixaBusca.BackgroundTransparency = 0.52 -- vidro translúcido
+caixaBusca.BackgroundTransparency = 1 -- sem fundo: flutua sobre a mulher 2D
 caixaBusca.PlaceholderText = "Pesquisar jogador..."
-caixaBusca.PlaceholderColor3 = Color3.fromRGB(180, 180, 190)
+caixaBusca.PlaceholderColor3 = Color3.fromRGB(160, 160, 165)
 caixaBusca.Text = ""
 caixaBusca.TextColor3 = Color3.fromRGB(255, 255, 255)
 aplicarFonte(caixaBusca, 13)
-caixaBusca.TextStrokeTransparency = 1
+caixaBusca.TextStrokeTransparency = 0.2
 caixaBusca.ClearTextOnFocus = false
 caixaBusca.Parent = frame
 criarUICorner(caixaBusca, 6)
-criarBorda(caixaBusca, Color3.fromRGB(255, 255, 255), 0.75)
+criarBorda(caixaBusca, Color3.fromRGB(255, 255, 255), 0.5)
 
 caixaBusca.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -1567,18 +1567,18 @@ local function atualizarLista()
 		local linha = Instance.new("Frame")
 		linha.Size = UDim2.new(1, 0, 0, ALTURA_LINHA)
 		linha.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-		linha.BackgroundTransparency = 0.55 -- vidro dark glass: o fundo da garota aparece claramente por trás
+		linha.BackgroundTransparency = 1 -- SEM FUNDO: a mulher 2D fica 100% visível por trás
 		linha.LayoutOrder = i
 		linha.Parent = scrollFrame
 		criarUICorner(linha, 8)
-		criarBorda(linha, Color3.fromRGB(255, 255, 255), 0.7)
+		criarBorda(linha, Color3.fromRGB(255, 255, 255), 0.6)
 
 		-- Foto do boneco
 		local foto = Instance.new("ImageLabel")
 		foto.Size = UDim2.new(0, LARGURA_FOTO, 0, LARGURA_FOTO)
 		foto.Position = UDim2.new(0, 6, 0, 6)
-		foto.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-		foto.BackgroundTransparency = 0.4
+		foto.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+		foto.BackgroundTransparency = 0.2
 		foto.Parent = linha
 		criarUICorner(foto, 6)
 
@@ -1603,7 +1603,7 @@ local function atualizarLista()
 		nomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 		aplicarFonte(nomeLabel, 16)
 		nomeLabel.TextTruncate = Enum.TextTruncate.AtEnd
-		nomeLabel.TextStrokeTransparency = 1 -- nítido e aberto
+		nomeLabel.TextStrokeTransparency = 0.2 -- nítido e recortado sobre a arte
 		nomeLabel.Parent = linha
 
 		-- Estrela de favorito, no canto superior direito do cartão
@@ -1612,7 +1612,7 @@ local function atualizarLista()
 		botaoFavorito.Size = UDim2.new(0, LARGURA_ESTRELA, 0, LARGURA_ESTRELA)
 		botaoFavorito.Position = UDim2.new(1, -(LARGURA_ESTRELA + 6), 0, 8)
 		botaoFavorito.BackgroundTransparency = 1
-		botaoFavorito.TextStrokeTransparency = 1 -- nítido
+		botaoFavorito.TextStrokeTransparency = 0.2
 		botaoFavorito.Text = ehFavorito and "★" or "☆"
 		botaoFavorito.TextColor3 = ehFavorito and Color3.fromRGB(255, 210, 60) or Color3.fromRGB(160, 160, 165)
 		botaoFavorito.Font = Enum.Font.GothamBold
