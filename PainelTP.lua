@@ -12,6 +12,7 @@ while not player do
 	task.wait()
 end
 local camera = workspace.CurrentCamera
+local UI = {}
 
 ------------------------------------------------------------
 -- ÍCONE DO BOTÃO FLUTUANTE (o círculo que abre o painel)
@@ -83,9 +84,6 @@ local attachLoop = nil
 local orbitAlvo = nil
 local orbitLoop = nil
 local orbitAngulo = 0
-local ORBIT_RAIO = 6.5
-local ORBIT_ALTURA = 1.5
-local ORBIT_VELOCIDADE = 9 -- rad/s giro super rápido
 
 local autoLookAlvo = nil
 local autoLookLoop = nil
@@ -99,19 +97,21 @@ local jogadorInspecionadoAtual = nil
 local favoritos = {} -- [UserId] = true
 
 local seguindoAlvo = nil -- Player sendo seguido (só um por vez)
-local DISTANCIA_MAXIMA_SEGUIR = 3 -- studs: se afastar mais que isso, puxa de volta
 
 local posicaoSalva = nil -- CFrame do local salvo pelo botão "Salvar Local"
 
 -- Speed / Jump / Fly
-local SPEED_NORMAL, JUMP_NORMAL, FLYSPEED_NORMAL = 16, 50, 50 -- valores padrão (botão "Normal")
-local valorSpeed = SPEED_NORMAL
-local valorJump = JUMP_NORMAL
-local valorFlySpeed = FLYSPEED_NORMAL
-
-local SPEED_MIN, SPEED_MAX, SPEED_PASSO = 8, 1000, 20
-local JUMP_MIN, JUMP_MAX, JUMP_PASSO = 20, 1000, 50
-local FLYSPEED_MIN, FLYSPEED_MAX, FLYSPEED_PASSO = 10, 1000, 50
+local CFG = {
+	SPEED_NORMAL = 16, JUMP_NORMAL = 50, FLYSPEED_NORMAL = 50,
+	SPEED_MIN = 8, SPEED_MAX = 1000, SPEED_PASSO = 20,
+	JUMP_MIN = 20, JUMP_MAX = 1000, JUMP_PASSO = 50,
+	FLYSPEED_MIN = 10, FLYSPEED_MAX = 1000, FLYSPEED_PASSO = 50,
+	ORBIT_RAIO = 6.5, ORBIT_ALTURA = 1.5, ORBIT_VELOCIDADE = 9,
+	DISTANCIA_MAXIMA_SEGUIR = 3,
+}
+local valorSpeed = CFG.SPEED_NORMAL
+local valorJump = CFG.JUMP_NORMAL
+local valorFlySpeed = CFG.FLYSPEED_NORMAL
 
 local flyAtivo = false
 local flyBodyVelocity = nil
@@ -496,45 +496,45 @@ titulo.TextStrokeTransparency = 1
 titulo.Visible = (logoTitulo.Image == "") -- só aparece se o logo falhar
 titulo.Parent = frame
 
-local botaoMinimizar = Instance.new("TextButton")
-botaoMinimizar.Size = UDim2.new(0, 26, 0, 26)
-botaoMinimizar.Position = UDim2.new(1, -62, 0, 3)
-botaoMinimizar.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
-botaoMinimizar.BackgroundTransparency = 1 -- sem fundo
-botaoMinimizar.Text = "-"
-botaoMinimizar.TextColor3 = Color3.fromRGB(220, 220, 230)
-aplicarFonte(botaoMinimizar, 14)
-botaoMinimizar.TextStrokeTransparency = 0.2
-botaoMinimizar.Parent = frame
-criarUICorner(botaoMinimizar, 13)
-criarBorda(botaoMinimizar, Color3.fromRGB(200, 200, 205), 0.5)
+UI.botaoMinimizar = Instance.new("TextButton")
+UI.botaoMinimizar.Size = UDim2.new(0, 26, 0, 26)
+UI.botaoMinimizar.Position = UDim2.new(1, -62, 0, 3)
+UI.botaoMinimizar.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+UI.botaoMinimizar.BackgroundTransparency = 1 -- sem fundo
+UI.botaoMinimizar.Text = "-"
+UI.botaoMinimizar.TextColor3 = Color3.fromRGB(220, 220, 230)
+aplicarFonte(UI.botaoMinimizar, 14)
+UI.botaoMinimizar.TextStrokeTransparency = 0.2
+UI.botaoMinimizar.Parent = frame
+criarUICorner(UI.botaoMinimizar, 13)
+criarBorda(UI.botaoMinimizar, Color3.fromRGB(200, 200, 205), 0.5)
 
 local painelMinimizado = false
-botaoMinimizar.MouseButton1Click:Connect(function()
+UI.botaoMinimizar.MouseButton1Click:Connect(function()
 	painelMinimizado = not painelMinimizado
 	if painelMinimizado then
-		botaoMinimizar.Text = "+"
+		UI.botaoMinimizar.Text = "+"
 		frame.ClipsDescendants = true
 		frame.Size = UDim2.new(0, LARGURA_PAINEL, 0, 32)
 	else
-		botaoMinimizar.Text = "-"
+		UI.botaoMinimizar.Text = "-"
 		frame.ClipsDescendants = false
 		frame.Size = UDim2.new(0, LARGURA_PAINEL, 0, ALTURA_PAINEL)
 	end
 end)
 
-local botaoFechar = Instance.new("TextButton")
-botaoFechar.Size = UDim2.new(0, 26, 0, 26)
-botaoFechar.Position = UDim2.new(1, -32, 0, 3)
-botaoFechar.BackgroundColor3 = Color3.fromRGB(55, 20, 20)
-botaoFechar.BackgroundTransparency = 1 -- sem fundo
-botaoFechar.Text = "X"
-botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
-aplicarFonte(botaoFechar, 14)
-botaoFechar.TextStrokeTransparency = 0.2
-botaoFechar.Parent = frame
-criarUICorner(botaoFechar, 13)
-criarBorda(botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
+UI.botaoFechar = Instance.new("TextButton")
+UI.botaoFechar.Size = UDim2.new(0, 26, 0, 26)
+UI.botaoFechar.Position = UDim2.new(1, -32, 0, 3)
+UI.botaoFechar.BackgroundColor3 = Color3.fromRGB(55, 20, 20)
+UI.botaoFechar.BackgroundTransparency = 1 -- sem fundo
+UI.botaoFechar.Text = "X"
+UI.botaoFechar.TextColor3 = Color3.fromRGB(255, 120, 120)
+aplicarFonte(UI.botaoFechar, 14)
+UI.botaoFechar.TextStrokeTransparency = 0.2
+UI.botaoFechar.Parent = frame
+criarUICorner(UI.botaoFechar, 13)
+criarBorda(UI.botaoFechar, Color3.fromRGB(255, 120, 120), 0.6)
 
 ------------------------------------------------------------
 -- CABEÇALHO — LINHAS DE FERRAMENTAS
@@ -548,7 +548,7 @@ local LARGURA_3 = math.floor((LARGURA_UTIL - 16) / 3) -- (304 - 16) / 3 = 96
 local LARGURA_2 = math.floor((LARGURA_UTIL - 8) / 2)  -- (304 - 8) / 2 = 148
 
 -- Linha 1: Noclip / ESP / Anti-Cair
-local botaoNoclip = novoBotao(
+UI.botaoNoclip = novoBotao(
 	frame,
 	"Noclip: OFF",
 	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
@@ -557,7 +557,7 @@ local botaoNoclip = novoBotao(
 	11
 )
 
-local botaoESP = novoBotao(
+UI.botaoESP = novoBotao(
 	frame,
 	"ESP: OFF",
 	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
@@ -566,7 +566,7 @@ local botaoESP = novoBotao(
 	11
 )
 
-local botaoAntiCair = novoBotao(
+UI.botaoAntiCair = novoBotao(
 	frame,
 	"Anti-Cair: OFF",
 	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
@@ -576,7 +576,7 @@ local botaoAntiCair = novoBotao(
 )
 
 -- Linha 2: Anti-Freeze / Spinbot / Spider
-local botaoAntiFreeze = novoBotao(
+UI.botaoAntiFreeze = novoBotao(
 	frame,
 	"Anti-Freeze: OFF",
 	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
@@ -585,7 +585,7 @@ local botaoAntiFreeze = novoBotao(
 	10
 )
 
-local botaoSpinbot = novoBotao(
+UI.botaoSpinbot = novoBotao(
 	frame,
 	"Spinbot: OFF",
 	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
@@ -594,7 +594,7 @@ local botaoSpinbot = novoBotao(
 	11
 )
 
-local botaoSpider = novoBotao(
+UI.botaoSpider = novoBotao(
 	frame,
 	"Spider: OFF",
 	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
@@ -606,7 +606,7 @@ local botaoSpider = novoBotao(
 local LARGURA_4 = math.floor((LARGURA_UTIL - 12) / 4) -- (304 - 12) / 4 = 73
 
 -- Linha 3: Click TP / Fantasma / Rejoin / Servidores
-local botaoClickTp = novoBotao(
+UI.botaoClickTp = novoBotao(
 	frame,
 	"Click TP: OFF",
 	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
@@ -615,7 +615,7 @@ local botaoClickTp = novoBotao(
 	10
 )
 
-local botaoFantasma = novoBotao(
+UI.botaoFantasma = novoBotao(
 	frame,
 	"Ghost: OFF",
 	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
@@ -624,7 +624,7 @@ local botaoFantasma = novoBotao(
 	10
 )
 
-local botaoRejoin = novoBotao(
+UI.botaoRejoin = novoBotao(
 	frame,
 	"Rejoin",
 	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
@@ -633,7 +633,7 @@ local botaoRejoin = novoBotao(
 	10
 )
 
-local botaoServidores = novoBotao(
+UI.botaoServidores = novoBotao(
 	frame,
 	"Servidores",
 	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
@@ -644,7 +644,7 @@ local botaoServidores = novoBotao(
 
 -- Linha 4: Salvar / Retornar / Anti-AFK / Emotes
 
-local botaoSalvarLocal = novoBotao(
+UI.botaoSalvarLocal = novoBotao(
 	frame,
 	"Salvar",
 	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
@@ -653,7 +653,7 @@ local botaoSalvarLocal = novoBotao(
 	10
 )
 
-local botaoRetornarLocal = novoBotao(
+UI.botaoRetornarLocal = novoBotao(
 	frame,
 	"Retornar",
 	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
@@ -662,7 +662,7 @@ local botaoRetornarLocal = novoBotao(
 	10
 )
 
-local botaoAntiAfk = novoBotao(
+UI.botaoAntiAfk = novoBotao(
 	frame,
 	"AFK: OFF",
 	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
@@ -671,7 +671,7 @@ local botaoAntiAfk = novoBotao(
 	10
 )
 
-local botaoEmotes = novoBotao(
+UI.botaoEmotes = novoBotao(
 	frame,
 	"Emotes",
 	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
@@ -741,84 +741,84 @@ local function criarLinhaAjuste(y, textoLabel, valorInicial, sufixo)
 end
 
 -- Linha Speed
-local _, botaoSpeedMenos, labelSpeedValor, botaoSpeedMais, botaoSpeedMax, botaoSpeedNormal = criarLinhaAjuste(Y_LINHAS_MOV, "Velocidade", valorSpeed, "")
+_, UI.botaoSpeedMenos, UI.labelSpeedValor, UI.botaoSpeedMais, UI.botaoSpeedMax, UI.botaoSpeedNormal = criarLinhaAjuste(Y_LINHAS_MOV, "Velocidade", valorSpeed, "")
 
 -- Linha Jump
 local Y_LINHA_JUMP = Y_LINHAS_MOV + ALTURA_LINHA_MOV + GAP_LINHA_MOV
-local _, botaoJumpMenos, labelJumpValor, botaoJumpMais, botaoJumpMax, botaoJumpNormal = criarLinhaAjuste(Y_LINHA_JUMP, "Salto", valorJump, "")
+_, UI.botaoJumpMenos, UI.labelJumpValor, UI.botaoJumpMais, UI.botaoJumpMax, UI.botaoJumpNormal = criarLinhaAjuste(Y_LINHA_JUMP, "Salto", valorJump, "")
 
 -- Linha Fly (label + botão liga/desliga + controles de velocidade)
 local Y_LINHA_FLY = Y_LINHA_JUMP + ALTURA_LINHA_MOV + GAP_LINHA_MOV
-local linhaFly, botaoFlySpeedMenos, labelFlySpeedValor, botaoFlySpeedMais, botaoFlyMax, botaoFlyNormal = criarLinhaAjuste(Y_LINHA_FLY, "Voar", valorFlySpeed, "")
+local linhaFly; linhaFly, UI.botaoFlySpeedMenos, UI.labelFlySpeedValor, UI.botaoFlySpeedMais, UI.botaoFlyMax, UI.botaoFlyNormal = criarLinhaAjuste(Y_LINHA_FLY, "Voar", valorFlySpeed, "")
 
-local botaoFlyToggle = Instance.new("TextButton")
-botaoFlyToggle.Size = UDim2.new(0, 28, 0, 18)
-botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -9)
-botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
-botaoFlyToggle.BackgroundTransparency = 1 -- sem fundo
-botaoFlyToggle.Text = "OFF"
-botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-aplicarFonte(botaoFlyToggle, 10)
-botaoFlyToggle.TextStrokeTransparency = 0.2
-botaoFlyToggle.Parent = linhaFly
-criarUICorner(botaoFlyToggle, 5)
-criarBorda(botaoFlyToggle)
+UI.botaoFlyToggle = Instance.new("TextButton")
+UI.botaoFlyToggle.Size = UDim2.new(0, 28, 0, 18)
+UI.botaoFlyToggle.Position = UDim2.new(0, 164, 0.5, -9)
+UI.botaoFlyToggle.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+UI.botaoFlyToggle.BackgroundTransparency = 1 -- sem fundo
+UI.botaoFlyToggle.Text = "OFF"
+UI.botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(UI.botaoFlyToggle, 10)
+UI.botaoFlyToggle.TextStrokeTransparency = 0.2
+UI.botaoFlyToggle.Parent = linhaFly
+criarUICorner(UI.botaoFlyToggle, 5)
+criarBorda(UI.botaoFlyToggle)
 
 ------------------------------------------------------------
 -- CAIXA DE BUSCA (filtra a lista por nome digitado)
 ------------------------------------------------------------
 local Y_BUSCA = Y_LINHA_FLY + ALTURA_LINHA_MOV + 8 -- logo abaixo da seção Movimento
 
-local caixaBusca = Instance.new("TextBox")
-caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 26)
-caixaBusca.Position = UDim2.new(0, MARGEM, 0, Y_BUSCA)
-caixaBusca.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-caixaBusca.BackgroundTransparency = 1 -- sem fundo: flutua sobre a mulher 2D
-caixaBusca.PlaceholderText = "Pesquisar jogador..."
-caixaBusca.PlaceholderColor3 = Color3.fromRGB(160, 160, 165)
-caixaBusca.Text = ""
-caixaBusca.TextColor3 = Color3.fromRGB(255, 255, 255)
-aplicarFonte(caixaBusca, 12)
-caixaBusca.TextStrokeTransparency = 0.2
-caixaBusca.ClearTextOnFocus = false
-caixaBusca.Parent = frame
-criarUICorner(caixaBusca, 6)
-criarBorda(caixaBusca, Color3.fromRGB(255, 255, 255), 0.5)
+UI.caixaBusca = Instance.new("TextBox")
+UI.caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 26)
+UI.caixaBusca.Position = UDim2.new(0, MARGEM, 0, Y_BUSCA)
+UI.caixaBusca.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+UI.caixaBusca.BackgroundTransparency = 1 -- sem fundo: flutua sobre a mulher 2D
+UI.caixaBusca.PlaceholderText = "Pesquisar jogador..."
+UI.caixaBusca.PlaceholderColor3 = Color3.fromRGB(160, 160, 165)
+UI.caixaBusca.Text = ""
+UI.caixaBusca.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(UI.caixaBusca, 12)
+UI.caixaBusca.TextStrokeTransparency = 0.2
+UI.caixaBusca.ClearTextOnFocus = false
+UI.caixaBusca.Parent = frame
+criarUICorner(UI.caixaBusca, 6)
+criarBorda(UI.caixaBusca, Color3.fromRGB(255, 255, 255), 0.5)
 
-caixaBusca.TextXAlignment = Enum.TextXAlignment.Left
+UI.caixaBusca.TextXAlignment = Enum.TextXAlignment.Left
 
 -- Pequena margem esquerda pro texto não colar na borda
 local paddingBusca = Instance.new("UIPadding")
 paddingBusca.PaddingLeft = UDim.new(0, 10)
-paddingBusca.Parent = caixaBusca
+paddingBusca.Parent = UI.caixaBusca
 
 ------------------------------------------------------------
 -- BARRA "ESPECTANDO AGORA" (só aparece quando ativo)
 ------------------------------------------------------------
 local Y_BARRA_ESPECTANDO_REAL = Y_BUSCA + 26 + 6
 
-local barraEspectando = Instance.new("Frame")
-barraEspectando.Size = UDim2.new(1, -MARGEM * 2, 0, 26)
-barraEspectando.Position = UDim2.new(0, MARGEM, 0, Y_BARRA_ESPECTANDO_REAL)
-barraEspectando.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
-barraEspectando.BackgroundTransparency = 0.3 -- barra translúcida
-barraEspectando.Visible = false
-barraEspectando.Parent = frame
-criarUICorner(barraEspectando, 6)
+UI.barraEspectando = Instance.new("Frame")
+UI.barraEspectando.Size = UDim2.new(1, -MARGEM * 2, 0, 26)
+UI.barraEspectando.Position = UDim2.new(0, MARGEM, 0, Y_BARRA_ESPECTANDO_REAL)
+UI.barraEspectando.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+UI.barraEspectando.BackgroundTransparency = 0.3 -- barra translúcida
+UI.barraEspectando.Visible = false
+UI.barraEspectando.Parent = frame
+criarUICorner(UI.barraEspectando, 6)
 
-local labelEspectando = Instance.new("TextLabel")
-labelEspectando.Size = UDim2.new(1, -86, 1, 0)
-labelEspectando.Position = UDim2.new(0, 10, 0, 0)
-labelEspectando.BackgroundTransparency = 1
-labelEspectando.TextXAlignment = Enum.TextXAlignment.Left
-labelEspectando.Text = "Espectando: -"
-labelEspectando.TextColor3 = Color3.fromRGB(255, 255, 255)
-aplicarFonte(labelEspectando, 12)
-labelEspectando.TextStrokeTransparency = 1
-labelEspectando.Parent = barraEspectando
+UI.labelEspectando = Instance.new("TextLabel")
+UI.labelEspectando.Size = UDim2.new(1, -86, 1, 0)
+UI.labelEspectando.Position = UDim2.new(0, 10, 0, 0)
+UI.labelEspectando.BackgroundTransparency = 1
+UI.labelEspectando.TextXAlignment = Enum.TextXAlignment.Left
+UI.labelEspectando.Text = "Espectando: -"
+UI.labelEspectando.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(UI.labelEspectando, 12)
+UI.labelEspectando.TextStrokeTransparency = 1
+UI.labelEspectando.Parent = UI.barraEspectando
 
-local botaoPararSpec = novoBotao(
-	barraEspectando,
+UI.botaoPararSpec = novoBotao(
+	UI.barraEspectando,
 	"Parar",
 	UDim2.new(0, 68, 0, 20),
 	UDim2.new(1, -74, 0, 3),
@@ -832,36 +832,37 @@ local botaoPararSpec = novoBotao(
 local Y_LISTA_SEM_BARRA = Y_BARRA_ESPECTANDO_REAL
 local Y_LISTA_COM_BARRA = Y_BARRA_ESPECTANDO_REAL + 26 + 6
 
-local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_LISTA_SEM_BARRA + MARGEM))
-scrollFrame.Position = UDim2.new(0, MARGEM, 0, Y_LISTA_SEM_BARRA)
-scrollFrame.BackgroundTransparency = 1
-scrollFrame.BorderSizePixel = 0
-scrollFrame.ScrollBarThickness = 5
-scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 95)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-scrollFrame.Parent = frame
+UI.scrollFrame = Instance.new("ScrollingFrame")
+UI.scrollFrame.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_LISTA_SEM_BARRA + MARGEM))
+UI.scrollFrame.Position = UDim2.new(0, MARGEM, 0, Y_LISTA_SEM_BARRA)
+UI.scrollFrame.BackgroundTransparency = 1
+UI.scrollFrame.BorderSizePixel = 0
+UI.scrollFrame.ScrollBarThickness = 5
+UI.scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 95)
+UI.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+UI.scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+UI.scrollFrame.Parent = frame
 
 local listLayout = Instance.new("UIListLayout")
 listLayout.Padding = UDim.new(0, 6)
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-listLayout.Parent = scrollFrame
+listLayout.Parent = UI.scrollFrame
 
 -- Ajusta a posição/altura do scroll quando a barra de espectar aparece/some
 local function atualizarLayoutFrame()
-	if barraEspectando.Visible then
-		scrollFrame.Position = UDim2.new(0, MARGEM, 0, Y_LISTA_COM_BARRA)
-		scrollFrame.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_LISTA_COM_BARRA + MARGEM))
+	if UI.barraEspectando.Visible then
+		UI.scrollFrame.Position = UDim2.new(0, MARGEM, 0, Y_LISTA_COM_BARRA)
+		UI.scrollFrame.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_LISTA_COM_BARRA + MARGEM))
 	else
-		scrollFrame.Position = UDim2.new(0, MARGEM, 0, Y_LISTA_SEM_BARRA)
-		scrollFrame.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_LISTA_SEM_BARRA + MARGEM))
+		UI.scrollFrame.Position = UDim2.new(0, MARGEM, 0, Y_LISTA_SEM_BARRA)
+		UI.scrollFrame.Size = UDim2.new(1, -MARGEM * 2, 1, -(Y_LISTA_SEM_BARRA + MARGEM))
 	end
 end
 
 ------------------------------------------------------------
 -- ARRASTAR A BOLINHA (segura o botão flutuante e move pela tela)
 ------------------------------------------------------------
+do
 local bolinhaArrastando = false
 local bolinhaInputArraste = nil
 local bolinhaPosicaoInicialMouse = nil
@@ -922,7 +923,8 @@ botaoToggle.MouseButton1Click:Connect(function()
 	end
 	frame.Visible = not frame.Visible
 end)
-botaoFechar.MouseButton1Click:Connect(function()
+end
+UI.botaoFechar.MouseButton1Click:Connect(function()
 	frame.Visible = false
 end)
 
@@ -939,6 +941,7 @@ end)
 ------------------------------------------------------------
 -- ARRASTAR O PAINEL (segurando a barra do título)
 ------------------------------------------------------------
+do
 local arrastando = false
 local inputArraste = nil
 local posicaoInicialMouse = nil
@@ -979,6 +982,7 @@ UserInputService.InputChanged:Connect(function(input)
 		atualizarArraste(input)
 	end
 end)
+end
 
 ------------------------------------------------------------
 -- TELEPORTE
@@ -1025,7 +1029,7 @@ seguirHeartbeat = RunService.Heartbeat:Connect(function()
 
 	if myHRP and alvoHRP then
 		local distancia = (alvoHRP.Position - myHRP.Position).Magnitude
-		if distancia > DISTANCIA_MAXIMA_SEGUIR then
+		if distancia > CFG.DISTANCIA_MAXIMA_SEGUIR then
 			myHRP.CFrame = alvoHRP.CFrame * CFrame.new(0, 0, 3)
 		end
 	end
@@ -1076,11 +1080,11 @@ carregarLocalPersistido()
 -- Atualiza a aparência do botão "Retornar" conforme há ou não local salvo
 local function atualizarBotaoRetornar()
 	if posicaoSalva then
-		botaoRetornarLocal.Text = "Retornar"
-		botaoRetornarLocal.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoRetornarLocal.Text = "Retornar"
+		UI.botaoRetornarLocal.TextColor3 = Color3.fromRGB(255, 255, 255)
 	else
-		botaoRetornarLocal.Text = "Retornar"
-		botaoRetornarLocal.TextColor3 = Color3.fromRGB(140, 140, 145)
+		UI.botaoRetornarLocal.Text = "Retornar"
+		UI.botaoRetornarLocal.TextColor3 = Color3.fromRGB(140, 140, 145)
 	end
 end
 
@@ -1092,18 +1096,18 @@ local function salvarLocal()
 	persistirLocal()
 	atualizarBotaoRetornar()
 
-	botaoSalvarLocal.Text = "Salvo ✓"
-	botaoSalvarLocal.TextColor3 = Color3.fromRGB(90, 255, 150)
+	UI.botaoSalvarLocal.Text = "Salvo ✓"
+	UI.botaoSalvarLocal.TextColor3 = Color3.fromRGB(90, 255, 150)
 	task.delay(1.5, function()
-		botaoSalvarLocal.Text = "Salvar"
-		botaoSalvarLocal.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoSalvarLocal.Text = "Salvar"
+		UI.botaoSalvarLocal.TextColor3 = Color3.fromRGB(255, 255, 255)
 	end)
 end
 
 local function retornarLocal()
 	if not posicaoSalva then
-		botaoRetornarLocal.Text = "Nada salvo!"
-		botaoRetornarLocal.TextColor3 = Color3.fromRGB(255, 120, 120)
+		UI.botaoRetornarLocal.Text = "Nada salvo!"
+		UI.botaoRetornarLocal.TextColor3 = Color3.fromRGB(255, 120, 120)
 		task.delay(1.2, function()
 			atualizarBotaoRetornar()
 		end)
@@ -1120,8 +1124,8 @@ local function retornarLocal()
 	myHRP.CFrame = posicaoSalva
 end
 
-botaoSalvarLocal.MouseButton1Click:Connect(salvarLocal)
-botaoRetornarLocal.MouseButton1Click:Connect(retornarLocal)
+UI.botaoSalvarLocal.MouseButton1Click:Connect(salvarLocal)
+UI.botaoRetornarLocal.MouseButton1Click:Connect(retornarLocal)
 
 atualizarBotaoRetornar()
 
@@ -1141,7 +1145,7 @@ local function pararEspectar()
 	camera.CameraSubject = humanoid
 	camera.CameraType = Enum.CameraType.Custom
 
-	barraEspectando.Visible = false
+	UI.barraEspectando.Visible = false
 	atualizarLayoutFrame()
 end
 
@@ -1161,12 +1165,12 @@ local function espectarAte(alvo)
 	camera.CameraSubject = humanoidAlvo
 	camera.CameraType = Enum.CameraType.Custom
 
-	labelEspectando.Text = "Espectando: " .. alvo.Name
-	barraEspectando.Visible = true
+	UI.labelEspectando.Text = "Espectando: " .. alvo.Name
+	UI.barraEspectando.Visible = true
 	atualizarLayoutFrame()
 end
 
-botaoPararSpec.MouseButton1Click:Connect(pararEspectar)
+UI.botaoPararSpec.MouseButton1Click:Connect(pararEspectar)
 
 Players.PlayerRemoving:Connect(function(saindo)
 	if espectando and alvoEspectado == saindo then
@@ -1285,14 +1289,14 @@ local function atualizarESPTodos()
 	end
 end
 
-botaoESP.MouseButton1Click:Connect(function()
+UI.botaoESP.MouseButton1Click:Connect(function()
 	espAtivo = not espAtivo
 	if espAtivo then
-		botaoESP.Text = "ESP: ON"
-		botaoESP.TextColor3 = Color3.fromRGB(90, 255, 150)
+		UI.botaoESP.Text = "ESP: ON"
+		UI.botaoESP.TextColor3 = Color3.fromRGB(90, 255, 150)
 	else
-		botaoESP.Text = "ESP: OFF"
-		botaoESP.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoESP.Text = "ESP: OFF"
+		UI.botaoESP.TextColor3 = Color3.fromRGB(255, 255, 255)
 	end
 	atualizarESPTodos()
 end)
@@ -1412,15 +1416,15 @@ local function desativarNoclip()
 	valoresOriginaisCollide = {}
 end
 
-botaoNoclip.MouseButton1Click:Connect(function()
+UI.botaoNoclip.MouseButton1Click:Connect(function()
 	noclipAtivo = not noclipAtivo
 	if noclipAtivo then
-		botaoNoclip.Text = "Noclip: ON"
-		botaoNoclip.TextColor3 = Color3.fromRGB(90, 255, 150)
+		UI.botaoNoclip.Text = "Noclip: ON"
+		UI.botaoNoclip.TextColor3 = Color3.fromRGB(90, 255, 150)
 		ativarNoclip()
 	else
-		botaoNoclip.Text = "Noclip: OFF"
-		botaoNoclip.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoNoclip.Text = "Noclip: OFF"
+		UI.botaoNoclip.TextColor3 = Color3.fromRGB(255, 255, 255)
 		desativarNoclip()
 	end
 end)
@@ -1550,15 +1554,15 @@ function desativarAntiCair()
 	end
 end
 
-botaoAntiCair.MouseButton1Click:Connect(function()
+UI.botaoAntiCair.MouseButton1Click:Connect(function()
 	antiCairAtivo = not antiCairAtivo
 	if antiCairAtivo then
-		botaoAntiCair.Text = "Anti-Cair: ON"
-		botaoAntiCair.TextColor3 = Color3.fromRGB(90, 255, 150)
+		UI.botaoAntiCair.Text = "Anti-Cair: ON"
+		UI.botaoAntiCair.TextColor3 = Color3.fromRGB(90, 255, 150)
 		ativarAntiCair()
 	else
-		botaoAntiCair.Text = "Anti-Cair: OFF"
-		botaoAntiCair.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoAntiCair.Text = "Anti-Cair: OFF"
+		UI.botaoAntiCair.TextColor3 = Color3.fromRGB(255, 255, 255)
 		desativarAntiCair()
 	end
 end)
@@ -1592,15 +1596,15 @@ local function desativarAntiFreeze()
 	end
 end
 
-botaoAntiFreeze.MouseButton1Click:Connect(function()
+UI.botaoAntiFreeze.MouseButton1Click:Connect(function()
 	antiFreezeAtivo = not antiFreezeAtivo
 	if antiFreezeAtivo then
-		botaoAntiFreeze.Text = "Anti-Freeze: ON"
-		botaoAntiFreeze.TextColor3 = Color3.fromRGB(90, 255, 150)
+		UI.botaoAntiFreeze.Text = "Anti-Freeze: ON"
+		UI.botaoAntiFreeze.TextColor3 = Color3.fromRGB(90, 255, 150)
 		ativarAntiFreeze()
 	else
-		botaoAntiFreeze.Text = "Anti-Freeze: OFF"
-		botaoAntiFreeze.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoAntiFreeze.Text = "Anti-Freeze: OFF"
+		UI.botaoAntiFreeze.TextColor3 = Color3.fromRGB(255, 255, 255)
 		desativarAntiFreeze()
 	end
 end)
@@ -1627,15 +1631,15 @@ local function desativarSpinbot()
 	end
 end
 
-botaoSpinbot.MouseButton1Click:Connect(function()
+UI.botaoSpinbot.MouseButton1Click:Connect(function()
 	spinbotAtivo = not spinbotAtivo
 	if spinbotAtivo then
-		botaoSpinbot.Text = "Spinbot: ON"
-		botaoSpinbot.TextColor3 = Color3.fromRGB(90, 255, 150)
+		UI.botaoSpinbot.Text = "Spinbot: ON"
+		UI.botaoSpinbot.TextColor3 = Color3.fromRGB(90, 255, 150)
 		ativarSpinbot()
 	else
-		botaoSpinbot.Text = "Spinbot: OFF"
-		botaoSpinbot.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoSpinbot.Text = "Spinbot: OFF"
+		UI.botaoSpinbot.TextColor3 = Color3.fromRGB(255, 255, 255)
 		desativarSpinbot()
 	end
 end)
@@ -1674,15 +1678,15 @@ local function desativarSpiderMan()
 	end
 end
 
-botaoSpider.MouseButton1Click:Connect(function()
+UI.botaoSpider.MouseButton1Click:Connect(function()
 	spiderManAtivo = not spiderManAtivo
 	if spiderManAtivo then
-		botaoSpider.Text = "Spider: ON"
-		botaoSpider.TextColor3 = Color3.fromRGB(90, 255, 150)
+		UI.botaoSpider.Text = "Spider: ON"
+		UI.botaoSpider.TextColor3 = Color3.fromRGB(90, 255, 150)
 		ativarSpiderMan()
 	else
-		botaoSpider.Text = "Spider: OFF"
-		botaoSpider.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoSpider.Text = "Spider: OFF"
+		UI.botaoSpider.TextColor3 = Color3.fromRGB(255, 255, 255)
 		desativarSpiderMan()
 	end
 end)
@@ -1700,14 +1704,14 @@ mouse.Button1Down:Connect(function()
 	end
 end)
 
-botaoClickTp.MouseButton1Click:Connect(function()
+UI.botaoClickTp.MouseButton1Click:Connect(function()
 	clickTpAtivo = not clickTpAtivo
 	if clickTpAtivo then
-		botaoClickTp.Text = "Click TP: ON"
-		botaoClickTp.TextColor3 = Color3.fromRGB(90, 255, 150)
+		UI.botaoClickTp.Text = "Click TP: ON"
+		UI.botaoClickTp.TextColor3 = Color3.fromRGB(90, 255, 150)
 	else
-		botaoClickTp.Text = "Click TP: OFF"
-		botaoClickTp.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoClickTp.Text = "Click TP: OFF"
+		UI.botaoClickTp.TextColor3 = Color3.fromRGB(255, 255, 255)
 	end
 end)
 
@@ -1749,15 +1753,15 @@ local function desativarFantasma()
 	restaurarFantasmaChar()
 end
 
-botaoFantasma.MouseButton1Click:Connect(function()
+UI.botaoFantasma.MouseButton1Click:Connect(function()
 	fantasmaAtivo = not fantasmaAtivo
 	if fantasmaAtivo then
-		botaoFantasma.Text = "Ghost: ON"
-		botaoFantasma.TextColor3 = Color3.fromRGB(90, 255, 150)
+		UI.botaoFantasma.Text = "Ghost: ON"
+		UI.botaoFantasma.TextColor3 = Color3.fromRGB(90, 255, 150)
 		ativarFantasma()
 	else
-		botaoFantasma.Text = "Ghost: OFF"
-		botaoFantasma.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoFantasma.Text = "Ghost: OFF"
+		UI.botaoFantasma.TextColor3 = Color3.fromRGB(255, 255, 255)
 		desativarFantasma()
 	end
 end)
@@ -1768,9 +1772,9 @@ end)
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
-botaoRejoin.MouseButton1Click:Connect(function()
-	botaoRejoin.Text = "Reconectando..."
-	botaoRejoin.TextColor3 = Color3.fromRGB(90, 255, 150)
+UI.botaoRejoin.MouseButton1Click:Connect(function()
+	UI.botaoRejoin.Text = "Reconectando..."
+	UI.botaoRejoin.TextColor3 = Color3.fromRGB(90, 255, 150)
 	task.delay(0.5, function()
 		pcall(function()
 			if #Players:GetPlayers() <= 1 then
@@ -1821,22 +1825,23 @@ end
 ------------------------------------------------------------
 -- JANELA DE SERVIDORES (Navegador com lista completa)
 ------------------------------------------------------------
-local janelaServidores = Instance.new("Frame")
-janelaServidores.Name = "JanelaServidores"
-janelaServidores.Size = UDim2.new(1, 0, 1, 0)
-janelaServidores.Position = UDim2.new(0, 0, 0, 0)
-janelaServidores.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
-janelaServidores.BackgroundTransparency = 0.15
-janelaServidores.Visible = false
-janelaServidores.ZIndex = 20
-janelaServidores.Parent = frame
-criarUICorner(janelaServidores, 10)
+UI.janelaServidores = Instance.new("Frame")
+UI.janelaServidores.Name = "JanelaServidores"
+UI.janelaServidores.Size = UDim2.new(1, 0, 1, 0)
+UI.janelaServidores.Position = UDim2.new(0, 0, 0, 0)
+UI.janelaServidores.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+UI.janelaServidores.BackgroundTransparency = 0.15
+UI.janelaServidores.Visible = false
+UI.janelaServidores.ZIndex = 20
+UI.janelaServidores.Parent = frame
+criarUICorner(UI.janelaServidores, 10)
 
+do
 local topoServ = Instance.new("Frame")
 topoServ.Size = UDim2.new(1, 0, 0, 36)
 topoServ.BackgroundTransparency = 1
 topoServ.ZIndex = 21
-topoServ.Parent = janelaServidores
+topoServ.Parent = UI.janelaServidores
 
 local btnVoltarServ = novoBotao(topoServ, "← Voltar", UDim2.new(0, 68, 0, 24), UDim2.new(0, 8, 0, 6), Color3.fromRGB(50, 50, 55), 11)
 btnVoltarServ.ZIndex = 22
@@ -1865,7 +1870,7 @@ scrollServidores.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 95)
 scrollServidores.AutomaticCanvasSize = Enum.AutomaticSize.Y
 scrollServidores.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrollServidores.ZIndex = 21
-scrollServidores.Parent = janelaServidores
+scrollServidores.Parent = UI.janelaServidores
 
 local listLayoutServ = Instance.new("UIListLayout")
 listLayoutServ.Padding = UDim.new(0, 6)
@@ -1983,17 +1988,18 @@ local function carregarServidores()
 end
 
 btnVoltarServ.MouseButton1Click:Connect(function()
-	janelaServidores.Visible = false
+	UI.janelaServidores.Visible = false
 end)
 
-botaoServidores.MouseButton1Click:Connect(function()
-	janelaServidores.Visible = true
+UI.botaoServidores.MouseButton1Click:Connect(function()
+	UI.janelaServidores.Visible = true
 	carregarServidores()
 end)
 
 btnRecarregarServ.MouseButton1Click:Connect(function()
 	carregarServidores()
 end)
+end
 
 ------------------------------------------------------------
 -- ANTI-AFK (impede kick por inatividade após 20 minutos)
@@ -2018,15 +2024,15 @@ local function desativarAntiAfk()
 	end
 end
 
-botaoAntiAfk.MouseButton1Click:Connect(function()
+UI.botaoAntiAfk.MouseButton1Click:Connect(function()
 	antiAfkAtivo = not antiAfkAtivo
 	if antiAfkAtivo then
-		botaoAntiAfk.Text = "AFK: ON"
-		botaoAntiAfk.TextColor3 = Color3.fromRGB(90, 255, 150)
+		UI.botaoAntiAfk.Text = "AFK: ON"
+		UI.botaoAntiAfk.TextColor3 = Color3.fromRGB(90, 255, 150)
 		ativarAntiAfk()
 	else
-		botaoAntiAfk.Text = "AFK: OFF"
-		botaoAntiAfk.TextColor3 = Color3.fromRGB(255, 255, 255)
+		UI.botaoAntiAfk.Text = "AFK: OFF"
+		UI.botaoAntiAfk.TextColor3 = Color3.fromRGB(255, 255, 255)
 		desativarAntiAfk()
 	end
 end)
@@ -2110,10 +2116,10 @@ local function iniciarOrbit(alvo)
 		local alvoHRP = alvoChar and alvoChar:FindFirstChild("HumanoidRootPart")
 
 		if myHRP and alvoHRP then
-			orbitAngulo = (orbitAngulo + dt * ORBIT_VELOCIDADE) % (2 * math.pi)
-			local offset = Vector3.new(math.cos(orbitAngulo) * ORBIT_RAIO, ORBIT_ALTURA, math.sin(orbitAngulo) * ORBIT_RAIO)
+			orbitAngulo = (orbitAngulo + dt * CFG.ORBIT_VELOCIDADE) % (2 * math.pi)
+			local offset = Vector3.new(math.cos(orbitAngulo) * CFG.ORBIT_RAIO, CFG.ORBIT_ALTURA, math.sin(orbitAngulo) * CFG.ORBIT_RAIO)
 			local novaPos = alvoHRP.Position + offset
-			local lookPos = alvoHRP.Position + Vector3.new(0, ORBIT_ALTURA, 0)
+			local lookPos = alvoHRP.Position + Vector3.new(0, CFG.ORBIT_ALTURA, 0)
 			myHRP.CFrame = CFrame.lookAt(novaPos, lookPos)
 			myHRP.AssemblyLinearVelocity = Vector3.zero
 			myHRP.AssemblyAngularVelocity = Vector3.zero
@@ -2197,22 +2203,23 @@ end
 ------------------------------------------------------------
 -- JANELA DE EMOTES & DANÇAS (Catálogo com emotes raros)
 ------------------------------------------------------------
-local janelaEmotes = Instance.new("Frame")
-janelaEmotes.Name = "JanelaEmotes"
-janelaEmotes.Size = UDim2.new(1, 0, 1, 0)
-janelaEmotes.Position = UDim2.new(0, 0, 0, 0)
-janelaEmotes.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
-janelaEmotes.BackgroundTransparency = 0.15
-janelaEmotes.Visible = false
-janelaEmotes.ZIndex = 25
-janelaEmotes.Parent = frame
-criarUICorner(janelaEmotes, 10)
+UI.janelaEmotes = Instance.new("Frame")
+UI.janelaEmotes.Name = "JanelaEmotes"
+UI.janelaEmotes.Size = UDim2.new(1, 0, 1, 0)
+UI.janelaEmotes.Position = UDim2.new(0, 0, 0, 0)
+UI.janelaEmotes.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+UI.janelaEmotes.BackgroundTransparency = 0.15
+UI.janelaEmotes.Visible = false
+UI.janelaEmotes.ZIndex = 25
+UI.janelaEmotes.Parent = frame
+criarUICorner(UI.janelaEmotes, 10)
 
+do
 local topoEmotes = Instance.new("Frame")
 topoEmotes.Size = UDim2.new(1, 0, 0, 36)
 topoEmotes.BackgroundTransparency = 1
 topoEmotes.ZIndex = 26
-topoEmotes.Parent = janelaEmotes
+topoEmotes.Parent = UI.janelaEmotes
 
 local btnVoltarEmotes = novoBotao(topoEmotes, "← Voltar", UDim2.new(0, 68, 0, 24), UDim2.new(0, 8, 0, 6), Color3.fromRGB(50, 50, 55), 11)
 btnVoltarEmotes.ZIndex = 27
@@ -2237,7 +2244,7 @@ linhaCustomEmote.Size = UDim2.new(1, -16, 0, 26)
 linhaCustomEmote.Position = UDim2.new(0, 8, 0, 38)
 linhaCustomEmote.BackgroundTransparency = 1
 linhaCustomEmote.ZIndex = 26
-linhaCustomEmote.Parent = janelaEmotes
+linhaCustomEmote.Parent = UI.janelaEmotes
 
 local caixaCustomEmote = Instance.new("TextBox")
 caixaCustomEmote.Size = UDim2.new(1, -74, 1, 0)
@@ -2269,7 +2276,7 @@ scrollEmotes.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 95)
 scrollEmotes.AutomaticCanvasSize = Enum.AutomaticSize.Y
 scrollEmotes.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrollEmotes.ZIndex = 26
-scrollEmotes.Parent = janelaEmotes
+scrollEmotes.Parent = UI.janelaEmotes
 
 local gridLayoutEmotes = Instance.new("UIGridLayout")
 gridLayoutEmotes.CellSize = UDim2.new(0, 93, 0, 32)
@@ -2325,12 +2332,13 @@ btnPararEmote.MouseButton1Click:Connect(function()
 end)
 
 btnVoltarEmotes.MouseButton1Click:Connect(function()
-	janelaEmotes.Visible = false
+	UI.janelaEmotes.Visible = false
 end)
 
-botaoEmotes.MouseButton1Click:Connect(function()
-	janelaEmotes.Visible = true
+UI.botaoEmotes.MouseButton1Click:Connect(function()
+	UI.janelaEmotes.Visible = true
 end)
+end
 
 ------------------------------------------------------------
 -- COPIAR SKIN (Clona a aparência, roupas e acessórios do jogador)
@@ -2368,67 +2376,68 @@ end
 ------------------------------------------------------------
 -- JANELA DE INVENTÁRIO (Inspecionar ferramentas e mochila)
 ------------------------------------------------------------
-local janelaInventario = Instance.new("Frame")
-janelaInventario.Name = "JanelaInventario"
-janelaInventario.Size = UDim2.new(1, 0, 1, 0)
-janelaInventario.Position = UDim2.new(0, 0, 0, 0)
-janelaInventario.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
-janelaInventario.BackgroundTransparency = 0.15
-janelaInventario.Visible = false
-janelaInventario.ZIndex = 25
-janelaInventario.Parent = frame
-criarUICorner(janelaInventario, 10)
+UI.janelaInventario = Instance.new("Frame")
+UI.janelaInventario.Name = "JanelaInventario"
+UI.janelaInventario.Size = UDim2.new(1, 0, 1, 0)
+UI.janelaInventario.Position = UDim2.new(0, 0, 0, 0)
+UI.janelaInventario.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+UI.janelaInventario.BackgroundTransparency = 0.15
+UI.janelaInventario.Visible = false
+UI.janelaInventario.ZIndex = 25
+UI.janelaInventario.Parent = frame
+criarUICorner(UI.janelaInventario, 10)
 
+do
 local topoInv = Instance.new("Frame")
 topoInv.Size = UDim2.new(1, 0, 0, 36)
 topoInv.BackgroundTransparency = 1
 topoInv.ZIndex = 26
-topoInv.Parent = janelaInventario
+topoInv.Parent = UI.janelaInventario
 
-local btnVoltarInv = novoBotao(topoInv, "← Voltar", UDim2.new(0, 68, 0, 24), UDim2.new(0, 8, 0, 6), Color3.fromRGB(50, 50, 55), 11)
-btnVoltarInv.ZIndex = 27
+UI.btnVoltarInv = novoBotao(topoInv, "← Voltar", UDim2.new(0, 68, 0, 24), UDim2.new(0, 8, 0, 6), Color3.fromRGB(50, 50, 55), 11)
+UI.btnVoltarInv.ZIndex = 27
 
-local tituloInv = Instance.new("TextLabel")
-tituloInv.Size = UDim2.new(1, -160, 0, 24)
-tituloInv.Position = UDim2.new(0, 80, 0, 6)
-tituloInv.BackgroundTransparency = 1
-tituloInv.Text = "INVENTÁRIO"
-tituloInv.TextColor3 = Color3.fromRGB(255, 255, 255)
-aplicarFonte(tituloInv, 13)
-tituloInv.TextStrokeTransparency = 0.2
-tituloInv.ZIndex = 27
-tituloInv.Parent = topoInv
+UI.tituloInv = Instance.new("TextLabel")
+UI.tituloInv.Size = UDim2.new(1, -160, 0, 24)
+UI.tituloInv.Position = UDim2.new(0, 80, 0, 6)
+UI.tituloInv.BackgroundTransparency = 1
+UI.tituloInv.Text = "INVENTÁRIO"
+UI.tituloInv.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(UI.tituloInv, 13)
+UI.tituloInv.TextStrokeTransparency = 0.2
+UI.tituloInv.ZIndex = 27
+UI.tituloInv.Parent = topoInv
 
-local btnAtualizarInv = novoBotao(topoInv, "🔄 Atualizar", UDim2.new(0, 72, 0, 24), UDim2.new(1, -80, 0, 6), Color3.fromRGB(50, 50, 55), 11)
-btnAtualizarInv.ZIndex = 27
+UI.btnAtualizarInv = novoBotao(topoInv, "🔄 Atualizar", UDim2.new(0, 72, 0, 24), UDim2.new(1, -80, 0, 6), Color3.fromRGB(50, 50, 55), 11)
+UI.btnAtualizarInv.ZIndex = 27
 
-local scrollInventario = Instance.new("ScrollingFrame")
-scrollInventario.Size = UDim2.new(1, -16, 1, -44)
-scrollInventario.Position = UDim2.new(0, 8, 0, 38)
-scrollInventario.BackgroundTransparency = 1
-scrollInventario.BorderSizePixel = 0
-scrollInventario.ScrollBarThickness = 4
-scrollInventario.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 95)
-scrollInventario.AutomaticCanvasSize = Enum.AutomaticSize.Y
-scrollInventario.CanvasSize = UDim2.new(0, 0, 0, 0)
-scrollInventario.ZIndex = 26
-scrollInventario.Parent = janelaInventario
+UI.scrollInventario = Instance.new("ScrollingFrame")
+UI.scrollInventario.Size = UDim2.new(1, -16, 1, -44)
+UI.scrollInventario.Position = UDim2.new(0, 8, 0, 38)
+UI.scrollInventario.BackgroundTransparency = 1
+UI.scrollInventario.BorderSizePixel = 0
+UI.scrollInventario.ScrollBarThickness = 4
+UI.scrollInventario.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 95)
+UI.scrollInventario.AutomaticCanvasSize = Enum.AutomaticSize.Y
+UI.scrollInventario.CanvasSize = UDim2.new(0, 0, 0, 0)
+UI.scrollInventario.ZIndex = 26
+UI.scrollInventario.Parent = UI.janelaInventario
 
 local listLayoutInv = Instance.new("UIListLayout")
 listLayoutInv.Padding = UDim.new(0, 6)
 listLayoutInv.SortOrder = Enum.SortOrder.LayoutOrder
-listLayoutInv.Parent = scrollInventario
+listLayoutInv.Parent = UI.scrollInventario
 
 local function renderizarInventario(alvo)
 	jogadorInspecionadoAtual = alvo
-	for _, child in ipairs(scrollInventario:GetChildren()) do
+	for _, child in ipairs(UI.scrollInventario:GetChildren()) do
 		if child:IsA("Frame") or child:IsA("TextLabel") then
 			child:Destroy()
 		end
 	end
 
 	local nomeAlvo = alvo and (alvo.DisplayName or alvo.Name) or "-"
-	tituloInv.Text = "INVENTÁRIO: " .. nomeAlvo
+	UI.tituloInv.Text = "INVENTÁRIO: " .. nomeAlvo
 
 	if not alvo or not alvo.Parent then
 		local labelVazio = Instance.new("TextLabel")
@@ -2438,7 +2447,7 @@ local function renderizarInventario(alvo)
 		labelVazio.TextColor3 = Color3.fromRGB(180, 180, 185)
 		aplicarFonte(labelVazio, 12)
 		labelVazio.ZIndex = 27
-		labelVazio.Parent = scrollInventario
+		labelVazio.Parent = UI.scrollInventario
 		return
 	end
 
@@ -2473,7 +2482,7 @@ local function renderizarInventario(alvo)
 		aplicarFonte(labelVazio, 12)
 		labelVazio.TextStrokeTransparency = 0.2
 		labelVazio.ZIndex = 27
-		labelVazio.Parent = scrollInventario
+		labelVazio.Parent = UI.scrollInventario
 		return
 	end
 
@@ -2485,7 +2494,7 @@ local function renderizarInventario(alvo)
 		cardItem.BackgroundTransparency = 1
 		cardItem.LayoutOrder = i
 		cardItem.ZIndex = 27
-		cardItem.Parent = scrollInventario
+		cardItem.Parent = UI.scrollInventario
 		criarUICorner(cardItem, 6)
 		criarBorda(cardItem, Color3.fromRGB(255, 255, 255), 0.5)
 
@@ -2542,16 +2551,17 @@ local function renderizarInventario(alvo)
 	end
 end
 
-btnVoltarInv.MouseButton1Click:Connect(function()
-	janelaInventario.Visible = false
+UI.btnVoltarInv.MouseButton1Click:Connect(function()
+	UI.janelaInventario.Visible = false
 	jogadorInspecionadoAtual = nil
 end)
 
-btnAtualizarInv.MouseButton1Click:Connect(function()
+UI.btnAtualizarInv.MouseButton1Click:Connect(function()
 	if jogadorInspecionadoAtual then
 		renderizarInventario(jogadorInspecionadoAtual)
 	end
 end)
+end
 
 ------------------------------------------------------------
 -- SPEED (velocidade de andar ajustável)
@@ -2564,29 +2574,29 @@ local function aplicarSpeed()
 	end
 end
 
-botaoSpeedMenos.MouseButton1Click:Connect(function()
-	valorSpeed = math.max(SPEED_MIN, valorSpeed - SPEED_PASSO)
-	labelSpeedValor.Text = tostring(valorSpeed)
+UI.botaoSpeedMenos.MouseButton1Click:Connect(function()
+	valorSpeed = math.max(CFG.SPEED_MIN, valorSpeed - CFG.SPEED_PASSO)
+	UI.labelSpeedValor.Text = tostring(valorSpeed)
 	aplicarSpeed()
 end)
 
-botaoSpeedMais.MouseButton1Click:Connect(function()
-	valorSpeed = math.min(SPEED_MAX, valorSpeed + SPEED_PASSO)
-	labelSpeedValor.Text = tostring(valorSpeed)
+UI.botaoSpeedMais.MouseButton1Click:Connect(function()
+	valorSpeed = math.min(CFG.SPEED_MAX, valorSpeed + CFG.SPEED_PASSO)
+	UI.labelSpeedValor.Text = tostring(valorSpeed)
 	aplicarSpeed()
 end)
 
 -- Max: Speed direto pro limite máximo
-botaoSpeedMax.MouseButton1Click:Connect(function()
-	valorSpeed = SPEED_MAX
-	labelSpeedValor.Text = tostring(valorSpeed)
+UI.botaoSpeedMax.MouseButton1Click:Connect(function()
+	valorSpeed = CFG.SPEED_MAX
+	UI.labelSpeedValor.Text = tostring(valorSpeed)
 	aplicarSpeed()
 end)
 
 -- Normal: Speed de volta pro padrão
-botaoSpeedNormal.MouseButton1Click:Connect(function()
-	valorSpeed = SPEED_NORMAL
-	labelSpeedValor.Text = tostring(valorSpeed)
+UI.botaoSpeedNormal.MouseButton1Click:Connect(function()
+	valorSpeed = CFG.SPEED_NORMAL
+	UI.labelSpeedValor.Text = tostring(valorSpeed)
 	aplicarSpeed()
 end)
 
@@ -2602,29 +2612,29 @@ local function aplicarJump()
 	end
 end
 
-botaoJumpMenos.MouseButton1Click:Connect(function()
-	valorJump = math.max(JUMP_MIN, valorJump - JUMP_PASSO)
-	labelJumpValor.Text = tostring(valorJump)
+UI.botaoJumpMenos.MouseButton1Click:Connect(function()
+	valorJump = math.max(CFG.JUMP_MIN, valorJump - CFG.JUMP_PASSO)
+	UI.labelJumpValor.Text = tostring(valorJump)
 	aplicarJump()
 end)
 
-botaoJumpMais.MouseButton1Click:Connect(function()
-	valorJump = math.min(JUMP_MAX, valorJump + JUMP_PASSO)
-	labelJumpValor.Text = tostring(valorJump)
+UI.botaoJumpMais.MouseButton1Click:Connect(function()
+	valorJump = math.min(CFG.JUMP_MAX, valorJump + CFG.JUMP_PASSO)
+	UI.labelJumpValor.Text = tostring(valorJump)
 	aplicarJump()
 end)
 
 -- Max: Salto direto pro limite máximo
-botaoJumpMax.MouseButton1Click:Connect(function()
-	valorJump = JUMP_MAX
-	labelJumpValor.Text = tostring(valorJump)
+UI.botaoJumpMax.MouseButton1Click:Connect(function()
+	valorJump = CFG.JUMP_MAX
+	UI.labelJumpValor.Text = tostring(valorJump)
 	aplicarJump()
 end)
 
 -- Normal: Salto de volta pro padrão
-botaoJumpNormal.MouseButton1Click:Connect(function()
-	valorJump = JUMP_NORMAL
-	labelJumpValor.Text = tostring(valorJump)
+UI.botaoJumpNormal.MouseButton1Click:Connect(function()
+	valorJump = CFG.JUMP_NORMAL
+	UI.labelJumpValor.Text = tostring(valorJump)
 	aplicarJump()
 end)
 
@@ -2661,8 +2671,8 @@ local function pararFly()
 		humanoid.PlatformStand = false
 	end
 
-	botaoFlyToggle.Text = "OFF"
-	botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+	UI.botaoFlyToggle.Text = "OFF"
+	UI.botaoFlyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
 
 local function iniciarFly()
@@ -2690,8 +2700,8 @@ local function iniciarFly()
 	flyBodyGyro.D = 100
 	flyBodyGyro.Parent = hrp
 
-	botaoFlyToggle.Text = "ON"
-	botaoFlyToggle.TextColor3 = Color3.fromRGB(90, 255, 150)
+	UI.botaoFlyToggle.Text = "ON"
+	UI.botaoFlyToggle.TextColor3 = Color3.fromRGB(90, 255, 150)
 
 	RunService:BindToRenderStep("PainelTP_Fly", Enum.RenderPriority.Character.Value, function()
 		if not flyBodyVelocity or not flyBodyGyro then
@@ -2729,7 +2739,7 @@ local function iniciarFly()
 	end)
 end
 
-botaoFlyToggle.MouseButton1Click:Connect(function()
+UI.botaoFlyToggle.MouseButton1Click:Connect(function()
 	if flyAtivo then
 		pararFly()
 	else
@@ -2737,26 +2747,26 @@ botaoFlyToggle.MouseButton1Click:Connect(function()
 	end
 end)
 
-botaoFlySpeedMenos.MouseButton1Click:Connect(function()
-	valorFlySpeed = math.max(FLYSPEED_MIN, valorFlySpeed - FLYSPEED_PASSO)
-	labelFlySpeedValor.Text = tostring(valorFlySpeed)
+UI.botaoFlySpeedMenos.MouseButton1Click:Connect(function()
+	valorFlySpeed = math.max(CFG.FLYSPEED_MIN, valorFlySpeed - CFG.FLYSPEED_PASSO)
+	UI.labelFlySpeedValor.Text = tostring(valorFlySpeed)
 end)
 
-botaoFlySpeedMais.MouseButton1Click:Connect(function()
-	valorFlySpeed = math.min(FLYSPEED_MAX, valorFlySpeed + FLYSPEED_PASSO)
-	labelFlySpeedValor.Text = tostring(valorFlySpeed)
+UI.botaoFlySpeedMais.MouseButton1Click:Connect(function()
+	valorFlySpeed = math.min(CFG.FLYSPEED_MAX, valorFlySpeed + CFG.FLYSPEED_PASSO)
+	UI.labelFlySpeedValor.Text = tostring(valorFlySpeed)
 end)
 
 -- Max: velocidade do fly direto pro limite máximo
-botaoFlyMax.MouseButton1Click:Connect(function()
-	valorFlySpeed = FLYSPEED_MAX
-	labelFlySpeedValor.Text = tostring(valorFlySpeed)
+UI.botaoFlyMax.MouseButton1Click:Connect(function()
+	valorFlySpeed = CFG.FLYSPEED_MAX
+	UI.labelFlySpeedValor.Text = tostring(valorFlySpeed)
 end)
 
 -- Normal: velocidade do fly de volta pro padrão
-botaoFlyNormal.MouseButton1Click:Connect(function()
-	valorFlySpeed = FLYSPEED_NORMAL
-	labelFlySpeedValor.Text = tostring(valorFlySpeed)
+UI.botaoFlyNormal.MouseButton1Click:Connect(function()
+	valorFlySpeed = CFG.FLYSPEED_NORMAL
+	UI.labelFlySpeedValor.Text = tostring(valorFlySpeed)
 end)
 
 -- Se o personagem respawnar enquanto voando, desliga o fly (evita bug com o novo boneco)
@@ -2783,24 +2793,23 @@ end)
 ------------------------------------------------------------
 -- LISTA DE JOGADORES (favoritos primeiro, cartão organizado)
 ------------------------------------------------------------
-local ALTURA_LINHA = 130
-local LARGURA_FOTO = 40
-local LARGURA_ESTRELA = 26
-local LARGURA_LINHA_INTERNA = LARGURA_UTIL - 4 -- pequena folga p/ scrollbar
-local LARGURA_BOTAO_ACAO_4 = math.floor((LARGURA_LINHA_INTERNA - 12 - 6) / 4) -- 4 botões: 70px
-local LARGURA_BOTAO_ACAO_3 = math.floor((LARGURA_LINHA_INTERNA - 12 - 4) / 3) -- 3 botões: 94px
-local LARGURA_BOTAO_ACAO_2 = math.floor((LARGURA_LINHA_INTERNA - 12 - 4) / 2) -- 2 botões: 142px
-local ALTURA_BTN_ACAO = 22
-
 local function atualizarLista()
-	for _, child in ipairs(scrollFrame:GetChildren()) do
+	local ALTURA_LINHA = 130
+	local LARGURA_FOTO = 40
+	local LARGURA_ESTRELA = 26
+	local LARGURA_LINHA_INTERNA = LARGURA_UTIL - 4
+	local LARGURA_BOTAO_ACAO_4 = math.floor((LARGURA_LINHA_INTERNA - 12 - 6) / 4)
+	local LARGURA_BOTAO_ACAO_3 = math.floor((LARGURA_LINHA_INTERNA - 12 - 4) / 3)
+	local LARGURA_BOTAO_ACAO_2 = math.floor((LARGURA_LINHA_INTERNA - 12 - 4) / 2)
+	local ALTURA_BTN_ACAO = 22
+	for _, child in ipairs(UI.scrollFrame:GetChildren()) do
 		if child:IsA("Frame") then
 			child:Destroy()
 		end
 	end
 
 	-- Monta a lista (sem o próprio jogador, e filtrando pelo texto da busca) e ordena: favoritos primeiro, depois por nome
-	local textoFiltro = caixaBusca.Text:lower()
+	local textoFiltro = UI.caixaBusca.Text:lower()
 
 	local listaJogadores = {}
 	for _, outroPlayer in ipairs(Players:GetPlayers()) do
@@ -2827,7 +2836,7 @@ local function atualizarLista()
 		linha.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
 		linha.BackgroundTransparency = 1 -- SEM FUNDO: a mulher 2D fica 100% visível por trás
 		linha.LayoutOrder = i
-		linha.Parent = scrollFrame
+		linha.Parent = UI.scrollFrame
 		criarUICorner(linha, 8)
 		criarBorda(linha, Color3.fromRGB(255, 255, 255), 0.6)
 
@@ -3051,7 +3060,7 @@ local function atualizarLista()
 		end)
 
 		botaoVerItens.MouseButton1Click:Connect(function()
-			janelaInventario.Visible = true
+			UI.janelaInventario.Visible = true
 			renderizarInventario(outroPlayer)
 		end)
 
@@ -3063,7 +3072,7 @@ Players.PlayerAdded:Connect(atualizarLista)
 Players.PlayerRemoving:Connect(atualizarLista)
 
 -- Atualiza a lista em tempo real conforme a pessoa digita na busca
-caixaBusca:GetPropertyChangedSignal("Text"):Connect(atualizarLista)
+UI.caixaBusca:GetPropertyChangedSignal("Text"):Connect(atualizarLista)
 
 atualizarLista()
 
