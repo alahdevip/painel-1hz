@@ -121,10 +121,12 @@
   .toolbar.c2 { left: 112px; }
   .toolbar.c3 { left: 216px; }
 
-  /* linha 4: Salvar / Retornar */
-  .locais { top: 120px; width: 148px; height: 24px; font-size: 11px; }
-  .locais.esq { left: 8px; }
-  .locais.dir { left: 164px; color: rgb(180,180,185); }
+  /* linha 4: Salvar / Retornar / Anti-AFK / Emotes */
+  .toolbar.r4 { top: 120px; width: 73px; font-size: 10px; }
+  .toolbar.r4.k1 { left: 8px; }
+  .toolbar.r4.k2 { left: 85px; color: rgb(180,180,185); }
+  .toolbar.r4.k3 { left: 162px; }
+  .toolbar.r4.k4 { left: 239px; }
 
   /* MOVIMENTO */
   #labelMov {
@@ -238,7 +240,7 @@
   #lista::-webkit-scrollbar-thumb { background: #5a5a5f; border-radius: 3px; }
 
   .card {
-    flex: 0 0 78px; background: transparent; border-radius: 8px; position: relative;
+    flex: 0 0 104px; background: transparent; border-radius: 8px; position: relative;
     border: 1px solid rgba(255,255,255,0.35);
   }
   .foto {
@@ -266,22 +268,56 @@
     text-shadow: 0 1px 2px rgba(0,0,0,.95);
   }
   .estrela.fav { color: rgb(255,210,60); }
-  .acoes {
+  .acoes-1 {
     position: absolute; left: 6px; top: 50px;
     display: flex; gap: 4px; width: calc(100% - 12px);
   }
-  .acoes .botao {
+  .acoes-1 .botao {
     position: static; flex: 1; height: 22px; font-size: 10px;
     background: transparent; border-color: rgba(255, 255, 255, 0.45); color: #fff;
   }
-  .acoes .btn-seguir.seguindo {
-    color: #5aff96 !important;
-    border-color: rgba(90, 255, 150, 0.85) !important;
+  .acoes-2 {
+    position: absolute; left: 6px; top: 76px;
+    display: flex; gap: 4px; width: calc(100% - 12px);
   }
-  .acoes .btn-fling:hover {
+  .acoes-2 .botao {
+    position: static; flex: 1; height: 22px; font-size: 10px;
+    background: transparent; border-color: rgba(255, 255, 255, 0.45); color: #fff;
+  }
+  .acoes-1 .btn-fling:hover {
     color: #ff7878 !important;
     border-color: rgba(255, 120, 120, 0.85) !important;
   }
+
+  /* janela de emotes */
+  #janelaEmotes {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    border-radius: 10px; background: rgba(14, 14, 18, 0.9);
+    display: none; flex-direction: column; z-index: 1100;
+    backdrop-filter: blur(10px);
+  }
+  #janelaEmotes.visivel { display: flex; }
+  .custom-emote-row {
+    display: flex; gap: 6px; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+  .custom-emote-row input {
+    flex: 1; height: 24px; background: transparent; border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 5px; color: #fff; font-size: 11px; padding: 0 8px; outline: none;
+    text-shadow: 0 1px 2px #000; font-family: inherit;
+  }
+  .custom-emote-row input::placeholder { color: #8c8c96; }
+  .emotes-grid {
+    flex: 1; overflow-y: auto; padding: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    scrollbar-width: thin; scrollbar-color: #5a5a5f transparent;
+  }
+  .btn-emote-card {
+    height: 32px; font-size: 10px; border: 1px solid rgba(255,255,255,0.45); border-radius: 6px;
+    background: transparent; color: #fff; cursor: pointer; font-family: inherit; font-weight: 700;
+    text-shadow: 0 1px 2px #000; transition: filter .12s, border-color .15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .btn-emote-card:hover { filter: brightness(1.3); border-color: rgba(90,255,150,0.85); color: #5aff96; }
+  .btn-emote-card.tocando { border-color: rgba(90,255,150,0.85) !important; color: #5aff96 !important; }
 
   /* janela de servidores */
   #janelaServidores {
@@ -350,9 +386,11 @@
   <button class="botao toolbar r3 c2" id="rejoin">Rejoin</button>
   <button class="botao toolbar r3 c3" id="servidores">Servidores</button>
 
-  <!-- linha 4: Salvar / Retornar -->
-  <button class="botao locais esq" id="salvar">Salvar Local</button>
-  <button class="botao locais dir" id="retornar">Retornar</button>
+  <!-- linha 4: Salvar / Retornar / Anti-AFK / Emotes -->
+  <button class="botao toolbar r4 k1" id="salvar">Salvar</button>
+  <button class="botao toolbar r4 k2" id="retornar">Retornar</button>
+  <button class="botao toolbar r4 k3" id="antiAfk">AFK: OFF</button>
+  <button class="botao toolbar r4 k4" id="emotes">Emotes</button>
 
   <!-- MOVIMENTO -->
   <div id="labelMov">MOVIMENTO</div>
@@ -406,6 +444,20 @@
       <button id="btnRecarregarServ" class="botao" style="position:static; width:72px; height:24px;">🔄 Atualizar</button>
     </div>
     <div class="serv-lista" id="listaServidores"></div>
+  </div>
+
+  <!-- janela de emotes -->
+  <div id="janelaEmotes">
+    <div class="serv-topo">
+      <button id="btnVoltarEmotes" class="botao" style="position:static; width:68px; height:24px;">← Voltar</button>
+      <span class="serv-titulo">EMOTES & DANÇAS</span>
+      <button id="btnPararEmote" class="botao vermelho" style="position:static; width:68px; height:24px;">⏹ Parar</button>
+    </div>
+    <div class="custom-emote-row">
+      <input id="inputCustomEmote" placeholder="ID do Emote (ex: 10714340543)">
+      <button id="btnTocarCustom" class="botao" style="position:static; width:68px; height:24px;">▶ Tocar</button>
+    </div>
+    <div class="emotes-grid" id="gridEmotes"></div>
   </div>
 </div>
 
@@ -659,7 +711,7 @@
     btnSalvar.textContent = 'Salvo ✓';
     btnSalvar.classList.add('on');
     setTimeout(() => {
-      btnSalvar.textContent = 'Salvar Local';
+      btnSalvar.textContent = 'Salvar';
       btnSalvar.classList.remove('on');
     }, 1500);
   };
@@ -676,6 +728,76 @@
     }
     btnRetornar.textContent = 'Retornado!';
     setTimeout(() => btnRetornar.textContent = 'Retornar', 900);
+  };
+
+  // ==========================================
+  // ANTI-AFK
+  // ==========================================
+  const btnAntiAfk = document.getElementById('antiAfk');
+  btnAntiAfk.onclick = () => {
+    const ligado = btnAntiAfk.classList.toggle('on');
+    btnAntiAfk.textContent = ligado ? 'AFK: ON' : 'AFK: OFF';
+  };
+
+  // ==========================================
+  // JANELA DE EMOTES & DANÇAS RARAS
+  // ==========================================
+  const janelaEmotes = document.getElementById('janelaEmotes');
+  const btnEmotes = document.getElementById('emotes');
+  const btnVoltarEmotes = document.getElementById('btnVoltarEmotes');
+  const btnPararEmote = document.getElementById('btnPararEmote');
+  const btnTocarCustom = document.getElementById('btnTocarCustom');
+  const inputCustomEmote = document.getElementById('inputCustomEmote');
+  const gridEmotes = document.getElementById('gridEmotes');
+
+  const emotesMock = [
+    { nome: '💃 Floss', id: '10714340543' },
+    { nome: '🕺 Griddy', id: '10714389083' },
+    { nome: '🔥 Breakdance', id: '180611870' },
+    { nome: '🧟 Zombie', id: '33796059' },
+    { nome: '🥷 Ninja', id: '656117878' },
+    { nome: '👌 Dab', id: '3361486518' },
+    { nome: '🦸 Hero Pose', id: '10884989679' },
+    { nome: '🎃 Spooky', id: '507771019' },
+    { nome: '✨ Caramell', id: '4049037665' },
+    { nome: '🎵 Pop Dance', id: '3696757129' },
+    { nome: '🕶️ Old School', id: '3189777795' },
+    { nome: '🤸 Backflip', id: '215384594' },
+  ];
+
+  let emoteTocando = null;
+
+  function renderEmotes() {
+    gridEmotes.innerHTML = '';
+    emotesMock.forEach(em => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-emote-card' + (emoteTocando === em.nome ? ' tocando' : '');
+      btn.textContent = em.nome;
+      btn.onclick = () => {
+        emoteTocando = em.nome;
+        renderEmotes();
+      };
+      gridEmotes.appendChild(btn);
+    });
+  }
+
+  btnEmotes.onclick = () => {
+    janelaEmotes.classList.add('visivel');
+    renderEmotes();
+  };
+  btnVoltarEmotes.onclick = () => {
+    janelaEmotes.classList.remove('visivel');
+  };
+  btnPararEmote.onclick = () => {
+    emoteTocando = null;
+    renderEmotes();
+  };
+  btnTocarCustom.onclick = () => {
+    const val = inputCustomEmote.value.trim();
+    if (val) {
+      emoteTocando = 'ID: ' + val;
+      renderEmotes();
+    }
   };
 
   // ==========================================
@@ -748,6 +870,9 @@
   ];
 
   let seguindoAtual = null;
+  let attachAtual = null;
+  let orbitAtual = null;
+  let lookAtual = null;
 
   function pintar(filtro = '') {
     listaEl.innerHTML = '';
@@ -766,16 +891,24 @@
         : j.disp[0].toUpperCase();
 
       const seguindoEsse = (seguindoAtual === j.nome);
+      const attachEsse = (attachAtual === j.nome);
+      const orbitEsse = (orbitAtual === j.nome);
+      const lookEsse = (lookAtual === j.nome);
 
       card.innerHTML = `
         <div class="foto">${fotoHtml}</div>
         <div class="nome">${j.nome}</div>
         <button class="estrela ${j.fav ? 'fav' : ''}">${j.fav ? '★' : '☆'}</button>
-        <div class="acoes">
+        <div class="acoes-1">
           <button class="botao btn-tp">TP</button>
           <button class="botao btn-spec">Spec</button>
-          <button class="botao btn-seguir ${seguindoEsse ? 'seguindo' : ''}">${seguindoEsse ? 'Seguindo' : 'Seguir'}</button>
+          <button class="botao btn-seguir ${seguindoEsse ? 'on' : ''}">${seguindoEsse ? 'Seguindo' : 'Seguir'}</button>
           <button class="botao btn-fling">Fling</button>
+        </div>
+        <div class="acoes-2">
+          <button class="botao btn-attach ${attachEsse ? 'on' : ''}">${attachEsse ? 'Mochila: ON' : 'Mochila'}</button>
+          <button class="botao btn-orbit ${orbitEsse ? 'on' : ''}">${orbitEsse ? 'Orbit: ON' : 'Orbit'}</button>
+          <button class="botao btn-look ${lookEsse ? 'on' : ''}">${lookEsse ? 'Olhar: ON' : 'Olhar'}</button>
         </div>`;
 
       // Estrela de favorito
@@ -802,11 +935,7 @@
       // Seguir
       const btnSeguir = card.querySelector('.btn-seguir');
       btnSeguir.onclick = () => {
-        if (seguindoAtual === j.nome) {
-          seguindoAtual = null;
-        } else {
-          seguindoAtual = j.nome;
-        }
+        seguindoAtual = (seguindoAtual === j.nome) ? null : j.nome;
         pintar(document.getElementById('busca').value);
       };
 
@@ -820,6 +949,27 @@
           btnFling.style.color = '#fff';
           alert('Fling executado com sucesso em ' + j.nome + '!');
         }, 900);
+      };
+
+      // Attach / Mochilinha
+      const btnAttach = card.querySelector('.btn-attach');
+      btnAttach.onclick = () => {
+        attachAtual = (attachAtual === j.nome) ? null : j.nome;
+        pintar(document.getElementById('busca').value);
+      };
+
+      // Orbit
+      const btnOrbit = card.querySelector('.btn-orbit');
+      btnOrbit.onclick = () => {
+        orbitAtual = (orbitAtual === j.nome) ? null : j.nome;
+        pintar(document.getElementById('busca').value);
+      };
+
+      // Auto-Look
+      const btnLook = card.querySelector('.btn-look');
+      btnLook.onclick = () => {
+        lookAtual = (lookAtual === j.nome) ? null : j.nome;
+        pintar(document.getElementById('busca').value);
       };
 
       listaEl.appendChild(card);

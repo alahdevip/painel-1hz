@@ -2,6 +2,10 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local VirtualUser = (function()
+	local ok, vu = pcall(function() return game:GetService("VirtualUser") end)
+	return ok and vu or nil
+end)()
 local player = Players.LocalPlayer
 while not player do
 	player = Players.LocalPlayer
@@ -69,6 +73,24 @@ local spiderManAtivo = false
 local spiderManLoop = nil
 
 local clickTpAtivo = false
+
+local antiAfkAtivo = false
+local antiAfkConn = nil
+
+local attachAlvo = nil
+local attachLoop = nil
+
+local orbitAlvo = nil
+local orbitLoop = nil
+local orbitAngulo = 0
+local ORBIT_RAIO = 6.5
+local ORBIT_ALTURA = 1.5
+local ORBIT_VELOCIDADE = 9 -- rad/s giro super rápido
+
+local autoLookAlvo = nil
+local autoLookLoop = nil
+
+local animacaoAtualTrack = nil
 
 local favoritos = {} -- [UserId] = true
 
@@ -605,23 +627,43 @@ local botaoServidores = novoBotao(
 	11
 )
 
--- Linha 4: Salvar Local / Retornar
+-- Linha 4: Salvar / Retornar / Anti-AFK / Emotes
+local LARGURA_4 = math.floor((LARGURA_UTIL - 12) / 4) -- (304 - 12) / 4 = 73
+
 local botaoSalvarLocal = novoBotao(
 	frame,
-	"Salvar Local",
-	UDim2.new(0, LARGURA_2, 0, ALTURA_BTN_TOOLBAR),
+	"Salvar",
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
 	UDim2.new(0, MARGEM, 0, Y_ROW4),
 	Color3.fromRGB(55, 55, 60),
-	11
+	10
 )
 
 local botaoRetornarLocal = novoBotao(
 	frame,
 	"Retornar",
-	UDim2.new(0, LARGURA_2, 0, ALTURA_BTN_TOOLBAR),
-	UDim2.new(0, MARGEM + LARGURA_2 + 8, 0, Y_ROW4),
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_4 + 4) * 1, 0, Y_ROW4),
 	Color3.fromRGB(40, 40, 44),
-	11
+	10
+)
+
+local botaoAntiAfk = novoBotao(
+	frame,
+	"AFK: OFF",
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_4 + 4) * 2, 0, Y_ROW4),
+	Color3.fromRGB(55, 55, 60),
+	10
+)
+
+local botaoEmotes = novoBotao(
+	frame,
+	"Emotes",
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_4 + 4) * 3, 0, Y_ROW4),
+	Color3.fromRGB(55, 55, 60),
+	10
 )
 
 ------------------------------------------------------------
@@ -1039,7 +1081,7 @@ local function salvarLocal()
 	botaoSalvarLocal.Text = "Salvo ✓"
 	botaoSalvarLocal.TextColor3 = Color3.fromRGB(90, 255, 150)
 	task.delay(1.5, function()
-		botaoSalvarLocal.Text = "Salvar Local"
+		botaoSalvarLocal.Text = "Salvar"
 		botaoSalvarLocal.TextColor3 = Color3.fromRGB(255, 255, 255)
 	end)
 end
@@ -1889,6 +1931,343 @@ btnRecarregarServ.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
+-- ANTI-AFK (impede kick por inatividade após 20 minutos)
+------------------------------------------------------------
+local function ativarAntiAfk()
+	if antiAfkConn then antiAfkConn:Disconnect() end
+	antiAfkConn = player.Idled:Connect(function()
+		if not antiAfkAtivo then return end
+		pcall(function()
+			if VirtualUser then
+				VirtualUser:CaptureController()
+				VirtualUser:ClickButton2(Vector2.new(0, 0))
+			end
+		end)
+	end)
+end
+
+local function desativarAntiAfk()
+	if antiAfkConn then
+		antiAfkConn:Disconnect()
+		antiAfkConn = nil
+	end
+end
+
+botaoAntiAfk.MouseButton1Click:Connect(function()
+	antiAfkAtivo = not antiAfkAtivo
+	if antiAfkAtivo then
+		botaoAntiAfk.Text = "AFK: ON"
+		botaoAntiAfk.TextColor3 = Color3.fromRGB(90, 255, 150)
+		ativarAntiAfk()
+	else
+		botaoAntiAfk.Text = "AFK: OFF"
+		botaoAntiAfk.TextColor3 = Color3.fromRGB(255, 255, 255)
+		desativarAntiAfk()
+	end
+end)
+
+------------------------------------------------------------
+-- ATTACH / MOCHILINHA (carona na cabeça ou costas sem cair)
+------------------------------------------------------------
+local function pararAttach()
+	attachAlvo = nil
+	if attachLoop then
+		attachLoop:Disconnect()
+		attachLoop = nil
+	end
+	local myChar = player.Character
+	local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+	if myHum and myHum.Sit then
+		myHum.Sit = false
+	end
+end
+
+local function iniciarAttach(alvo)
+	if attachAlvo == alvo then
+		pararAttach()
+		return
+	end
+	pararAttach()
+	attachAlvo = alvo
+
+	if attachLoop then attachLoop:Disconnect() end
+	attachLoop = RunService.Heartbeat:Connect(function()
+		if not attachAlvo or not attachAlvo.Parent then
+			pararAttach()
+			return
+		end
+		local myChar = player.Character
+		local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+		local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+		local alvoChar = attachAlvo.Character
+		local alvoHRP = alvoChar and alvoChar:FindFirstChild("HumanoidRootPart")
+
+		if myHRP and alvoHRP then
+			-- Gruda nas costas / ombro do jogador e senta
+			myHRP.CFrame = alvoHRP.CFrame * CFrame.new(0, 2.2, -1.1)
+			myHRP.AssemblyLinearVelocity = Vector3.zero
+			myHRP.AssemblyAngularVelocity = Vector3.zero
+			if myHum and not myHum.Sit then
+				myHum.Sit = true
+			end
+		end
+	end)
+end
+
+------------------------------------------------------------
+-- ORBIT PLAYER (gira velozmente em torno do jogador alvo)
+------------------------------------------------------------
+local function pararOrbit()
+	orbitAlvo = nil
+	if orbitLoop then
+		orbitLoop:Disconnect()
+		orbitLoop = nil
+	end
+end
+
+local function iniciarOrbit(alvo)
+	if orbitAlvo == alvo then
+		pararOrbit()
+		return
+	end
+	pararOrbit()
+	orbitAlvo = alvo
+
+	if orbitLoop then orbitLoop:Disconnect() end
+	orbitLoop = RunService.Heartbeat:Connect(function(dt)
+		if not orbitAlvo or not orbitAlvo.Parent then
+			pararOrbit()
+			return
+		end
+		local myChar = player.Character
+		local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+		local alvoChar = orbitAlvo.Character
+		local alvoHRP = alvoChar and alvoChar:FindFirstChild("HumanoidRootPart")
+
+		if myHRP and alvoHRP then
+			orbitAngulo = (orbitAngulo + dt * ORBIT_VELOCIDADE) % (2 * math.pi)
+			local offset = Vector3.new(math.cos(orbitAngulo) * ORBIT_RAIO, ORBIT_ALTURA, math.sin(orbitAngulo) * ORBIT_RAIO)
+			local novaPos = alvoHRP.Position + offset
+			local lookPos = alvoHRP.Position + Vector3.new(0, ORBIT_ALTURA, 0)
+			myHRP.CFrame = CFrame.lookAt(novaPos, lookPos)
+			myHRP.AssemblyLinearVelocity = Vector3.zero
+			myHRP.AssemblyAngularVelocity = Vector3.zero
+		end
+	end)
+end
+
+------------------------------------------------------------
+-- AUTO-LOOK (avatar fica sempre encarando o jogador fixamente)
+------------------------------------------------------------
+local function pararAutoLook()
+	autoLookAlvo = nil
+	if autoLookLoop then
+		autoLookLoop:Disconnect()
+		autoLookLoop = nil
+	end
+end
+
+local function iniciarAutoLook(alvo)
+	if autoLookAlvo == alvo then
+		pararAutoLook()
+		return
+	end
+	pararAutoLook()
+	autoLookAlvo = alvo
+
+	if autoLookLoop then autoLookLoop:Disconnect() end
+	autoLookLoop = RunService.RenderStepped:Connect(function()
+		if not autoLookAlvo or not autoLookAlvo.Parent then
+			pararAutoLook()
+			return
+		end
+		local myChar = player.Character
+		local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+		local alvoChar = autoLookAlvo.Character
+		local alvoHRP = alvoChar and alvoChar:FindFirstChild("HumanoidRootPart")
+
+		if myHRP and alvoHRP then
+			local alvoPos = alvoHRP.Position
+			myHRP.CFrame = CFrame.lookAt(myHRP.Position, Vector3.new(alvoPos.X, myHRP.Position.Y, alvoPos.Z))
+		end
+	end)
+end
+
+------------------------------------------------------------
+-- ANIMAÇÕES / EMOTES RAROS
+------------------------------------------------------------
+local function pararAnimacao()
+	if animacaoAtualTrack then
+		pcall(function()
+			animacaoAtualTrack:Stop()
+			animacaoAtualTrack:Destroy()
+		end)
+		animacaoAtualTrack = nil
+	end
+end
+
+local function tocarAnimacao(animId)
+	pararAnimacao()
+	local char = player.Character
+	if not char then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+	local animator = hum:FindFirstChildOfClass("Animator")
+	if not animator then
+		animator = Instance.new("Animator")
+		animator.Parent = hum
+	end
+
+	pcall(function()
+		local anim = Instance.new("Animation")
+		local cleanId = tostring(animId):match("%d+")
+		anim.AnimationId = "rbxassetid://" .. cleanId
+		animacaoAtualTrack = animator:LoadAnimation(anim)
+		animacaoAtualTrack.Priority = Enum.AnimationPriority.Action4
+		animacaoAtualTrack.Looped = true
+		animacaoAtualTrack:Play()
+	end)
+end
+
+------------------------------------------------------------
+-- JANELA DE EMOTES & DANÇAS (Catálogo com emotes raros)
+------------------------------------------------------------
+local janelaEmotes = Instance.new("Frame")
+janelaEmotes.Name = "JanelaEmotes"
+janelaEmotes.Size = UDim2.new(1, 0, 1, 0)
+janelaEmotes.Position = UDim2.new(0, 0, 0, 0)
+janelaEmotes.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+janelaEmotes.BackgroundTransparency = 0.15
+janelaEmotes.Visible = false
+janelaEmotes.ZIndex = 25
+janelaEmotes.Parent = frame
+criarUICorner(janelaEmotes, 10)
+
+local topoEmotes = Instance.new("Frame")
+topoEmotes.Size = UDim2.new(1, 0, 0, 36)
+topoEmotes.BackgroundTransparency = 1
+topoEmotes.ZIndex = 26
+topoEmotes.Parent = janelaEmotes
+
+local btnVoltarEmotes = novoBotao(topoEmotes, "← Voltar", UDim2.new(0, 68, 0, 24), UDim2.new(0, 8, 0, 6), Color3.fromRGB(50, 50, 55), 11)
+btnVoltarEmotes.ZIndex = 27
+
+local tituloEmotes = Instance.new("TextLabel")
+tituloEmotes.Size = UDim2.new(1, -160, 0, 24)
+tituloEmotes.Position = UDim2.new(0, 80, 0, 6)
+tituloEmotes.BackgroundTransparency = 1
+tituloEmotes.Text = "EMOTES & DANÇAS"
+tituloEmotes.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(tituloEmotes, 13)
+tituloEmotes.TextStrokeTransparency = 0.2
+tituloEmotes.ZIndex = 27
+tituloEmotes.Parent = topoEmotes
+
+local btnPararEmote = novoBotao(topoEmotes, "⏹ Parar", UDim2.new(0, 68, 0, 24), UDim2.new(1, -76, 0, 6), Color3.fromRGB(180, 50, 50), 11)
+btnPararEmote.ZIndex = 27
+btnPararEmote.TextColor3 = Color3.fromRGB(255, 120, 120)
+
+local linhaCustomEmote = Instance.new("Frame")
+linhaCustomEmote.Size = UDim2.new(1, -16, 0, 26)
+linhaCustomEmote.Position = UDim2.new(0, 8, 0, 38)
+linhaCustomEmote.BackgroundTransparency = 1
+linhaCustomEmote.ZIndex = 26
+linhaCustomEmote.Parent = janelaEmotes
+
+local caixaCustomEmote = Instance.new("TextBox")
+caixaCustomEmote.Size = UDim2.new(1, -74, 1, 0)
+caixaCustomEmote.Position = UDim2.new(0, 0, 0, 0)
+caixaCustomEmote.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+caixaCustomEmote.BackgroundTransparency = 1
+caixaCustomEmote.PlaceholderText = "ID do Emote (ex: 10714340543)"
+caixaCustomEmote.PlaceholderColor3 = Color3.fromRGB(160, 160, 165)
+caixaCustomEmote.Text = ""
+caixaCustomEmote.TextColor3 = Color3.fromRGB(255, 255, 255)
+aplicarFonte(caixaCustomEmote, 11)
+caixaCustomEmote.TextStrokeTransparency = 0.2
+caixaCustomEmote.ClearTextOnFocus = false
+caixaCustomEmote.ZIndex = 27
+caixaCustomEmote.Parent = linhaCustomEmote
+criarUICorner(caixaCustomEmote, 6)
+criarBorda(caixaCustomEmote, Color3.fromRGB(255, 255, 255), 0.5)
+
+local btnTocarCustom = novoBotao(linhaCustomEmote, "▶ Tocar", UDim2.new(0, 68, 1, 0), UDim2.new(1, -68, 0, 0), Color3.fromRGB(50, 50, 55), 11)
+btnTocarCustom.ZIndex = 27
+
+local scrollEmotes = Instance.new("ScrollingFrame")
+scrollEmotes.Size = UDim2.new(1, -16, 1, -72)
+scrollEmotes.Position = UDim2.new(0, 8, 0, 68)
+scrollEmotes.BackgroundTransparency = 1
+scrollEmotes.BorderSizePixel = 0
+scrollEmotes.ScrollBarThickness = 4
+scrollEmotes.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 95)
+scrollEmotes.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollEmotes.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollEmotes.ZIndex = 26
+scrollEmotes.Parent = janelaEmotes
+
+local gridLayoutEmotes = Instance.new("UIGridLayout")
+gridLayoutEmotes.CellSize = UDim2.new(0, 93, 0, 32)
+gridLayoutEmotes.CellPadding = UDim2.new(0, 8, 0, 8)
+gridLayoutEmotes.SortOrder = Enum.SortOrder.LayoutOrder
+gridLayoutEmotes.Parent = scrollEmotes
+
+local listaEmotes = {
+	{ nome = "💃 Floss", id = "10714340543" },
+	{ nome = "🕺 Griddy", id = "10714389083" },
+	{ nome = "🔥 Breakdance", id = "180611870" },
+	{ nome = "🧟 Zombie", id = "33796059" },
+	{ nome = "🥷 Ninja", id = "656117878" },
+	{ nome = "👌 Dab", id = "3361486518" },
+	{ nome = "🦸 Hero Pose", id = "10884989679" },
+	{ nome = "🎃 Spooky", id = "507771019" },
+	{ nome = "✨ Caramell", id = "4049037665" },
+	{ nome = "🎵 Pop Dance", id = "3696757129" },
+	{ nome = "🕶️ Old School", id = "3189777795" },
+	{ nome = "🤸 Backflip", id = "215384594" },
+}
+
+for i, emote in ipairs(listaEmotes) do
+	local btn = novoBotao(scrollEmotes, emote.nome, UDim2.new(0, 93, 0, 32), UDim2.new(0, 0, 0, 0), Color3.fromRGB(30, 30, 35), 10)
+	btn.ZIndex = 27
+	btn.LayoutOrder = i
+	btn.MouseButton1Click:Connect(function()
+		tocarAnimacao(emote.id)
+		btn.TextColor3 = Color3.fromRGB(90, 255, 150)
+		task.delay(1, function()
+			if btn and btn.Parent then btn.TextColor3 = Color3.fromRGB(255, 255, 255) end
+		end)
+	end)
+end
+
+btnTocarCustom.MouseButton1Click:Connect(function()
+	local raw = caixaCustomEmote.Text:match("%d+")
+	if raw then
+		tocarAnimacao(raw)
+		btnTocarCustom.TextColor3 = Color3.fromRGB(90, 255, 150)
+		task.delay(1, function()
+			btnTocarCustom.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end)
+	end
+end)
+
+btnPararEmote.MouseButton1Click:Connect(function()
+	pararAnimacao()
+	btnPararEmote.TextColor3 = Color3.fromRGB(255, 255, 255)
+	task.delay(0.5, function()
+		btnPararEmote.TextColor3 = Color3.fromRGB(255, 120, 120)
+	end)
+end)
+
+btnVoltarEmotes.MouseButton1Click:Connect(function()
+	janelaEmotes.Visible = false
+end)
+
+botaoEmotes.MouseButton1Click:Connect(function()
+	janelaEmotes.Visible = true
+end)
+
+------------------------------------------------------------
 -- SPEED (velocidade de andar ajustável)
 ------------------------------------------------------------
 local function aplicarSpeed()
@@ -2118,11 +2497,13 @@ end)
 ------------------------------------------------------------
 -- LISTA DE JOGADORES (favoritos primeiro, cartão organizado)
 ------------------------------------------------------------
-local ALTURA_LINHA = 78
+local ALTURA_LINHA = 104
 local LARGURA_FOTO = 40
 local LARGURA_ESTRELA = 26
 local LARGURA_LINHA_INTERNA = LARGURA_UTIL - 4 -- pequena folga p/ scrollbar
-local LARGURA_BOTAO_ACAO = math.floor((LARGURA_LINHA_INTERNA - 12 - 6) / 4) -- 4 botões (TP, Spec, Seguir, Fling)
+local LARGURA_BOTAO_ACAO_4 = math.floor((LARGURA_LINHA_INTERNA - 12 - 6) / 4) -- 4 botões: 70px
+local LARGURA_BOTAO_ACAO_3 = math.floor((LARGURA_LINHA_INTERNA - 12 - 4) / 3) -- 3 botões: 94px
+local ALTURA_BTN_ACAO = 22
 
 local function atualizarLista()
 	for _, child in ipairs(scrollFrame:GetChildren()) do
@@ -2209,46 +2590,82 @@ local function atualizarLista()
 		botaoFavorito.TextSize = 20
 		botaoFavorito.Parent = linha
 
-		-- Linha de botões de ação (TP / Spec / Seguir / Fling)
-		local Y_ACOES = LARGURA_FOTO + 12
+		-- Linha 1 de botões de ação (TP / Spec / Seguir / Fling)
+		local Y_ACOES_1 = LARGURA_FOTO + 10 -- 50
 
 		local botaoTP = novoBotao(
 			linha,
 			"TP",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 24),
-			UDim2.new(0, 6, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO_4, 0, ALTURA_BTN_ACAO),
+			UDim2.new(0, 6, 0, Y_ACOES_1),
 			Color3.fromRGB(55, 55, 60),
-			11
+			10
 		)
 
 		local botaoSpec = novoBotao(
 			linha,
 			"Spec",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 24),
-			UDim2.new(0, 6 + LARGURA_BOTAO_ACAO + 4, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO_4, 0, ALTURA_BTN_ACAO),
+			UDim2.new(0, 6 + LARGURA_BOTAO_ACAO_4 + 3, 0, Y_ACOES_1),
 			Color3.fromRGB(55, 55, 60),
-			11
+			10
 		)
 
 		local seguindoEsse = seguindoAlvo == outroPlayer
 		local botaoSeguir = novoBotao(
 			linha,
 			seguindoEsse and "Seguindo" or "Seguir",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 24),
-			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO + 4) * 2, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO_4, 0, ALTURA_BTN_ACAO),
+			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO_4 + 3) * 2, 0, Y_ACOES_1),
 			Color3.fromRGB(55, 55, 60),
-			11
+			10
 		)
 		botaoSeguir.TextColor3 = seguindoEsse and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
 
 		local botaoFling = novoBotao(
 			linha,
 			"Fling",
-			UDim2.new(0, LARGURA_BOTAO_ACAO, 0, 24),
-			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO + 4) * 3, 0, Y_ACOES),
+			UDim2.new(0, LARGURA_BOTAO_ACAO_4, 0, ALTURA_BTN_ACAO),
+			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO_4 + 3) * 3, 0, Y_ACOES_1),
 			Color3.fromRGB(55, 55, 60),
-			11
+			10
 		)
+
+		-- Linha 2 de botões de ação (Mochila / Orbit / Olhar)
+		local Y_ACOES_2 = Y_ACOES_1 + ALTURA_BTN_ACAO + 4 -- 76
+
+		local attachEsse = attachAlvo == outroPlayer
+		local botaoAttach = novoBotao(
+			linha,
+			attachEsse and "Mochila: ON" or "Mochila",
+			UDim2.new(0, LARGURA_BOTAO_ACAO_3, 0, ALTURA_BTN_ACAO),
+			UDim2.new(0, 6, 0, Y_ACOES_2),
+			Color3.fromRGB(55, 55, 60),
+			10
+		)
+		botaoAttach.TextColor3 = attachEsse and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
+
+		local orbitEsse = orbitAlvo == outroPlayer
+		local botaoOrbit = novoBotao(
+			linha,
+			orbitEsse and "Orbit: ON" or "Orbit",
+			UDim2.new(0, LARGURA_BOTAO_ACAO_3, 0, ALTURA_BTN_ACAO),
+			UDim2.new(0, 6 + LARGURA_BOTAO_ACAO_3 + 4, 0, Y_ACOES_2),
+			Color3.fromRGB(55, 55, 60),
+			10
+		)
+		botaoOrbit.TextColor3 = orbitEsse and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
+
+		local lookEsse = autoLookAlvo == outroPlayer
+		local botaoLook = novoBotao(
+			linha,
+			lookEsse and "Olhar: ON" or "Olhar",
+			UDim2.new(0, LARGURA_BOTAO_ACAO_3, 0, ALTURA_BTN_ACAO),
+			UDim2.new(0, 6 + (LARGURA_BOTAO_ACAO_3 + 4) * 2, 0, Y_ACOES_2),
+			Color3.fromRGB(55, 55, 60),
+			10
+		)
+		botaoLook.TextColor3 = lookEsse and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
 
 		botaoFling.MouseButton1Click:Connect(function()
 			botaoFling.Text = "Fling..."
@@ -2282,6 +2699,33 @@ local function atualizarLista()
 				pararSeguir()
 			else
 				seguirAte(outroPlayer)
+			end
+			atualizarLista()
+		end)
+
+		botaoAttach.MouseButton1Click:Connect(function()
+			if attachAlvo == outroPlayer then
+				pararAttach()
+			else
+				iniciarAttach(outroPlayer)
+			end
+			atualizarLista()
+		end)
+
+		botaoOrbit.MouseButton1Click:Connect(function()
+			if orbitAlvo == outroPlayer then
+				pararOrbit()
+			else
+				iniciarOrbit(outroPlayer)
+			end
+			atualizarLista()
+		end)
+
+		botaoLook.MouseButton1Click:Connect(function()
+			if autoLookAlvo == outroPlayer then
+				pararAutoLook()
+			else
+				iniciarAutoLook(outroPlayer)
 			end
 			atualizarLista()
 		end)
@@ -2333,6 +2777,11 @@ destruirPainel = function()
 		desativarSpiderMan()
 	end
 	clickTpAtivo = false
+	desativarAntiAfk()
+	pararAttach()
+	pararOrbit()
+	pararAutoLook()
+	pararAnimacao()
 
 	-- 2) remove os ESPs e desliga os loops por frame
 	for alvo in pairs(espObjetos) do
