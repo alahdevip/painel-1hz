@@ -804,15 +804,15 @@ criarBorda(UI.botaoSpinToggle)
 local Y_BUSCA = Y_LINHA_SPIN + ALTURA_LINHA_MOV + 8 -- logo abaixo da seção Movimento
 
 UI.caixaBusca = Instance.new("TextBox")
-UI.caixaBusca.Size = UDim2.new(1, -MARGEM * 2, 0, 26)
+UI.caixaBusca.Size = UDim2.new(0, 192, 0, 26)
 UI.caixaBusca.Position = UDim2.new(0, MARGEM, 0, Y_BUSCA)
 UI.caixaBusca.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
 UI.caixaBusca.BackgroundTransparency = 1 -- sem fundo: flutua sobre a mulher 2D
-UI.caixaBusca.PlaceholderText = "Pesquisar jogador..."
+UI.caixaBusca.PlaceholderText = "Pesquisar..."
 UI.caixaBusca.PlaceholderColor3 = Color3.fromRGB(160, 160, 165)
 UI.caixaBusca.Text = ""
 UI.caixaBusca.TextColor3 = Color3.fromRGB(255, 255, 255)
-aplicarFonte(UI.caixaBusca, 12)
+aplicarFonte(UI.caixaBusca, 11)
 UI.caixaBusca.TextStrokeTransparency = 0.2
 UI.caixaBusca.ClearTextOnFocus = false
 UI.caixaBusca.Parent = frame
@@ -823,8 +823,30 @@ UI.caixaBusca.TextXAlignment = Enum.TextXAlignment.Left
 
 -- Pequena margem esquerda pro texto não colar na borda
 local paddingBusca = Instance.new("UIPadding")
-paddingBusca.PaddingLeft = UDim.new(0, 10)
+paddingBusca.PaddingLeft = UDim.new(0, 8)
 paddingBusca.Parent = UI.caixaBusca
+
+-- Botão rápido: 🔫 Laser (pega e equipa a Arma de Laser na mão na hora)
+UI.botaoPegarLaser = novoBotao(
+	frame,
+	"🔫 Laser",
+	UDim2.new(0, 54, 0, 26),
+	UDim2.new(0, MARGEM + 192 + 4, 0, Y_BUSCA),
+	Color3.fromRGB(35, 45, 40),
+	10
+)
+criarBorda(UI.botaoPegarLaser, Color3.fromRGB(90, 255, 150), 0.7)
+
+-- Botão rápido: 🎒 Itens (abre a central com Black Market, scanner e inventário)
+UI.botaoAbrirItens = novoBotao(
+	frame,
+	"🎒 Itens",
+	UDim2.new(0, 50, 0, 26),
+	UDim2.new(0, MARGEM + 192 + 4 + 54 + 4, 0, Y_BUSCA),
+	Color3.fromRGB(45, 45, 52),
+	10
+)
+criarBorda(UI.botaoAbrirItens, Color3.fromRGB(255, 255, 255), 0.5)
 
 ------------------------------------------------------------
 -- BARRA "ESPECTANDO AGORA" (só aparece quando ativo)
@@ -2600,31 +2622,48 @@ criarUICorner(UI.janelaInventario, 10)
 
 do
 local topoInv = Instance.new("Frame")
-topoInv.Size = UDim2.new(1, 0, 0, 36)
+topoInv.Size = UDim2.new(1, 0, 0, 34)
 topoInv.BackgroundTransparency = 1
 topoInv.ZIndex = 26
 topoInv.Parent = UI.janelaInventario
 
-UI.btnVoltarInv = novoBotao(topoInv, "← Voltar", UDim2.new(0, 68, 0, 24), UDim2.new(0, 8, 0, 6), Color3.fromRGB(50, 50, 55), 11)
+UI.btnVoltarInv = novoBotao(topoInv, "← Voltar", UDim2.new(0, 64, 0, 24), UDim2.new(0, 8, 0, 5), Color3.fromRGB(50, 50, 55), 11)
 UI.btnVoltarInv.ZIndex = 27
 
 UI.tituloInv = Instance.new("TextLabel")
-UI.tituloInv.Size = UDim2.new(1, -160, 0, 24)
-UI.tituloInv.Position = UDim2.new(0, 80, 0, 6)
+UI.tituloInv.Size = UDim2.new(1, -150, 0, 24)
+UI.tituloInv.Position = UDim2.new(0, 76, 0, 5)
 UI.tituloInv.BackgroundTransparency = 1
-UI.tituloInv.Text = "INVENTÁRIO"
+UI.tituloInv.Text = "CENTRAL DE ITENS & ARMAS"
 UI.tituloInv.TextColor3 = Color3.fromRGB(255, 255, 255)
-aplicarFonte(UI.tituloInv, 13)
+aplicarFonte(UI.tituloInv, 12)
 UI.tituloInv.TextStrokeTransparency = 0.2
 UI.tituloInv.ZIndex = 27
 UI.tituloInv.Parent = topoInv
 
-UI.btnAtualizarInv = novoBotao(topoInv, "🔄 Atualizar", UDim2.new(0, 72, 0, 24), UDim2.new(1, -80, 0, 6), Color3.fromRGB(50, 50, 55), 11)
+UI.btnAtualizarInv = novoBotao(topoInv, "🔄", UDim2.new(0, 28, 0, 24), UDim2.new(1, -36, 0, 5), Color3.fromRGB(50, 50, 55), 12)
 UI.btnAtualizarInv.ZIndex = 27
 
+-- Barra de Abas da Central de Itens
+local barraAbas = Instance.new("Frame")
+barraAbas.Size = UDim2.new(1, -16, 0, 24)
+barraAbas.Position = UDim2.new(0, 8, 0, 36)
+barraAbas.BackgroundTransparency = 1
+barraAbas.ZIndex = 26
+barraAbas.Parent = UI.janelaInventario
+
+local btnTabMarket = novoBotao(barraAbas, "🛒 Black Market", UDim2.new(0, 102, 0, 22), UDim2.new(0, 0, 0, 1), Color3.fromRGB(35, 45, 40), 10)
+btnTabMarket.ZIndex = 27
+
+local btnTabMeuInv = novoBotao(barraAbas, "🎒 Meu Inv", UDim2.new(0, 88, 0, 22), UDim2.new(0, 106, 0, 1), Color3.fromRGB(45, 45, 52), 10)
+btnTabMeuInv.ZIndex = 27
+
+local btnTabScanner = novoBotao(barraAbas, "🌐 Scanner", UDim2.new(0, 102, 0, 22), UDim2.new(0, 198, 0, 1), Color3.fromRGB(45, 45, 52), 10)
+btnTabScanner.ZIndex = 27
+
 UI.scrollInventario = Instance.new("ScrollingFrame")
-UI.scrollInventario.Size = UDim2.new(1, -16, 1, -44)
-UI.scrollInventario.Position = UDim2.new(0, 8, 0, 38)
+UI.scrollInventario.Size = UDim2.new(1, -16, 1, -68)
+UI.scrollInventario.Position = UDim2.new(0, 8, 0, 64)
 UI.scrollInventario.BackgroundTransparency = 1
 UI.scrollInventario.BorderSizePixel = 0
 UI.scrollInventario.ScrollBarThickness = 4
@@ -2639,13 +2678,603 @@ listLayoutInv.Padding = UDim.new(0, 6)
 listLayoutInv.SortOrder = Enum.SortOrder.LayoutOrder
 listLayoutInv.Parent = UI.scrollInventario
 
-local function renderizarInventario(alvo)
-	jogadorInspecionadoAtual = alvo
+local abaAtiva = "market"
+local jogadorInspecionadoAtual = nil
+
+local PRESETS_BLACK_MARKET = {
+	{
+		nome = "Arma de Laser",
+		termos = { "laser", "arma de laser", "arma laser", "blaster", "raygun", "ray gun", "lasergun" },
+		icone = "🔫",
+		preco = "23,572",
+		desc = "Dispara um raio devastador que desintegra o alvo."
+	},
+	{
+		nome = "Pé de Cabra",
+		termos = { "cabra", "crowbar", "pe de cabra", "pé de cabra" },
+		icone = "🔨",
+		preco = "23,572",
+		desc = "Golpe pesado que quebra o alvo em pedaços."
+	},
+	{
+		nome = "Magic Slayer Sword",
+		termos = { "slayer", "magic slayer", "magic sword", "espada" },
+		icone = "⚔️",
+		preco = "39,286",
+		desc = "Transforma em zumbi e abre buracos negros."
+	},
+	{
+		nome = "Ivory Periastron",
+		termos = { "periastron", "ivory", "ivory periastron" },
+		icone = "🌟",
+		preco = "47,143",
+		desc = "Orbe celeste com orbes caçadores e clones explosivos."
+	}
+}
+
+local notifToast = nil
+local function mostrarNotificacao(texto, sucesso)
+	pcall(function()
+		if notifToast and notifToast.Parent then notifToast:Destroy() end
+		notifToast = Instance.new("Frame")
+		notifToast.Size = UDim2.new(1, -20, 0, 30)
+		notifToast.Position = UDim2.new(0, 10, 1, -40)
+		notifToast.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+		notifToast.BackgroundTransparency = 0.05
+		notifToast.ZIndex = 40
+		notifToast.Parent = frame
+		criarUICorner(notifToast, 6)
+		criarBorda(notifToast, sucesso and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 180, 80), 0.9)
+
+		local lbl = Instance.new("TextLabel")
+		lbl.Size = UDim2.new(1, -12, 1, 0)
+		lbl.Position = UDim2.new(0, 6, 0, 0)
+		lbl.BackgroundTransparency = 1
+		lbl.Text = texto
+		lbl.TextColor3 = sucesso and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 230, 150)
+		lbl.TextXAlignment = Enum.TextXAlignment.Center
+		lbl.TextTruncate = Enum.TextTruncate.AtEnd
+		aplicarFonte(lbl, 11)
+		lbl.TextStrokeTransparency = 0.2
+		lbl.ZIndex = 41
+		lbl.Parent = notifToast
+
+		task.delay(3.5, function()
+			if notifToast and notifToast.Parent then
+				notifToast:Destroy()
+				notifToast = nil
+			end
+		end)
+	end)
+end
+
+local function obterItemDoJogo(termos, nomeExibicao, colocarNaMao)
+	if colocarNaMao == nil then colocarNaMao = true end
+	local myChar = getCharacter()
+	local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+	local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+	local myBp = player:FindFirstChildOfClass("Backpack")
+
+	local function corresponde(nome)
+		if not nome then return false end
+		local n = string.lower(nome)
+		for _, t in ipairs(termos) do
+			if string.find(n, string.lower(t)) then
+				return true
+			end
+		end
+		return false
+	end
+
+	-- 1. Verificar se já está na mão
+	if myChar then
+		for _, item in ipairs(myChar:GetChildren()) do
+			if item:IsA("Tool") and corresponde(item.Name) then
+				mostrarNotificacao("✅ " .. nomeExibicao .. " já está equipada na sua mão!", true)
+				return true, item
+			end
+		end
+	end
+
+	-- 2. Verificar se está na mochila
+	if myBp then
+		for _, item in ipairs(myBp:GetChildren()) do
+			if item:IsA("Tool") and corresponde(item.Name) then
+				if myHum and colocarNaMao then
+					myHum:EquipTool(item)
+				end
+				mostrarNotificacao("⚡ " .. nomeExibicao .. " retirada da mochila e colocada na mão!", true)
+				return true, item
+			end
+		end
+	end
+
+	-- 3. Buscar no ReplicatedStorage (armazenamento do jogo / loja)
+	local rep = game:GetService("ReplicatedStorage")
+	for _, desc in ipairs(rep:GetDescendants()) do
+		if desc:IsA("Tool") and corresponde(desc.Name) then
+			local clone = desc:Clone()
+			clone.Parent = myBp or myChar
+			if myHum and colocarNaMao then
+				pcall(function() myHum:EquipTool(clone) end)
+			end
+			mostrarNotificacao("🔫 " .. nomeExibicao .. " obtida do jogo e colocada na mão!", true)
+			return true, clone
+		end
+	end
+
+	-- 4. Buscar em outros jogadores no servidor (clonar de quem comprou)
+	for _, outro in ipairs(Players:GetPlayers()) do
+		if outro ~= player then
+			if outro.Character then
+				for _, item in ipairs(outro.Character:GetChildren()) do
+					if item:IsA("Tool") and corresponde(item.Name) then
+						local clone = item:Clone()
+						clone.Parent = myBp or myChar
+						if myHum and colocarNaMao then
+							pcall(function() myHum:EquipTool(clone) end)
+						end
+						mostrarNotificacao("🔫 " .. nomeExibicao .. " copiada do jogador @" .. outro.Name .. "!", true)
+						return true, clone
+					end
+				end
+			end
+			local outroBp = outro:FindFirstChildOfClass("Backpack")
+			if outroBp then
+				for _, item in ipairs(outroBp:GetChildren()) do
+					if item:IsA("Tool") and corresponde(item.Name) then
+						local clone = item:Clone()
+						clone.Parent = myBp or myChar
+						if myHum and colocarNaMao then
+							pcall(function() myHum:EquipTool(clone) end)
+						end
+						mostrarNotificacao("🔫 " .. nomeExibicao .. " copiada da mochila de @" .. outro.Name .. "!", true)
+						return true, clone
+					end
+				end
+			end
+		end
+	end
+
+	-- 5. Buscar no Workspace (mapa / chão / barraca do Black Market)
+	for _, desc in ipairs(workspace:GetDescendants()) do
+		if desc:IsA("Tool") and corresponde(desc.Name) then
+			local handle = desc:FindFirstChild("Handle") or desc:FindFirstChildWhichIsA("BasePart")
+			if handle and myHRP then
+				pcall(function()
+					handle.CFrame = myHRP.CFrame
+					if firetouchinterest then
+						firetouchinterest(myHRP, handle, 0)
+						firetouchinterest(myHRP, handle, 1)
+					end
+				end)
+			end
+			local clone = desc:Clone()
+			clone.Parent = myBp or myChar
+			if myHum and colocarNaMao then
+				pcall(function() myHum:EquipTool(clone) end)
+			end
+			mostrarNotificacao("🔫 " .. nomeExibicao .. " resgatada do mapa e colocada na mão!", true)
+			return true, clone
+		end
+	end
+
+	-- 6. Buscar em Lighting e StarterPack
+	local outros = { game:GetService("Lighting"), game:GetService("StarterPack") }
+	for _, lugar in ipairs(outros) do
+		for _, desc in ipairs(lugar:GetDescendants()) do
+			if desc:IsA("Tool") and corresponde(desc.Name) then
+				local clone = desc:Clone()
+				clone.Parent = myBp or myChar
+				if myHum and colocarNaMao then
+					pcall(function() myHum:EquipTool(clone) end)
+				end
+				mostrarNotificacao("🔫 " .. nomeExibicao .. " obtida de " .. lugar.Name .. "!", true)
+				return true, clone
+			end
+		end
+	end
+
+	-- 7. Tentar disparar remotes de compra / equipar do Black Market
+	local disparou = false
+	for _, desc in ipairs(rep:GetDescendants()) do
+		if desc:IsA("RemoteEvent") or desc:IsA("RemoteFunction") then
+			local rName = string.lower(desc.Name)
+			if string.find(rName, "buy") or string.find(rName, "market") or string.find(rName, "weapon") or string.find(rName, "item") or string.find(rName, "tool") or string.find(rName, "give") or string.find(rName, "claim") then
+				pcall(function()
+					if desc:IsA("RemoteEvent") then
+						desc:FireServer("Arma de Laser")
+						desc:FireServer(2)
+						desc:FireServer("Laser")
+					elseif desc:IsA("RemoteFunction") then
+						desc:InvokeServer("Arma de Laser")
+						desc:InvokeServer(2)
+					end
+					disparou = true
+				end)
+			end
+		end
+	end
+
+	local pg = player:FindFirstChildOfClass("PlayerGui")
+	if pg then
+		for _, desc in ipairs(pg:GetDescendants()) do
+			if (desc:IsA("TextButton") or desc:IsA("ImageButton")) and desc.Visible then
+				local txt = desc:IsA("TextButton") and desc.Text or ""
+				local pai = desc.Parent
+				local pTxt = (pai and pai:FindFirstChildWhichIsA("TextLabel")) and pai:FindFirstChildWhichIsA("TextLabel").Text or ""
+				if corresponde(txt) or corresponde(pTxt) or corresponde(desc.Name) then
+					pcall(function()
+						if firesignal then
+							firesignal(desc.MouseButton1Click)
+							firesignal(desc.Activated)
+						end
+						disparou = true
+					end)
+				end
+			end
+		end
+	end
+
+	if disparou then
+		mostrarNotificacao("⚡ Sinal enviado para os Remotes do Black Market!", true)
+		return true, nil
+	end
+
+	mostrarNotificacao("⚠️ " .. nomeExibicao .. " não encontrada no momento. Veja na aba 'Scanner'!", false)
+	return false, nil
+end
+
+local function limparScroll()
 	for _, child in ipairs(UI.scrollInventario:GetChildren()) do
 		if child:IsA("Frame") or child:IsA("TextLabel") then
 			child:Destroy()
 		end
 	end
+end
+
+local function atualizarEstiloAbas()
+	btnTabMarket.TextColor3 = (abaAtiva == "market") and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
+	btnTabMeuInv.TextColor3 = (abaAtiva == "meu") and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
+	btnTabScanner.TextColor3 = (abaAtiva == "scanner") and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255)
+end
+
+local function renderizarBlackMarket()
+	abaAtiva = "market"
+	jogadorInspecionadoAtual = nil
+	UI.tituloInv.Text = "BLACK MARKET (RO VIBES)"
+	atualizarEstiloAbas()
+	limparScroll()
+
+	local topoDica = Instance.new("TextLabel")
+	topoDica.Size = UDim2.new(1, 0, 0, 24)
+	topoDica.BackgroundTransparency = 1
+	topoDica.Text = "Selecione um item para tentar puxar para sua mão:"
+	topoDica.TextColor3 = Color3.fromRGB(180, 180, 190)
+	aplicarFonte(topoDica, 11)
+	topoDica.TextStrokeTransparency = 0.2
+	topoDica.ZIndex = 27
+	topoDica.Parent = UI.scrollInventario
+
+	for i, preset in ipairs(PRESETS_BLACK_MARKET) do
+		local card = Instance.new("Frame")
+		card.Size = UDim2.new(1, 0, 0, 52)
+		card.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+		card.BackgroundTransparency = 1
+		card.LayoutOrder = i
+		card.ZIndex = 27
+		card.Parent = UI.scrollInventario
+		criarUICorner(card, 6)
+		criarBorda(card, Color3.fromRGB(255, 255, 255), 0.45)
+
+		local icone = Instance.new("TextLabel")
+		icone.Size = UDim2.new(0, 34, 0, 34)
+		icone.Position = UDim2.new(0, 6, 0.5, -17)
+		icone.BackgroundTransparency = 1
+		icone.Text = preset.icone
+		aplicarFonte(icone, 20)
+		icone.ZIndex = 28
+		icone.Parent = card
+
+		local lblNome = Instance.new("TextLabel")
+		lblNome.Size = UDim2.new(1, -125, 0, 18)
+		lblNome.Position = UDim2.new(0, 44, 0, 5)
+		lblNome.BackgroundTransparency = 1
+		lblNome.Text = preset.nome
+		lblNome.TextXAlignment = Enum.TextXAlignment.Left
+		lblNome.TextColor3 = Color3.fromRGB(255, 255, 255)
+		aplicarFonte(lblNome, 12)
+		lblNome.TextStrokeTransparency = 0.2
+		lblNome.ZIndex = 28
+		lblNome.Parent = card
+
+		local lblDesc = Instance.new("TextLabel")
+		lblDesc.Size = UDim2.new(1, -125, 0, 14)
+		lblDesc.Position = UDim2.new(0, 44, 0, 22)
+		lblDesc.BackgroundTransparency = 1
+		lblDesc.Text = preset.desc
+		lblDesc.TextXAlignment = Enum.TextXAlignment.Left
+		lblDesc.TextColor3 = Color3.fromRGB(160, 160, 170)
+		lblDesc.TextTruncate = Enum.TextTruncate.AtEnd
+		aplicarFonte(lblDesc, 10)
+		lblDesc.TextStrokeTransparency = 0.2
+		lblDesc.ZIndex = 28
+		lblDesc.Parent = card
+
+		local lblPreco = Instance.new("TextLabel")
+		lblPreco.Size = UDim2.new(1, -125, 0, 12)
+		lblPreco.Position = UDim2.new(0, 44, 0, 36)
+		lblPreco.BackgroundTransparency = 1
+		lblPreco.Text = "Loja: " .. preset.preco
+		lblPreco.TextXAlignment = Enum.TextXAlignment.Left
+		lblPreco.TextColor3 = Color3.fromRGB(90, 255, 150)
+		aplicarFonte(lblPreco, 9)
+		lblPreco.TextStrokeTransparency = 0.2
+		lblPreco.ZIndex = 28
+		lblPreco.Parent = card
+
+		local btnPegar = novoBotao(card, "Pegar p/ Mão", UDim2.new(0, 72, 0, 26), UDim2.new(1, -78, 0.5, -13), Color3.fromRGB(35, 45, 40), 10)
+		btnPegar.ZIndex = 28
+		criarBorda(btnPegar, Color3.fromRGB(90, 255, 150), 0.7)
+
+		btnPegar.MouseButton1Click:Connect(function()
+			btnPegar.Text = "Buscando..."
+			local ok, res = obterItemDoJogo(preset.termos, preset.nome, true)
+			if ok then
+				btnPegar.Text = "Obtida! ✓"
+				btnPegar.TextColor3 = Color3.fromRGB(90, 255, 150)
+			else
+				btnPegar.Text = "Não achou"
+				btnPegar.TextColor3 = Color3.fromRGB(255, 180, 80)
+			end
+			task.delay(2, function()
+				if btnPegar and btnPegar.Parent then
+					btnPegar.Text = "Pegar p/ Mão"
+					btnPegar.TextColor3 = Color3.fromRGB(255, 255, 255)
+				end
+			end)
+		end)
+	end
+
+	-- Botão extra: Forçar remotes do Black Market
+	local btnForcarRemotes = novoBotao(UI.scrollInventario, "⚡ Disparar Remotes de Compra do Black Market", UDim2.new(1, 0, 0, 28), UDim2.new(0, 0, 0, 0), Color3.fromRGB(45, 45, 52), 10)
+	btnForcarRemotes.ZIndex = 27
+	btnForcarRemotes.LayoutOrder = 100
+	btnForcarRemotes.MouseButton1Click:Connect(function()
+		btnForcarRemotes.Text = "Disparando Remotes..."
+		obterItemDoJogo({ "laser" }, "Arma de Laser", true)
+		task.delay(1.5, function()
+			if btnForcarRemotes and btnForcarRemotes.Parent then
+				btnForcarRemotes.Text = "⚡ Disparar Remotes de Compra do Black Market"
+			end
+		end)
+	end)
+end
+
+local function renderizarMeuInventario()
+	abaAtiva = "meu"
+	jogadorInspecionadoAtual = nil
+	UI.tituloInv.Text = "MEU INVENTÁRIO & MÃO"
+	atualizarEstiloAbas()
+	limparScroll()
+
+	local itens = {}
+	local myChar = getCharacter()
+	local myBp = player:FindFirstChildOfClass("Backpack")
+	local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+
+	if myChar then
+		for _, child in ipairs(myChar:GetChildren()) do
+			if child:IsA("Tool") then
+				table.insert(itens, { tool = child, status = "Equipado (Na Mão)", naMao = true })
+			end
+		end
+	end
+
+	if myBp then
+		for _, child in ipairs(myBp:GetChildren()) do
+			if child:IsA("Tool") then
+				table.insert(itens, { tool = child, status = "Na Mochila", naMao = false })
+			end
+		end
+	end
+
+	if #itens == 0 then
+		local lblVazio = Instance.new("TextLabel")
+		lblVazio.Size = UDim2.new(1, 0, 0, 40)
+		lblVazio.BackgroundTransparency = 1
+		lblVazio.Text = "Você não tem nenhuma ferramenta na mão ou mochila."
+		lblVazio.TextColor3 = Color3.fromRGB(180, 180, 190)
+		aplicarFonte(lblVazio, 11)
+		lblVazio.TextStrokeTransparency = 0.2
+		lblVazio.ZIndex = 27
+		lblVazio.Parent = UI.scrollInventario
+
+		local btnPegarRapido = novoBotao(UI.scrollInventario, "🔫 Pegar Arma de Laser Agora", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), Color3.fromRGB(35, 45, 40), 11)
+		btnPegarRapido.ZIndex = 27
+		criarBorda(btnPegarRapido, Color3.fromRGB(90, 255, 150), 0.7)
+		btnPegarRapido.MouseButton1Click:Connect(function()
+			obterItemDoJogo(PRESETS_BLACK_MARKET[1].termos, "Arma de Laser", true)
+			task.delay(1, renderizarMeuInventario)
+		end)
+		return
+	end
+
+	for i, it in ipairs(itens) do
+		local tool = it.tool
+		local card = Instance.new("Frame")
+		card.Size = UDim2.new(1, 0, 0, 44)
+		card.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+		card.BackgroundTransparency = 1
+		card.LayoutOrder = i
+		card.ZIndex = 27
+		card.Parent = UI.scrollInventario
+		criarUICorner(card, 6)
+		criarBorda(card, it.naMao and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(255, 255, 255), 0.5)
+
+		local lblNome = Instance.new("TextLabel")
+		lblNome.Size = UDim2.new(1, -120, 0, 18)
+		lblNome.Position = UDim2.new(0, 10, 0, 4)
+		lblNome.BackgroundTransparency = 1
+		lblNome.Text = tool.Name
+		lblNome.TextXAlignment = Enum.TextXAlignment.Left
+		lblNome.TextColor3 = Color3.fromRGB(255, 255, 255)
+		aplicarFonte(lblNome, 12)
+		lblNome.TextStrokeTransparency = 0.2
+		lblNome.ZIndex = 28
+		lblNome.Parent = card
+
+		local lblStatus = Instance.new("TextLabel")
+		lblStatus.Size = UDim2.new(1, -120, 0, 16)
+		lblStatus.Position = UDim2.new(0, 10, 0, 22)
+		lblStatus.BackgroundTransparency = 1
+		lblStatus.Text = it.naMao and "⚔️ Equipado (Na Mão)" or "🎒 Na Mochila"
+		lblStatus.TextXAlignment = Enum.TextXAlignment.Left
+		lblStatus.TextColor3 = it.naMao and Color3.fromRGB(90, 255, 150) or Color3.fromRGB(180, 180, 190)
+		aplicarFonte(lblStatus, 10)
+		lblStatus.TextStrokeTransparency = 0.2
+		lblStatus.ZIndex = 28
+		lblStatus.Parent = card
+
+		local btnAcao = novoBotao(card, it.naMao and "Desequipar" or "Equipar", UDim2.new(0, 68, 0, 24), UDim2.new(1, -74, 0.5, -12), Color3.fromRGB(45, 45, 52), 10)
+		btnAcao.ZIndex = 28
+		btnAcao.MouseButton1Click:Connect(function()
+			if it.naMao then
+				if myHum then myHum:UnequipTools() end
+			else
+				if myHum then myHum:EquipTool(tool) end
+			end
+			task.delay(0.2, renderizarMeuInventario)
+		end)
+	end
+end
+
+local function renderizarTodasFerramentas()
+	abaAtiva = "scanner"
+	jogadorInspecionadoAtual = nil
+	UI.tituloInv.Text = "SCANNER DE FERRAMENTAS"
+	atualizarEstiloAbas()
+	limparScroll()
+
+	local lblInfo = Instance.new("TextLabel")
+	lblInfo.Size = UDim2.new(1, 0, 0, 24)
+	lblInfo.BackgroundTransparency = 1
+	lblInfo.Text = "Varrendo ReplicatedStorage, Workspace e Jogadores..."
+	lblInfo.TextColor3 = Color3.fromRGB(180, 180, 190)
+	aplicarFonte(lblInfo, 10)
+	lblInfo.TextStrokeTransparency = 0.2
+	lblInfo.ZIndex = 27
+	lblInfo.Parent = UI.scrollInventario
+
+	local ferramentas = {}
+	local rep = game:GetService("ReplicatedStorage")
+	for _, desc in ipairs(rep:GetDescendants()) do
+		if desc:IsA("Tool") then
+			table.insert(ferramentas, { tool = desc, origem = "ReplicatedStorage" })
+		end
+	end
+
+	for _, desc in ipairs(workspace:GetDescendants()) do
+		if desc:IsA("Tool") then
+			table.insert(ferramentas, { tool = desc, origem = "Workspace (Mapa)" })
+		end
+	end
+
+	for _, outro in ipairs(Players:GetPlayers()) do
+		if outro ~= player then
+			if outro.Character then
+				for _, item in ipairs(outro.Character:GetChildren()) do
+					if item:IsA("Tool") then
+						table.insert(ferramentas, { tool = item, origem = "@" .. outro.Name .. " (Mão)" })
+					end
+				end
+			end
+			local bp = outro:FindFirstChildOfClass("Backpack")
+			if bp then
+				for _, item in ipairs(bp:GetChildren()) do
+					if item:IsA("Tool") then
+						table.insert(ferramentas, { tool = item, origem = "@" .. outro.Name .. " (Mochila)" })
+					end
+				end
+			end
+		end
+	end
+
+	if #ferramentas == 0 then
+		local lblVazio = Instance.new("TextLabel")
+		lblVazio.Size = UDim2.new(1, 0, 0, 40)
+		lblVazio.BackgroundTransparency = 1
+		lblVazio.Text = "Nenhuma ferramenta externa acessível no momento."
+		lblVazio.TextColor3 = Color3.fromRGB(180, 180, 190)
+		aplicarFonte(lblVazio, 11)
+		lblVazio.TextStrokeTransparency = 0.2
+		lblVazio.ZIndex = 27
+		lblVazio.Parent = UI.scrollInventario
+		return
+	end
+
+	for i, fData in ipairs(ferramentas) do
+		local tool = fData.tool
+		local card = Instance.new("Frame")
+		card.Size = UDim2.new(1, 0, 0, 44)
+		card.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+		card.BackgroundTransparency = 1
+		card.LayoutOrder = i
+		card.ZIndex = 27
+		card.Parent = UI.scrollInventario
+		criarUICorner(card, 6)
+		criarBorda(card, Color3.fromRGB(255, 255, 255), 0.45)
+
+		local lblNome = Instance.new("TextLabel")
+		lblNome.Size = UDim2.new(1, -110, 0, 18)
+		lblNome.Position = UDim2.new(0, 10, 0, 4)
+		lblNome.BackgroundTransparency = 1
+		lblNome.Text = tool.Name
+		lblNome.TextXAlignment = Enum.TextXAlignment.Left
+		lblNome.TextColor3 = Color3.fromRGB(255, 255, 255)
+		aplicarFonte(lblNome, 12)
+		lblNome.TextStrokeTransparency = 0.2
+		lblNome.ZIndex = 28
+		lblNome.Parent = card
+
+		local lblOrigem = Instance.new("TextLabel")
+		lblOrigem.Size = UDim2.new(1, -110, 0, 16)
+		lblOrigem.Position = UDim2.new(0, 10, 0, 22)
+		lblOrigem.BackgroundTransparency = 1
+		lblOrigem.Text = "📍 " .. fData.origem
+		lblOrigem.TextXAlignment = Enum.TextXAlignment.Left
+		lblOrigem.TextColor3 = Color3.fromRGB(90, 255, 150)
+		aplicarFonte(lblOrigem, 10)
+		lblOrigem.TextStrokeTransparency = 0.2
+		lblOrigem.ZIndex = 28
+		lblOrigem.Parent = card
+
+		local btnPegar = novoBotao(card, "Pegar", UDim2.new(0, 60, 0, 24), UDim2.new(1, -66, 0.5, -12), Color3.fromRGB(35, 45, 40), 10)
+		btnPegar.ZIndex = 28
+		btnPegar.MouseButton1Click:Connect(function()
+			pcall(function()
+				local clone = tool:Clone()
+				clone.Parent = player:FindFirstChildOfClass("Backpack") or player.Character
+				local myHum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+				if myHum then myHum:EquipTool(clone) end
+			end)
+			btnPegar.Text = "Pegou! ✓"
+			btnPegar.TextColor3 = Color3.fromRGB(90, 255, 150)
+			task.delay(1.5, function()
+				if btnPegar and btnPegar.Parent then
+					btnPegar.Text = "Pegar"
+					btnPegar.TextColor3 = Color3.fromRGB(255, 255, 255)
+				end
+			end)
+		end)
+	end
+end
+
+local function renderizarInventario(alvo)
+	jogadorInspecionadoAtual = alvo
+	abaAtiva = "outro"
+	limparScroll()
+	atualizarEstiloAbas()
 
 	local nomeAlvo = alvo and (alvo.DisplayName or alvo.Name) or "-"
 	UI.tituloInv.Text = "INVENTÁRIO: " .. nomeAlvo
@@ -2663,8 +3292,6 @@ local function renderizarInventario(alvo)
 	end
 
 	local itensEncontrados = {}
-
-	-- Ferramentas na mão
 	local char = alvo.Character
 	if char then
 		for _, child in ipairs(char:GetChildren()) do
@@ -2674,7 +3301,6 @@ local function renderizarInventario(alvo)
 		end
 	end
 
-	-- Ferramentas na mochila
 	local bp = alvo:FindFirstChildOfClass("Backpack")
 	if bp then
 		for _, child in ipairs(bp:GetChildren()) do
@@ -2762,16 +3388,52 @@ local function renderizarInventario(alvo)
 	end
 end
 
+-- Conexão das abas
+btnTabMarket.MouseButton1Click:Connect(renderizarBlackMarket)
+btnTabMeuInv.MouseButton1Click:Connect(renderizarMeuInventario)
+btnTabScanner.MouseButton1Click:Connect(renderizarTodasFerramentas)
+
 UI.btnVoltarInv.MouseButton1Click:Connect(function()
 	UI.janelaInventario.Visible = false
 	jogadorInspecionadoAtual = nil
 end)
 
 UI.btnAtualizarInv.MouseButton1Click:Connect(function()
-	if jogadorInspecionadoAtual then
+	if abaAtiva == "market" then
+		renderizarBlackMarket()
+	elseif abaAtiva == "meu" then
+		renderizarMeuInventario()
+	elseif abaAtiva == "scanner" then
+		renderizarTodasFerramentas()
+	elseif jogadorInspecionadoAtual then
 		renderizarInventario(jogadorInspecionadoAtual)
 	end
 end)
+
+-- Conexões dos botões rápidos do painel principal
+UI.botaoPegarLaser.MouseButton1Click:Connect(function()
+	UI.botaoPegarLaser.Text = "Buscando..."
+	local ok, res = obterItemDoJogo(PRESETS_BLACK_MARKET[1].termos, "Arma de Laser", true)
+	if ok then
+		UI.botaoPegarLaser.Text = "Obtida! ✓"
+		UI.botaoPegarLaser.TextColor3 = Color3.fromRGB(90, 255, 150)
+	else
+		UI.botaoPegarLaser.Text = "Não achou"
+		UI.botaoPegarLaser.TextColor3 = Color3.fromRGB(255, 180, 80)
+	end
+	task.delay(2, function()
+		if UI.botaoPegarLaser and UI.botaoPegarLaser.Parent then
+			UI.botaoPegarLaser.Text = "🔫 Laser"
+			UI.botaoPegarLaser.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end)
+end)
+
+UI.botaoAbrirItens.MouseButton1Click:Connect(function()
+	UI.janelaInventario.Visible = true
+	renderizarBlackMarket()
+end)
+
 end
 
 ------------------------------------------------------------

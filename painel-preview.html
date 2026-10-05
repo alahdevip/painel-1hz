@@ -202,15 +202,31 @@
     border-color: rgba(90,255,150,.85) !important;
   }
 
-  /* busca */
+  /* busca e botões rápidos de itens */
   #busca {
-    position: absolute; left: 8px; top: 281px; width: 304px; height: 26px;
+    position: absolute; left: 8px; top: 281px; width: 192px; height: 26px;
     background: transparent; border: 1px solid rgba(255,255,255,0.45); border-radius: 6px;
-    color: #fff; font-family: inherit; font-size: 12px;
-    padding-left: 10px; outline: none;
+    color: #fff; font-family: inherit; font-size: 11px;
+    padding-left: 8px; outline: none;
     text-shadow: 0 1px 2px rgba(0,0,0,.95), 0 0 1px #000;
   }
   #busca::placeholder { color: rgb(170,170,175); }
+
+  #btnLaser {
+    position: absolute; left: 204px; top: 281px; width: 54px; height: 26px;
+    border: 1px solid rgba(90,255,150,0.75); border-radius: 6px; background: transparent;
+    color: #5aff96; font-size: 10px; font-weight: 700; cursor: pointer; font-family: inherit;
+    text-shadow: 0 1px 2px #000; transition: filter .12s;
+  }
+  #btnLaser:hover { filter: brightness(1.3); }
+
+  #btnItens {
+    position: absolute; left: 262px; top: 281px; width: 50px; height: 26px;
+    border: 1px solid rgba(255,255,255,0.45); border-radius: 6px; background: transparent;
+    color: #fff; font-size: 10px; font-weight: 700; cursor: pointer; font-family: inherit;
+    text-shadow: 0 1px 2px #000; transition: filter .12s;
+  }
+  #btnItens:hover { filter: brightness(1.3); }
 
   /* barra espectando */
   #barraEspectando {
@@ -321,10 +337,31 @@
     backdrop-filter: blur(10px);
   }
   #janelaInventario.visivel { display: flex; }
+  .inv-abas {
+    display: flex; gap: 4px; padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.15);
+  }
+  .tab-btn {
+    flex: 1; height: 22px; font-size: 10px; font-weight: 700;
+    border: 1px solid rgba(255,255,255,0.45); border-radius: 5px;
+    background: transparent; color: #fff; cursor: pointer; font-family: inherit;
+    text-shadow: 0 1px 2px #000; transition: color .15s, border-color .15s;
+  }
+  .tab-btn:hover { filter: brightness(1.2); }
+  .tab-btn.ativa {
+    color: #5aff96 !important; border-color: rgba(90,255,150,0.85) !important;
+  }
   .inv-lista {
     flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px;
     scrollbar-width: thin; scrollbar-color: #5a5a5f transparent;
   }
+  #toastNotif {
+    position: absolute; left: 10px; bottom: 10px; width: calc(100% - 20px); height: 28px;
+    background: rgba(18, 18, 24, 0.95); border: 1px solid #5aff96; border-radius: 6px;
+    display: none; align-items: center; justify-content: center; font-size: 11px;
+    color: #5aff96; font-weight: 700; z-index: 2000; text-shadow: 0 1px 2px #000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6); pointer-events: none;
+  }
+  #toastNotif.visivel { display: flex; }
   .card-inv {
     background: transparent; border: 1px solid rgba(255,255,255,0.45);
     border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; align-items: center;
@@ -489,8 +526,10 @@
     <button class="btnMais" data-alvo="spin" data-dir="+">+</button>
   </div>
 
-  <!-- busca -->
-  <input id="busca" placeholder="Pesquisar jogador...">
+  <!-- busca e botões rápidos -->
+  <input id="busca" placeholder="Pesquisar...">
+  <button id="btnLaser" class="botao" title="Pegar Arma de Laser para a Mão">🔫 Laser</button>
+  <button id="btnItens" class="botao" title="Central de Armas & Itens">🎒 Itens</button>
 
   <!-- barra espectando agora -->
   <div id="barraEspectando">
@@ -526,15 +565,21 @@
     <div class="emotes-grid" id="gridEmotes"></div>
   </div>
 
-  <!-- janela de inventário -->
+  <!-- janela de inventário e armas -->
   <div id="janelaInventario">
     <div class="serv-topo">
-      <button id="btnVoltarInv" class="botao" style="position:static; width:68px; height:24px;">← Voltar</button>
-      <span class="serv-titulo" id="tituloInv">INVENTÁRIO</span>
-      <button id="btnAtualizarInv" class="botao" style="position:static; width:72px; height:24px;">🔄 Atualizar</button>
+      <button id="btnVoltarInv" class="botao" style="position:static; width:64px; height:24px;">← Voltar</button>
+      <span class="serv-titulo" id="tituloInv">CENTRAL DE ITENS & ARMAS</span>
+      <button id="btnAtualizarInv" class="botao" style="position:static; width:28px; height:24px; padding:0;">🔄</button>
+    </div>
+    <div class="inv-abas">
+      <button class="tab-btn ativa" id="tabMarket">🛒 Black Market</button>
+      <button class="tab-btn" id="tabMeuInv">🎒 Meu Inv</button>
+      <button class="tab-btn" id="tabScanner">🌐 Scanner</button>
     </div>
     <div class="inv-lista" id="listaInventario"></div>
   </div>
+  <div id="toastNotif">🔫 Arma de Laser colocada na sua mão!</div>
 </div>
 
 <div id="dica">Pressione <b>B</b> para abrir/fechar | <b>F</b> para voar | Arraste pelo topo</div>
@@ -917,13 +962,57 @@
   };
 
   // ==========================================
-  // JANELA DE INVENTÁRIO (INSPECIONAR FERRAMENTAS)
+  // CENTRAL DE ITENS, BLACK MARKET E INVENTÁRIO
   // ==========================================
   const janelaInventario = document.getElementById('janelaInventario');
   const btnVoltarInv = document.getElementById('btnVoltarInv');
   const btnAtualizarInv = document.getElementById('btnAtualizarInv');
   const listaInventario = document.getElementById('listaInventario');
   const tituloInv = document.getElementById('tituloInv');
+  const tabMarket = document.getElementById('tabMarket');
+  const tabMeuInv = document.getElementById('tabMeuInv');
+  const tabScanner = document.getElementById('tabScanner');
+  const btnLaser = document.getElementById('btnLaser');
+  const btnItens = document.getElementById('btnItens');
+  const toastNotif = document.getElementById('toastNotif');
+
+  let abaAtivaPreview = 'market';
+  let jogadorInspecionadoPreview = null;
+  let toastTimer = null;
+
+  function mostrarToast(texto, cor) {
+    if (toastTimer) clearTimeout(toastTimer);
+    toastNotif.textContent = texto;
+    toastNotif.style.color = cor || '#5aff96';
+    toastNotif.style.borderColor = cor || '#5aff96';
+    toastNotif.classList.add('visivel');
+    toastTimer = setTimeout(() => {
+      toastNotif.classList.remove('visivel');
+      toastTimer = null;
+    }, 3200);
+  }
+
+  const presetsBlackMarket = [
+    { nome: 'Arma de Laser', icone: '🔫', preco: '23,572', desc: 'Dispara um feixe laser que desintegra o alvo.' },
+    { nome: 'Pé de Cabra', icone: '🔨', preco: '23,572', desc: 'Golpe pesado que quebra o alvo e manda longe.' },
+    { nome: 'Magic Slayer Sword', icone: '⚔️', preco: '39,286', desc: 'Transforma alvos em zumbi e abre buracos negros.' },
+    { nome: 'Ivory Periastron', icone: '🌟', preco: '47,143', desc: 'Orbe cósmico caçador e clones explosivos.' },
+  ];
+
+  let meuInventario = [
+    { nome: 'Espada Padrão', icone: '🗡️', equipado: true },
+    { nome: 'Lanterna Tática', icone: '🔦', equipado: false },
+  ];
+
+  const ferramentasServidor = [
+    { nome: 'Arma de Laser (Laser Blaster)', icone: '🔫', origem: 'ReplicatedStorage.Weapons' },
+    { nome: 'Pé de Cabra (Crowbar)', icone: '🔨', origem: 'ReplicatedStorage.ShopItems' },
+    { nome: 'Magic Slayer Sword', icone: '⚔️', origem: 'ReplicatedStorage.Gear' },
+    { nome: 'Ivory Periastron', icone: '🌟', origem: 'ReplicatedStorage.Tools' },
+    { nome: 'Darkheart (Espada Sombria)', icone: '🗡️', origem: '@6yelt (Mão)' },
+    { nome: 'Speed Coil (Mola de Velocidade)', icone: '⚡', origem: 'Workspace.Dispensers' },
+    { nome: 'Gravity Coil (Mola de Gravidade)', icone: '🌀', origem: '@75ef (Mochila)' },
+  ];
 
   const itensMock = {
     '6yelt': [
@@ -951,11 +1040,185 @@
     ],
   };
 
-  let jogadorInspecionadoPreview = null;
+  function pegarArmaLaserAcao() {
+    const jaTem = meuInventario.find(i => i.nome.includes('Laser'));
+    if (jaTem) {
+      meuInventario.forEach(i => i.equipado = false);
+      jaTem.equipado = true;
+      mostrarToast('✅ Arma de Laser equipada diretamente na sua mão!');
+    } else {
+      meuInventario.forEach(i => i.equipado = false);
+      meuInventario.unshift({ nome: 'Arma de Laser', icone: '🔫', equipado: true });
+      mostrarToast('🔫 Arma de Laser clonada do jogo e colocada na sua mão!');
+    }
+    btnLaser.textContent = 'Obtida! ✓';
+    btnLaser.style.color = '#5aff96';
+    setTimeout(() => {
+      btnLaser.textContent = '🔫 Laser';
+      btnLaser.style.color = '#5aff96';
+    }, 2000);
+    if (janelaInventario.classList.contains('visivel') && abaAtivaPreview === 'meu') {
+      renderizarMeuInvPreview();
+    }
+  }
+
+  btnLaser.onclick = pegarArmaLaserAcao;
+
+  function atualizarAbasPreview() {
+    tabMarket.classList.toggle('ativa', abaAtivaPreview === 'market');
+    tabMeuInv.classList.toggle('ativa', abaAtivaPreview === 'meu');
+    tabScanner.classList.toggle('ativa', abaAtivaPreview === 'scanner');
+  }
+
+  function renderizarBlackMarketPreview() {
+    abaAtivaPreview = 'market';
+    jogadorInspecionadoPreview = null;
+    tituloInv.textContent = 'BLACK MARKET (RO VIBES)';
+    atualizarAbasPreview();
+    listaInventario.innerHTML = '';
+
+    presetsBlackMarket.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card-inv';
+      card.innerHTML = `
+        <div class="card-inv-info">
+          <div class="card-inv-icone">${item.icone}</div>
+          <div class="card-inv-texto">
+            <div class="card-inv-nome">${item.nome}</div>
+            <div class="card-inv-status" style="color:#b4b4be;">${item.desc}</div>
+            <div style="font-size:9px; color:#5aff96;">Loja: ${item.preco}</div>
+          </div>
+        </div>
+        <button class="btn-copiar-item" style="border-color:rgba(90,255,150,0.8); color:#5aff96;">Pegar p/ Mão</button>
+      `;
+      const btn = card.querySelector('.btn-copiar-item');
+      btn.onclick = () => {
+        btn.textContent = 'Obtendo...';
+        setTimeout(() => {
+          meuInventario.forEach(i => i.equipado = false);
+          if (!meuInventario.find(i => i.nome === item.nome)) {
+            meuInventario.unshift({ nome: item.nome, icone: item.icone, equipado: true });
+          } else {
+            const achado = meuInventario.find(i => i.nome === item.nome);
+            achado.equipado = true;
+          }
+          btn.textContent = 'Obtida! ✓';
+          mostrarToast(item.icone + ' ' + item.nome + ' colocada na sua mão!');
+          setTimeout(() => { btn.textContent = 'Pegar p/ Mão'; }, 2000);
+        }, 300);
+      };
+      listaInventario.appendChild(card);
+    });
+
+    const btnRemotes = document.createElement('button');
+    btnRemotes.className = 'botao';
+    btnRemotes.style.position = 'static';
+    btnRemotes.style.width = '100%';
+    btnRemotes.style.height = '28px';
+    btnRemotes.style.fontSize = '10px';
+    btnRemotes.style.marginTop = '6px';
+    btnRemotes.textContent = '⚡ Disparar Remotes de Compra do Black Market';
+    btnRemotes.onclick = () => {
+      btnRemotes.textContent = 'Disparando Remotes...';
+      setTimeout(() => {
+        btnRemotes.textContent = 'Sinais Enviados! ✓';
+        mostrarToast('⚡ Sinais de compra/equipamento enviados para o jogo!');
+        setTimeout(() => {
+          btnRemotes.textContent = '⚡ Disparar Remotes de Compra do Black Market';
+        }, 2000);
+      }, 400);
+    };
+    listaInventario.appendChild(btnRemotes);
+  }
+
+  function renderizarMeuInvPreview() {
+    abaAtivaPreview = 'meu';
+    jogadorInspecionadoPreview = null;
+    tituloInv.textContent = 'MEU INVENTÁRIO & MÃO';
+    atualizarAbasPreview();
+    listaInventario.innerHTML = '';
+
+    if (meuInventario.length === 0) {
+      listaInventario.innerHTML = '<div style="color:#b4b4be; text-align:center; padding:20px; font-size:11px;">Mochila vazia.</div>';
+      return;
+    }
+
+    meuInventario.forEach((it, idx) => {
+      const card = document.createElement('div');
+      card.className = 'card-inv';
+      card.innerHTML = `
+        <div class="card-inv-info">
+          <div class="card-inv-icone">${it.icone}</div>
+          <div class="card-inv-texto">
+            <div class="card-inv-nome">${it.nome}</div>
+            <div class="card-inv-status ${it.equipado ? 'equipado' : ''}">${it.equipado ? '⚔️ Equipado (Na Mão)' : '🎒 Na Mochila'}</div>
+          </div>
+        </div>
+        <button class="btn-copiar-item">${it.equipado ? 'Desequipar' : 'Equipar'}</button>
+      `;
+      const btn = card.querySelector('.btn-copiar-item');
+      btn.onclick = () => {
+        it.equipado = !it.equipado;
+        if (it.equipado) {
+          meuInventario.forEach((o, oidx) => { if (oidx !== idx) o.equipado = false; });
+          mostrarToast('⚔️ ' + it.nome + ' equipada na sua mão!');
+        } else {
+          mostrarToast('🎒 ' + it.nome + ' guardada na mochila!');
+        }
+        renderizarMeuInvPreview();
+      };
+      listaInventario.appendChild(card);
+    });
+  }
+
+  function renderizarScannerPreview() {
+    abaAtivaPreview = 'scanner';
+    jogadorInspecionadoPreview = null;
+    tituloInv.textContent = 'SCANNER DE FERRAMENTAS';
+    atualizarAbasPreview();
+    listaInventario.innerHTML = '';
+
+    const topoDica = document.createElement('div');
+    topoDica.style.fontSize = '10px';
+    topoDica.style.color = '#b4b4be';
+    topoDica.style.padding = '2px 0 6px 0';
+    topoDica.textContent = 'Ferramentas detectadas no servidor e outros jogadores:';
+    listaInventario.appendChild(topoDica);
+
+    ferramentasServidor.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card-inv';
+      card.innerHTML = `
+        <div class="card-inv-info">
+          <div class="card-inv-icone">${item.icone}</div>
+          <div class="card-inv-texto">
+            <div class="card-inv-nome">${item.nome}</div>
+            <div class="card-inv-status" style="color:#5aff96;">📍 ${item.origem}</div>
+          </div>
+        </div>
+        <button class="btn-copiar-item" style="border-color:rgba(90,255,150,0.8); color:#5aff96;">Pegar</button>
+      `;
+      const btn = card.querySelector('.btn-copiar-item');
+      btn.onclick = () => {
+        meuInventario.forEach(i => i.equipado = false);
+        if (!meuInventario.find(i => i.nome === item.nome)) {
+          meuInventario.unshift({ nome: item.nome, icone: item.icone, equipado: true });
+        } else {
+          meuInventario.find(i => i.nome === item.nome).equipado = true;
+        }
+        btn.textContent = 'Pegou! ✓';
+        mostrarToast('🔫 ' + item.nome + ' copiada e colocada na sua mão!');
+        setTimeout(() => { btn.textContent = 'Pegar'; }, 1500);
+      };
+      listaInventario.appendChild(card);
+    });
+  }
 
   function renderizarInventario(nome) {
     jogadorInspecionadoPreview = nome;
+    abaAtivaPreview = 'outro';
     tituloInv.textContent = 'INVENTÁRIO: ' + nome;
+    atualizarAbasPreview();
     listaInventario.innerHTML = '';
 
     const itens = itensMock[nome] || [
@@ -978,25 +1241,40 @@
       `;
       const btnCopiar = card.querySelector('.btn-copiar-item');
       btnCopiar.onclick = () => {
+        meuInventario.forEach(i => i.equipado = false);
+        if (!meuInventario.find(i => i.nome === it.nome)) {
+          meuInventario.unshift({ nome: it.nome, icone: it.icone, equipado: true });
+        }
         btnCopiar.textContent = 'Copiado!';
         btnCopiar.style.color = '#5aff96';
+        mostrarToast('⚔️ ' + it.nome + ' copiada do jogador e colocada na sua mão!');
         setTimeout(() => {
           btnCopiar.textContent = 'Copiar';
           btnCopiar.style.color = '#fff';
-        }, 1000);
+        }, 1200);
       };
       listaInventario.appendChild(card);
     });
   }
+
+  tabMarket.onclick = renderizarBlackMarketPreview;
+  tabMeuInv.onclick = renderizarMeuInvPreview;
+  tabScanner.onclick = renderizarScannerPreview;
+
+  btnItens.onclick = () => {
+    janelaInventario.classList.add('visivel');
+    renderizarBlackMarketPreview();
+  };
 
   btnVoltarInv.onclick = () => {
     janelaInventario.classList.remove('visivel');
     jogadorInspecionadoPreview = null;
   };
   btnAtualizarInv.onclick = () => {
-    if (jogadorInspecionadoPreview) {
-      renderizarInventario(jogadorInspecionadoPreview);
-    }
+    if (abaAtivaPreview === 'market') renderizarBlackMarketPreview();
+    else if (abaAtivaPreview === 'meu') renderizarMeuInvPreview();
+    else if (abaAtivaPreview === 'scanner') renderizarScannerPreview();
+    else if (jogadorInspecionadoPreview) renderizarInventario(jogadorInspecionadoPreview);
   };
 
   // ==========================================
