@@ -64,6 +64,12 @@ local antiCairLoop = nil
 local antiCairStateConn = nil
 local ultimoChaoSeguro = nil
 
+local imortalAtivo = false
+local imortalHealthConn = nil
+local imortalLoop = nil
+local imortalDescendantConn = nil
+local imortalTouchOriginal = {}
+
 local antiFreezeAtivo = false
 local antiFreezeLoop = nil
 
@@ -575,12 +581,23 @@ UI.botaoAntiCair = novoBotao(
 	11
 )
 
--- Linha 2: Anti-Freeze / Spinbot / Spider
+-- Linha 2: Imortalidade / Anti-Freeze / Spinbot / Spider
+local LARGURA_4 = math.floor((LARGURA_UTIL - 12) / 4) -- (304 - 12) / 4 = 73
+
+UI.botaoImortal = novoBotao(
+	frame,
+	"Imortal: OFF",
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM, 0, Y_ROW2),
+	Color3.fromRGB(55, 55, 60),
+	10
+)
+
 UI.botaoAntiFreeze = novoBotao(
 	frame,
-	"Anti-Freeze: OFF",
-	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
-	UDim2.new(0, MARGEM, 0, Y_ROW2),
+	"Freeze: OFF",
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_4 + 4) * 1, 0, Y_ROW2),
 	Color3.fromRGB(55, 55, 60),
 	10
 )
@@ -588,22 +605,20 @@ UI.botaoAntiFreeze = novoBotao(
 UI.botaoSpinbot = novoBotao(
 	frame,
 	"Spinbot: OFF",
-	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
-	UDim2.new(0, MARGEM + LARGURA_3 + 8, 0, Y_ROW2),
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_4 + 4) * 2, 0, Y_ROW2),
 	Color3.fromRGB(55, 55, 60),
-	11
+	10
 )
 
 UI.botaoSpider = novoBotao(
 	frame,
 	"Spider: OFF",
-	UDim2.new(0, LARGURA_3, 0, ALTURA_BTN_TOOLBAR),
-	UDim2.new(0, MARGEM + (LARGURA_3 + 8) * 2, 0, Y_ROW2),
+	UDim2.new(0, LARGURA_4, 0, ALTURA_BTN_TOOLBAR),
+	UDim2.new(0, MARGEM + (LARGURA_4 + 4) * 3, 0, Y_ROW2),
 	Color3.fromRGB(55, 55, 60),
-	11
+	10
 )
-
-local LARGURA_4 = math.floor((LARGURA_UTIL - 12) / 4) -- (304 - 12) / 4 = 73
 
 -- Linha 3: Click TP / Fantasma / Rejoin / Servidores
 UI.botaoClickTp = novoBotao(
@@ -1443,6 +1458,11 @@ player.CharacterAdded:Connect(function(novoChar)
 		task.wait(0.3)
 		ativarAntiCair()
 	end
+	if imortalAtivo then
+		task.wait(0.3)
+		aplicarImortalidadeChar(novoChar)
+		ativarImortalidade()
+	end
 end)
 
 ------------------------------------------------------------
@@ -1568,6 +1588,150 @@ UI.botaoAntiCair.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
+-- IMORTALIDADE / GOD MODE (Bypass de morte, touch-damage, kill-bricks e void)
+------------------------------------------------------------
+local function aplicarImortalidadeChar(char)
+	if not char then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		pcall(function()
+			hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+			hum.BreakJointsOnDeath = false
+			if hum.Health < hum.MaxHealth then
+				hum.Health = hum.MaxHealth
+			end
+		end)
+	end
+
+	-- Anula Kill Bricks & Dano por Toque (lava, lasers, ácido, espinhos)
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			if imortalTouchOriginal[part] == nil then
+				imortalTouchOriginal[part] = part.CanTouch
+			end
+			pcall(function() part.CanTouch = false end)
+		end
+	end
+
+	-- Remove efeitos nocivos locais (fogo, veneno, scripts de dano)
+	for _, item in ipairs(char:GetChildren()) do
+		if item:IsA("Fire") or item:IsA("Smoke") then
+			pcall(function() item:Destroy() end)
+		elseif item:IsA("Script") or item:IsA("LocalScript") then
+			local n = string.lower(item.Name)
+			if string.find(n, "damage") or string.find(n, "kill") or string.find(n, "poison") or string.find(n, "bleed") or string.find(n, "lava") then
+				pcall(function() item.Disabled = true; item:Destroy() end)
+			end
+		end
+	end
+end
+
+local function restaurarImortalidadeChar()
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		pcall(function()
+			hum:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+			hum.BreakJointsOnDeath = true
+		end)
+	end
+	for part, touch in pairs(imortalTouchOriginal) do
+		if part and part.Parent then
+			pcall(function() part.CanTouch = touch end)
+		end
+	end
+	imortalTouchOriginal = {}
+end
+
+local function desativarImortalidade()
+	if not imortalAtivo then return end
+	imortalAtivo = false
+	if imortalHealthConn then imortalHealthConn:Disconnect(); imortalHealthConn = nil end
+	if imortalLoop then imortalLoop:Disconnect(); imortalLoop = nil end
+	if imortalDescendantConn then imortalDescendantConn:Disconnect(); imortalDescendantConn = nil end
+	restaurarImortalidadeChar()
+end
+
+local function ativarImortalidade()
+	if imortalAtivo then return end
+	imortalAtivo = true
+
+	local char = player.Character
+	aplicarImortalidadeChar(char)
+
+	if char then
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then
+			if imortalHealthConn then imortalHealthConn:Disconnect() end
+			imortalHealthConn = hum.HealthChanged:Connect(function(vida)
+				if not imortalAtivo then return end
+				if vida < hum.MaxHealth then
+					pcall(function()
+						hum.Health = hum.MaxHealth
+					end)
+				end
+			end)
+		end
+
+		if imortalDescendantConn then imortalDescendantConn:Disconnect() end
+		imortalDescendantConn = char.DescendantAdded:Connect(function(desc)
+			if not imortalAtivo then return end
+			if desc:IsA("BasePart") then
+				pcall(function() desc.CanTouch = false end)
+			elseif desc:IsA("Fire") or desc:IsA("Smoke") then
+				pcall(function() desc:Destroy() end)
+			end
+		end)
+	end
+
+	if imortalLoop then imortalLoop:Disconnect() end
+	imortalLoop = RunService.Heartbeat:Connect(function()
+		if not imortalAtivo then return end
+		local c = player.Character
+		if not c then return end
+		local h = c:FindFirstChildOfClass("Humanoid")
+		local hrp = c:FindFirstChild("HumanoidRootPart")
+
+		if h then
+			pcall(function()
+				h:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+				h.BreakJointsOnDeath = false
+				if h.Health < h.MaxHealth then
+					h.Health = h.MaxHealth
+				end
+			end)
+		end
+
+		-- Proteção Anti-Void (não morre caindo no mapa)
+		if hrp then
+			local limiteVoid = (workspace.FallenPartsDestroyHeight or -500) + 60
+			if hrp.Position.Y < limiteVoid then
+				hrp.AssemblyLinearVelocity = Vector3.zero
+				hrp.AssemblyAngularVelocity = Vector3.zero
+				if posicaoSalva then
+					hrp.CFrame = posicaoSalva
+				else
+					hrp.CFrame = CFrame.new(hrp.Position.X, 50, hrp.Position.Z)
+				end
+			end
+		end
+	end)
+end
+
+UI.botaoImortal.MouseButton1Click:Connect(function()
+	imortalAtivo = not imortalAtivo
+	if imortalAtivo then
+		UI.botaoImortal.Text = "Imortal: ON"
+		UI.botaoImortal.TextColor3 = Color3.fromRGB(90, 255, 150)
+		ativarImortalidade()
+	else
+		UI.botaoImortal.Text = "Imortal: OFF"
+		UI.botaoImortal.TextColor3 = Color3.fromRGB(255, 255, 255)
+		desativarImortalidade()
+	end
+end)
+
+------------------------------------------------------------
 -- ANTI-FREEZE / ANTI-STUN
 ------------------------------------------------------------
 local function ativarAntiFreeze()
@@ -1599,11 +1763,11 @@ end
 UI.botaoAntiFreeze.MouseButton1Click:Connect(function()
 	antiFreezeAtivo = not antiFreezeAtivo
 	if antiFreezeAtivo then
-		UI.botaoAntiFreeze.Text = "Anti-Freeze: ON"
+		UI.botaoAntiFreeze.Text = "Freeze: ON"
 		UI.botaoAntiFreeze.TextColor3 = Color3.fromRGB(90, 255, 150)
 		ativarAntiFreeze()
 	else
-		UI.botaoAntiFreeze.Text = "Anti-Freeze: OFF"
+		UI.botaoAntiFreeze.Text = "Freeze: OFF"
 		UI.botaoAntiFreeze.TextColor3 = Color3.fromRGB(255, 255, 255)
 		desativarAntiFreeze()
 	end
@@ -3103,6 +3267,9 @@ destruirPainel = function()
 	end
 	if antiFreezeAtivo then
 		desativarAntiFreeze()
+	end
+	if imortalAtivo then
+		desativarImortalidade()
 	end
 	if spinbotAtivo then
 		desativarSpinbot()

@@ -129,6 +129,7 @@ O painel é organizado em **4 Abas Especializadas**, projetadas para máxima efi
   - `Copiar Skin`: Clona instantaneamente as roupas, acessórios, estilo e aparência do jogador no seu personagem via `ApplyDescription`.
   - `Ver Inventário`: Abre uma janela modal exclusiva listando todas as ferramentas equipadas na mão e guardadas na mochila do jogador, com botão para copiar a ferramenta para si.
 - **Ferramentas Extras da Toolbar**:
+  - `Imortalidade (God Mode)`: Proteção multicamadas contra morte: desativação do estado `Dead`, anulação de danos por toque (`Kill Bricks`, lava, lasers, ácido via `CanTouch = false`), trava contínua de vida máxima e resgate automático do vazio (`Anti-Void`).
   - `Ghost Mode (Invisibilidade)`: Deixa seu personagem translúcido e furtivo.
   - `Anti-Cair`: Plataforma de resgate automático para não cair no vazio.
   - `Anti-Freeze`: Libera o personagem caso congelado por outros jogadores.

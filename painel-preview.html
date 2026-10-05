@@ -115,10 +115,16 @@
   /* linhas de ferramentas */
   .toolbar { width: 96px; height: 24px; font-size: 11px; }
   .toolbar.r1 { top: 36px; }
-  .toolbar.r2 { top: 64px; }
   .toolbar.c1 { left: 8px; }
   .toolbar.c2 { left: 112px; }
   .toolbar.c3 { left: 216px; }
+
+  /* linha 2: Imortalidade / Anti-Freeze / Spinbot / Spider */
+  .toolbar.r2 { top: 64px; width: 73px; font-size: 10px; }
+  .toolbar.r2.k1 { left: 8px; }
+  .toolbar.r2.k2 { left: 85px; }
+  .toolbar.r2.k3 { left: 162px; }
+  .toolbar.r2.k4 { left: 239px; }
 
   /* linha 3: Click TP / Fantasma / Rejoin / Servidores */
   .toolbar.r3 { top: 92px; width: 73px; font-size: 10px; }
@@ -423,10 +429,11 @@
   <button class="botao toolbar r1 c2" id="esp">ESP: OFF</button>
   <button class="botao toolbar r1 c3" id="antiCair">Anti-Cair: OFF</button>
 
-  <!-- linha 2: Anti-Freeze / Spinbot / Spider -->
-  <button class="botao toolbar r2 c1" id="antiFreeze">Anti-Freeze: OFF</button>
-  <button class="botao toolbar r2 c2" id="spinbot">Spinbot: OFF</button>
-  <button class="botao toolbar r2 c3" id="spider">Spider: OFF</button>
+  <!-- linha 2: Imortalidade / Anti-Freeze / Spinbot / Spider -->
+  <button class="botao toolbar r2 k1" id="imortal">Imortal: OFF</button>
+  <button class="botao toolbar r2 k2" id="antiFreeze">Freeze: OFF</button>
+  <button class="botao toolbar r2 k3" id="spinbot">Spinbot: OFF</button>
+  <button class="botao toolbar r2 k4" id="spider">Spider: OFF</button>
 
   <!-- linha 3: Click TP / Fantasma / Rejoin / Servidores -->
   <button class="botao toolbar r3 k1" id="clickTp">Click TP: OFF</button>
@@ -639,10 +646,16 @@
     btnAntiCair.textContent = ligado ? 'Anti-Cair: ON' : 'Anti-Cair: OFF';
   };
 
+  const btnImortal = document.getElementById('imortal');
+  btnImortal.onclick = () => {
+    const ligado = btnImortal.classList.toggle('on');
+    btnImortal.textContent = ligado ? 'Imortal: ON' : 'Imortal: OFF';
+  };
+
   const btnAntiFreeze = document.getElementById('antiFreeze');
   btnAntiFreeze.onclick = () => {
     const ligado = btnAntiFreeze.classList.toggle('on');
-    btnAntiFreeze.textContent = ligado ? 'Anti-Freeze: ON' : 'Anti-Freeze: OFF';
+    btnAntiFreeze.textContent = ligado ? 'Freeze: ON' : 'Freeze: OFF';
   };
 
   const btnSpinbot = document.getElementById('spinbot');
