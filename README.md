@@ -162,7 +162,7 @@ No início do arquivo [PainelTP.lua](file:///c:/Users/Administrator/Documents/De
 ------------------------------------------------------------
 -- IMAGENS E APARÊNCIA
 ------------------------------------------------------------
-local IMAGEM_BOTAO = "https://i.pinimg.com/736x/46/3d/34/463d3437da0561f30879391cfe426530.jpg"
+local IMAGEM_BOTAO = "https://i.pinimg.com/736x/6a/0f/ac/6a0facac537ff3a1fae07aa00fcc0578.jpg"
 local IMAGEM_FUNDO = "https://i.pinimg.com/736x/74/5e/83/745e835eca5be13b1df753fcb279b35e.jpg"
 local IMAGEM_LOGO  = "https://raw.githubusercontent.com/alahdevip/painel-1hz/main/logo-demoniaka.png"
 ```

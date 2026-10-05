@@ -21,7 +21,7 @@ local UI = {}
 --   2) "rbxassetid://1234..." = ID de um decal enviado no Roblox (funciona em qualquer lugar)
 --   3) ""                     = usa o emoji de ICONE_FALLBACK
 ------------------------------------------------------------
-local IMAGEM_BOTAO = "https://i.pinimg.com/736x/46/3d/34/463d3437da0561f30879391cfe426530.jpg"
+local IMAGEM_BOTAO = "https://i.pinimg.com/736x/6a/0f/ac/6a0facac537ff3a1fae07aa00fcc0578.jpg"
 local ICONE_FALLBACK = "📍"
 
 ------------------------------------------------------------
